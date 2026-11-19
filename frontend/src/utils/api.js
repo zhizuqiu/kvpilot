@@ -177,6 +177,10 @@ export function ServerInfo(name) {
     return post('/browser/server-info', { name })
 }
 
+export function Topology(name) {
+    return post('/browser/topology', { name })
+}
+
 export function LoadNextKeys(server, db, match, keyType, exactMatch) {
     return post('/browser/load-next-keys', { server, db, match, keyType, exactMatch })
 }

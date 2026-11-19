@@ -444,7 +444,8 @@
       "age": "Age (sec)",
       "idle": "Idle (sec)",
       "db": "Database"
-    }
+    },
+    "deploy_topology": "Deployment Topology"
   },
   "slog": {
     "title": "Slow Log",

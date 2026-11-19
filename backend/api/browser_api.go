@@ -51,11 +51,22 @@ func registerBrowserRoutes(rg *gin.RouterGroup) {
 		var req struct {
 			Name string `json:"name"`
 		}
-		if err := c.ShouldBindJSON(&req); err != nil {
+		if c.ShouldBindJSON(&req) != nil {
 			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
 			return
 		}
 		c.JSON(http.StatusOK, services.Browser().ServerInfo(req.Name))
+	})
+
+	g.POST("/topology", func(c *gin.Context) {
+		var req struct {
+			Name string `json:"name"`
+		}
+		if c.ShouldBindJSON(&req) != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().Topology(req.Name))
 	})
 
 	g.POST("/load-next-keys", func(c *gin.Context) {

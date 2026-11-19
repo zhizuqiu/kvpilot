@@ -28,6 +28,7 @@ import { convertBytes, formatBytes } from '@/utils/byte_convert.js'
 import usePreferencesStore from 'stores/preferences.js'
 import { useI18n } from 'vue-i18n'
 import useConnectionStore from 'stores/connections.js'
+import ContentDeployTopology from '@/components/content_value/ContentDeployTopology.vue'
 import { toHumanReadable } from '@/utils/date.js'
 
 const props = defineProps({
@@ -779,6 +780,11 @@ const clientTableColumns = computed(() => {
                             flex-height
                             striped />
                     </n-space>
+                </n-tab-pane>
+
+                <!-- deploy topology tab pane -->
+                <n-tab-pane :tab="$t('status.deploy_topology')" display-directive="show:lazy" name="topology">
+                    <content-deploy-topology :pause="props.pause || tabVal !== 'topology'" :server="props.server" />
                 </n-tab-pane>
             </n-tabs>
         </n-card>
