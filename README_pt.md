@@ -21,9 +21,11 @@ oferece uma versão web que pode ser implantada via Docker.</strong>
 </div>
 
 <div align="center">
-<img alt="KVPilot dashboard" src="docs/assets/03-browser.png" />
+<img alt="KVPilot 仪表盘" src="docs/assets/03-browser.png" />
 
-<img alt="KVPilot preferences" src="docs/assets/04-preferences.png" />
+<img alt="KVPilot 键详情" src="docs/assets/02-key-detail.png" />
+
+<img alt="KVPilot 偏好设置" src="docs/assets/04-preferences.png" />
 </div>
 
 ## Funcionalidades
@@ -99,6 +101,9 @@ wails dev
 
 ## Implantação com Docker
 
+> No official image is published yet. Build it locally from the repository root: `docker build -f Dockerfile.local -t kvpilot:1.2.8 .`
+
+
 Além do cliente desktop, o KVPilot também oferece uma versão web que pode ser implantada rapidamente via Docker.
 
 ### Usando Docker Compose (recomendado)
@@ -107,15 +112,15 @@ Crie um arquivo `docker-compose.yml`:
 
 ```yaml
 services:
-  tinyrdm:
-    image: ghcr.io/zhizuqiu/kvpilot:latest
-    container_name: tinyrdm
+  kvpilot:
+    image: kvpilot:1.2.8
+    container_name: kvpilot
     restart: unless-stopped
     ports:
       - "8086:8086"
     environment:
       - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=tinyrdm
+      - ADMIN_PASSWORD=change-me
     volumes:
       - ./data:/app/tinyrdm
 ```
@@ -131,12 +136,12 @@ Após iniciar, acesse `http://localhost:8086` e faça login com as credenciais c
 ### Usando o comando Docker
 
 ```bash
-docker run -d --name tinyrdm \
+docker run -d --name kvpilot \
   -p 8086:8086 \
   -e ADMIN_USERNAME=admin \
-  -e ADMIN_PASSWORD=tinyrdm \
+  -e ADMIN_PASSWORD=change-me \
   -v ./data:/app/tinyrdm \
-  ghcr.io/zhizuqiu/kvpilot:latest
+  kvpilot:1.2.8
 ```
 
 ### Variáveis de ambiente
@@ -146,23 +151,8 @@ docker run -d --name tinyrdm \
 | `ADMIN_USERNAME` | Nome de usuário | -      |
 | `ADMIN_PASSWORD` | Senha           | -      |
 
-## Patrocínio
+## Contributing
 
-Agradecemos aos seguintes provedores de serviços pelo patrocínio de hospedagem
-
-<table>
-<tr>
-<td width="200"><a href="https://flymux.com/register?promo=TINYRDM"><img alt="FlyMux" src="docs/images/flymux_logo.png"/></a></td>
-<td>Agradecimento especial à FlyMux por patrocinar este projeto! A FlyMux se dedica a fornecer serviços oficiais de retransmissão com alta estabilidade para Claude Code e Codex, focando em criar uma experiência de integração fluida e eficiente para desenvolvedores. Como benefício exclusivo para usuários do TinyRDM, ao se registrar por meio de <a href="https://flymux.com/register?promo=TINYRDM">deste link</a>, você receberá automaticamente um crédito bônus de $5 na sua conta.</td>
-</tr>
-<tr>
-<td width="200"><a href="https://www.notidc.com/"><img src="docs/images/notidc_logo.png" alt="NotiDC"></a></td>
-<td>Agradecimento especial à NotiDC por patrocinar este projeto! A NotIDC oferece infraestrutura em nuvem de alto desempenho, incluindo servidores em nuvem, bare metal, CDN e soluções de segurança, com cobertura global de rede e proteção DDoS confiável, ajudando desenvolvedores a implantar e escalar aplicações com eficiência.</td>
-</tr>
-</table>
-
-## Sobre
-
-### Conta oficial do WeChat
-
-<img src="docs/images/wechat_official.png" alt="wechat" width="360" />
+- Issues and feature requests: <https://github.com/zhizuqiu/kvpilot/issues>
+- Upstream project: [Tiny RDM](https://github.com/tiny-craft/tiny-rdm); thanks to its authors
+- License: [GPL-3.0](LICENSE); third-party notices in [NOTICE](NOTICE)

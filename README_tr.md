@@ -21,9 +21,11 @@ yöneticisidir. Docker ile dağıtılabilen bir web sürümü de sunmaktadır.</
 </div>
 
 <div align="center">
-<img alt="KVPilot dashboard" src="docs/assets/03-browser.png" />
+<img alt="KVPilot 仪表盘" src="docs/assets/03-browser.png" />
 
-<img alt="KVPilot preferences" src="docs/assets/04-preferences.png" />
+<img alt="KVPilot 键详情" src="docs/assets/02-key-detail.png" />
+
+<img alt="KVPilot 偏好设置" src="docs/assets/04-preferences.png" />
 </div>
 
 ## Özellikler
@@ -98,6 +100,9 @@ wails dev
 
 ## Docker ile Dağıtım
 
+> No official image is published yet. Build it locally from the repository root: `docker build -f Dockerfile.local -t kvpilot:1.2.8 .`
+
+
 Masaüstü istemcisinin yanı sıra, KVPilot Docker ile hızlıca dağıtılabilen bir web sürümü de sunmaktadır.
 
 ### Docker Compose Kullanımı (önerilen)
@@ -106,15 +111,15 @@ Bir `docker-compose.yml` dosyası oluşturun:
 
 ```yaml
 services:
-  tinyrdm:
-    image: ghcr.io/zhizuqiu/kvpilot:latest
-    container_name: tinyrdm
+  kvpilot:
+    image: kvpilot:1.2.8
+    container_name: kvpilot
     restart: unless-stopped
     ports:
       - "8086:8086"
     environment:
       - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=tinyrdm
+      - ADMIN_PASSWORD=change-me
     volumes:
       - ./data:/app/tinyrdm
 ```
@@ -131,12 +136,12 @@ yapın.
 ### Docker Komutu Kullanımı
 
 ```bash
-docker run -d --name tinyrdm \
+docker run -d --name kvpilot \
   -p 8086:8086 \
   -e ADMIN_USERNAME=admin \
-  -e ADMIN_PASSWORD=tinyrdm \
+  -e ADMIN_PASSWORD=change-me \
   -v ./data:/app/tinyrdm \
-  ghcr.io/zhizuqiu/kvpilot:latest
+  kvpilot:1.2.8
 ```
 
 ### Ortam Değişkenleri
@@ -146,23 +151,8 @@ docker run -d --name tinyrdm \
 | `ADMIN_USERNAME` | Giriş kullanıcı adı | -          |
 | `ADMIN_PASSWORD` | Giriş şifresi       | -          |
 
-## Sponsorluk
+## Contributing
 
-Barındırma sponsorluğu sağlayan aşağıdaki hizmet sağlayıcılarına teşekkür ederiz
-
-<table>
-<tr>
-<td width="200"><a href="https://flymux.com/register?promo=TINYRDM"><img alt="FlyMux" src="docs/images/flymux_logo.png"/></a></td>
-<td>Bu projeye sponsor olduğu için FlyMux'a özel teşekkürler! FlyMux, Claude Code ve Codex için resmi ve yüksek kararlılığa sahip relay hizmetleri sunmaya odaklanır; geliştiriciler için sorunsuz ve verimli bir entegrasyon deneyimi oluşturur. TinyRDM kullanıcılarına özel olarak, <a href="https://flymux.com/register?promo=TINYRDM">bu bağlantı</a> üzerinden kayıt olduğunuzda hesabınıza otomatik olarak $5 bonus kredi tanımlanır.</td>
-</tr>
-<tr>
-<td width="200"><a href="https://www.notidc.com/"><img src="docs/images/notidc_logo.png" alt="NotiDC"></a></td>
-<td>Bu projeye sponsor olduğu için NotiDC'a özel teşekkürler! NotIDC, bulut sunucuları, bare metal, CDN ve güvenlik çözümleri dahil yüksek performanslı bulut altyapısı sunar; küresel ağ kapsamı ve güvenilir DDoS korumasıyla geliştiricilerin uygulamalarını verimli şekilde dağıtmasına ve ölçeklemesine yardımcı olur.</td>
-</tr>
-</table>
-
-## Hakkında
-
-### WeChat Resmi Hesabı
-
-<img src="docs/images/wechat_official.png" alt="wechat" width="360" />
+- Issues and feature requests: <https://github.com/zhizuqiu/kvpilot/issues>
+- Upstream project: [Tiny RDM](https://github.com/tiny-craft/tiny-rdm); thanks to its authors
+- License: [GPL-3.0](LICENSE); third-party notices in [NOTICE](NOTICE)

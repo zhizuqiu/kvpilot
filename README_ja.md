@@ -21,9 +21,11 @@ RDMは、Mac、Windows、Linuxで利用可能な、モダンで軽量なクロ�
 </div>
 
 <div align="center">
-<img alt="KVPilot dashboard" src="docs/assets/03-browser.png" />
+<img alt="KVPilot 仪表盘" src="docs/assets/03-browser.png" />
 
-<img alt="KVPilot preferences" src="docs/assets/04-preferences.png" />
+<img alt="KVPilot 键详情" src="docs/assets/02-key-detail.png" />
+
+<img alt="KVPilot 偏好设置" src="docs/assets/04-preferences.png" />
 </div>
 
 ## 特徴
@@ -99,6 +101,9 @@ wails dev
 
 ## Dockerデプロイ
 
+> No official image is published yet. Build it locally from the repository root: `docker build -f Dockerfile.local -t kvpilot:1.2.8 .`
+
+
 デスクトップクライアントに加えて、KVPilotはDockerで素早くデプロイできるWeb版も提供しています。
 
 ### Docker Composeを使用（推奨）
@@ -107,15 +112,15 @@ wails dev
 
 ```yaml
 services:
-  tinyrdm:
-    image: ghcr.io/zhizuqiu/kvpilot:latest
-    container_name: tinyrdm
+  kvpilot:
+    image: kvpilot:1.2.8
+    container_name: kvpilot
     restart: unless-stopped
     ports:
       - "8086:8086"
     environment:
       - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=tinyrdm
+      - ADMIN_PASSWORD=change-me
     volumes:
       - ./data:/app/tinyrdm
 ```
@@ -131,12 +136,12 @@ docker compose up -d
 ### Dockerコマンドを使用
 
 ```bash
-docker run -d --name tinyrdm \
+docker run -d --name kvpilot \
   -p 8086:8086 \
   -e ADMIN_USERNAME=admin \
-  -e ADMIN_PASSWORD=tinyrdm \
+  -e ADMIN_PASSWORD=change-me \
   -v ./data:/app/tinyrdm \
-  ghcr.io/zhizuqiu/kvpilot:latest
+  kvpilot:1.2.8
 ```
 
 ### 環境変数の説明
@@ -146,23 +151,8 @@ docker run -d --name tinyrdm \
 | `ADMIN_USERNAME` | ログインユーザー名 | -      |
 | `ADMIN_PASSWORD` | ログインパスワード | -      |
 
-## スポンサー
+## Contributing
 
-以下のサービスプロバイダーによるホスティングスポンサーに感謝いたします
-
-<table>
-<tr>
-<td width="200"><a href="https://flymux.com/register?promo=TINYRDM"><img alt="FlyMux" src="docs/images/flymux_logo.png"/></a></td>
-<td>本プロジェクトをスポンサーしてくださった FlyMux に心より感謝します。FlyMux は Claude Code と Codex 向けの公式かつ高安定なリレーサービスの提供に注力し、開発者にスムーズで効率的な AI コーディングへの接続体験を届けています。TinyRDM ユーザー向けの特典として、<a href="https://flymux.com/register?promo=TINYRDM">このリンク</a>から登録すると、アカウントに $5 のボーナスクレジットが自動で追加されます。</td>
-</tr>
-<tr>
-<td width="200"><a href="https://www.notidc.com/"><img src="docs/images/notidc_logo.png" alt="NotiDC"></a></td>
-<td>本プロジェクトをスポンサーしてくださった NotiDC に心より感謝します。NotIDC はクラウドサーバー、ベアメタル、CDN、セキュリティソリューションを含む高性能なクラウドインフラを提供しており、グローバルなネットワークカバレッジと信頼性の高い DDoS 対策によって、開発者の効率的なデプロイとスケールを支援します。</td>
-</tr>
-</table>
-
-## について
-
-### WeChat公式アカウント
-
-<img src="docs/images/wechat_official.png" alt="wechat" width="360" />
+- Issues and feature requests: <https://github.com/zhizuqiu/kvpilot/issues>
+- Upstream project: [Tiny RDM](https://github.com/tiny-craft/tiny-rdm); thanks to its authors
+- License: [GPL-3.0](LICENSE); third-party notices in [NOTICE](NOTICE)

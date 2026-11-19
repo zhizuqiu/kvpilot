@@ -21,9 +21,11 @@
 </div>
 
 <div align="center">
-<img alt="KVPilot dashboard" src="docs/assets/03-browser.png" />
+<img alt="KVPilot 仪表盘" src="docs/assets/03-browser.png" />
 
-<img alt="KVPilot preferences" src="docs/assets/04-preferences.png" />
+<img alt="KVPilot 键详情" src="docs/assets/02-key-detail.png" />
+
+<img alt="KVPilot 偏好设置" src="docs/assets/04-preferences.png" />
 </div>
 
 ## 功能特性
@@ -98,6 +100,9 @@ wails dev
 
 ## Docker 部署
 
+> 当前尚未发布官方镜像，请先在仓库根目录执行 `docker build -f Dockerfile.local -t kvpilot:1.2.8 .` 构建本地镜像。
+
+
 除桌面客戶端外，KVPilot 還提供 Web 版本，可透過 Docker 快速部署。
 
 ### 使用 Docker Compose（推薦）
@@ -106,15 +111,15 @@ wails dev
 
 ```yaml
 services:
-  tinyrdm:
-    image: ghcr.io/zhizuqiu/kvpilot:latest
-    container_name: tinyrdm
+  kvpilot:
+    image: kvpilot:1.2.8
+    container_name: kvpilot
     restart: unless-stopped
     ports:
       - "8086:8086"
     environment:
       - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=tinyrdm
+      - ADMIN_PASSWORD=change-me
     volumes:
       - ./data:/app/tinyrdm
 ```
@@ -130,12 +135,12 @@ docker compose up -d
 ### 使用 Docker 命令
 
 ```bash
-docker run -d --name tinyrdm \
+docker run -d --name kvpilot \
   -p 8086:8086 \
   -e ADMIN_USERNAME=admin \
-  -e ADMIN_PASSWORD=tinyrdm \
+  -e ADMIN_PASSWORD=change-me \
   -v ./data:/app/tinyrdm \
-  ghcr.io/zhizuqiu/kvpilot:latest
+  kvpilot:1.2.8
 ```
 
 ### 環境變數說明
@@ -145,27 +150,8 @@ docker run -d --name tinyrdm \
 | `ADMIN_USERNAME` | 登入帳號 | -   |
 | `ADMIN_PASSWORD` | 登入密碼 | -   |
 
-### 感謝
+## 參與貢獻
 
-感謝以下服務商提供主機贊助
-
-<table>
-<tr>
-<td width="200"><a href="https://flymux.com/register?promo=TINYRDM"><img alt="FlyMux" src="docs/images/flymux_logo.png"/></a></td>
-<td>感謝 FlyMux 贊助本專案！FlyMux 致力於提供 Claude Code 與 Codex 官方高穩定中轉服務，專注為開發者打造流暢、便捷的 AI 程式開發接入體驗。FlyMux 為 TinyRDM 使用者提供專屬特別福利：透過<a href="https://flymux.com/register?promo=TINYRDM">此連結</a>註冊帳號可直接獲得 $5 充值額度！</td>
-</tr>
-<tr>
-<td width="200"><a href="https://www.notidc.com/"><img src="docs/images/notidc_logo.png" alt="NotiDC"></a></td>
-<td>感謝 NotiDC 贊助本專案！NotiDC 提供高效能雲端伺服器、裸金屬、CDN 及安全防護等基礎設施服務，具備全球網路覆蓋與穩定的抗 DDoS 能力，協助開發者高效部署與擴展應用。</td>
-</tr>
-</table>
-
-## 關於
-
-### 贊助
-
-如果此專案對您有幫助，歡迎請作者喝杯咖啡 ☕️
-
-* 微信贊賞
-
-<img src="docs/images/wechat_sponsor.jpg" alt="wechat" width="200" />
+- 問題回饋與功能建議：<https://github.com/zhizuqiu/kvpilot/issues>
+- 本專案上游為 [Tiny RDM](https://github.com/tiny-craft/tiny-rdm)，感謝原作者的開源工作
+- 授權條款：[GPL-3.0](LICENSE)，第三方元件授權見 [NOTICE](NOTICE)

@@ -20,9 +20,11 @@
 </div>
 
 <div align="center">
-<img alt="KVPilot dashboard" src="docs/assets/03-browser.png" />
+<img alt="KVPilot 仪表盘" src="docs/assets/03-browser.png" />
 
-<img alt="KVPilot preferences" src="docs/assets/04-preferences.png" />
+<img alt="KVPilot 键详情" src="docs/assets/02-key-detail.png" />
+
+<img alt="KVPilot 偏好设置" src="docs/assets/04-preferences.png" />
 </div>
 
 ## 功能特性
@@ -97,6 +99,9 @@ wails dev
 
 ## Docker 部署
 
+> 当前尚未发布官方镜像，请先在仓库根目录执行 `docker build -f Dockerfile.local -t kvpilot:1.2.8 .` 构建本地镜像。
+
+
 除桌面客户端外，KVPilot 还提供 Web 版本，可通过 Docker 快速部署。
 
 ### 使用 Docker Compose（推荐）
@@ -105,15 +110,15 @@ wails dev
 
 ```yaml
 services:
-  tinyrdm:
-    image: ghcr.io/zhizuqiu/kvpilot:latest
-    container_name: tinyrdm
+  kvpilot:
+    image: kvpilot:1.2.8
+    container_name: kvpilot
     restart: unless-stopped
     ports:
       - "8086:8086"
     environment:
       - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=tinyrdm
+      - ADMIN_PASSWORD=change-me
     volumes:
       - ./data:/app/tinyrdm
 ```
@@ -129,12 +134,12 @@ docker compose up -d
 ### 使用 Docker 命令
 
 ```bash
-docker run -d --name tinyrdm \
+docker run -d --name kvpilot \
   -p 8086:8086 \
   -e ADMIN_USERNAME=admin \
-  -e ADMIN_PASSWORD=tinyrdm \
+  -e ADMIN_PASSWORD=change-me \
   -v ./data:/app/tinyrdm \
-  ghcr.io/zhizuqiu/kvpilot:latest
+  kvpilot:1.2.8
 ```
 
 ### 环境变量说明
@@ -144,43 +149,8 @@ docker run -d --name tinyrdm \
 | `ADMIN_USERNAME` | 登录用户名 | -   |
 | `ADMIN_PASSWORD` | 登录密码  | -   |
 
-## 感谢赞助
+## 参与贡献
 
-感谢以下服务商提供主机赞助
-
-<table>
-<tr>
-<td width="200"><a href="https://flymux.com/register?promo=TINYRDM"><img alt="FlyMux" src="docs/images/flymux_logo.png"/></a></td>
-<td>感谢 FlyMux 赞助了本项目！FlyMux 致力于提供 Claude Code 与 Codex 官方高稳定中转服务，专注于为开发者打造流畅、便捷的 AI 编程接入体验。FlyMux 为 TinyRDM 用户提供了专属特别福利：通过<a href="https://flymux.com/register?promo=TINYRDM">此链接</a>账号直接到账 $5 赠送额度！</td>
-</tr>
-<td width="200"><a href="https://www.notidc.com/"><img src="docs/images/notidc_logo.png" alt="NotiDC"></a></td>
-<td>感谢 NotiDC 赞助了本项目！NotIDC 提供高性能云服务器、裸金属、CDN 及安全防护等基础设施服务，具备全球网络覆盖与稳定的抗 DDoS 能力，助力开发者高效部署与扩展应用。</td>
-</table>
-
-## 关于
-
-如果你也同为独立开发者（团队），喜欢开源，或者对Tiny Craft的相关产品感兴趣，可以关注微信公众号或者加入QQ群，探讨心得，反馈意见，交个朋友。
-
-### 微信公众号（用户交流微信群）
-
-我会不定期更新一些关于独立开发的思考和感悟，以及独立产品的介绍，欢迎扫码关注~👏
-
-<img src="docs/images/wechat_official.png" alt="wechat" width="360" />
-
-### B站官方账号
-
-<img src="docs/images/bilibili_official.png" alt="bilibili" width="360" />
-
-### 独立开发互助QQ群
-
-```
-831077639
-```
-
-### 赞助
-
-该项目完全为爱发电，如果对你有所帮助，可以请作者喝杯咖啡 ☕️
-
-* 微信赞赏
-
-<img src="docs/images/wechat_sponsor.jpg" alt="wechat" width="200" />
+- 问题反馈与功能建议：<https://github.com/zhizuqiu/kvpilot/issues>
+- 本项目上游为 [Tiny RDM](https://github.com/tiny-craft/tiny-rdm)，感谢原作者的开源工作
+- 许可证：[GPL-3.0](LICENSE)，第三方组件许可见 [NOTICE](NOTICE)

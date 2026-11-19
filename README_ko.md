@@ -21,9 +21,11 @@
 </div>
 
 <div align="center">
-<img alt="KVPilot dashboard" src="docs/assets/03-browser.png" />
+<img alt="KVPilot 仪表盘" src="docs/assets/03-browser.png" />
 
-<img alt="KVPilot preferences" src="docs/assets/04-preferences.png" />
+<img alt="KVPilot 键详情" src="docs/assets/02-key-detail.png" />
+
+<img alt="KVPilot 偏好设置" src="docs/assets/04-preferences.png" />
 </div>
 
 ## 기능
@@ -98,6 +100,9 @@ wails dev
 
 ## Docker 배포
 
+> No official image is published yet. Build it locally from the repository root: `docker build -f Dockerfile.local -t kvpilot:1.2.8 .`
+
+
 데스크톱 클라이언트 외에도 KVPilot은 Docker를 통해 빠르게 배포할 수 있는 웹 버전을 제공합니다.
 
 ### Docker Compose 사용 (권장)
@@ -106,15 +111,15 @@ wails dev
 
 ```yaml
 services:
-  tinyrdm:
-    image: ghcr.io/zhizuqiu/kvpilot:latest
-    container_name: tinyrdm
+  kvpilot:
+    image: kvpilot:1.2.8
+    container_name: kvpilot
     restart: unless-stopped
     ports:
       - "8086:8086"
     environment:
       - ADMIN_USERNAME=admin
-      - ADMIN_PASSWORD=tinyrdm
+      - ADMIN_PASSWORD=change-me
     volumes:
       - ./data:/app/tinyrdm
 ```
@@ -130,12 +135,12 @@ docker compose up -d
 ### Docker 명령 사용
 
 ```bash
-docker run -d --name tinyrdm \
+docker run -d --name kvpilot \
   -p 8086:8086 \
   -e ADMIN_USERNAME=admin \
-  -e ADMIN_PASSWORD=tinyrdm \
+  -e ADMIN_PASSWORD=change-me \
   -v ./data:/app/tinyrdm \
-  ghcr.io/zhizuqiu/kvpilot:latest
+  kvpilot:1.2.8
 ```
 
 ### 환경 변수
@@ -145,23 +150,8 @@ docker run -d --name tinyrdm \
 | `ADMIN_USERNAME` | 로그인 사용자 이름 | -   |
 | `ADMIN_PASSWORD` | 로그인 비밀번호   | -   |
 
-## 스폰서
+## Contributing
 
-다음 서비스 제공업체의 호스팅 후원에 감사드립니다
-
-<table>
-<tr>
-<td width="200"><a href="https://flymux.com/register?promo=TINYRDM"><img alt="FlyMux" src="docs/images/flymux_logo.png"/></a></td>
-<td>이 프로젝트를 후원해 준 FlyMux에 특별히 감사드립니다! FlyMux는 Claude Code와 Codex를 위한 공식 고안정 중계 서비스 제공에 집중하며, 개발자에게 매끄럽고 효율적인 AI 코딩 연동 경험을 제공하고 있습니다. TinyRDM 사용자 전용 혜택으로 <a href="https://flymux.com/register?promo=TINYRDM">이 링크</a>를 통해 가입하면 계정에 $5 보너스 크레딧이 자동으로 지급됩니다.</td>
-</tr>
-<tr>
-<td width="200"><a href="https://www.notidc.com/"><img src="docs/images/notidc_logo.png" alt="NotiDC"></a></td>
-<td>이 프로젝트를 후원해 준 NotiDC에 특별히 감사드립니다! NotIDC는 클라우드 서버, 베어메탈, CDN, 보안 솔루션을 포함한 고성능 클라우드 인프라를 제공하며, 글로벌 네트워크 커버리지와 안정적인 DDoS 방어를 바탕으로 개발자가 애플리케이션을 효율적으로 배포하고 확장할 수 있도록 돕습니다.</td>
-</tr>
-</table>
-
-## 소개
-
-### 위챗 공식 계정
-
-<img src="docs/images/wechat_official.png" alt="wechat" width="360" />
+- Issues and feature requests: <https://github.com/zhizuqiu/kvpilot/issues>
+- Upstream project: [Tiny RDM](https://github.com/tiny-craft/tiny-rdm); thanks to its authors
+- License: [GPL-3.0](LICENSE); third-party notices in [NOTICE](NOTICE)
