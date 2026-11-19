@@ -1,6 +1,7 @@
 <div align="center">
 <a href="https://github.com/zhizuqiu/kvpilot/"><img src="build/appicon.png" width="120"/></a>
 </div>
+
 <h1 align="center">KVPilot</h1>
 <h4 align="center"><a href="/">English</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_zh.md">简体中文</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_tw.md">繁體中文</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ja.md">日本語</a> | <strong>한국어</strong> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_fr.md">Français</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_es.md">Español</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_pt.md">Português (BR)</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ru.md">Русский</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_tr.md">Türkçe</a></h4>
 
@@ -14,23 +15,16 @@
 ![GitHub All Releases](https://img.shields.io/github/downloads/zhizuqiu/kvpilot/total)
 [![GitHub stars](https://img.shields.io/github/stars/zhizuqiu/kvpilot)](https://github.com/zhizuqiu/kvpilot/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/zhizuqiu/kvpilot)](https://github.com/zhizuqiu/kvpilot/fork)
-[![AtomGitStars](https://atomgit.com/zhizuqiu/kvpilot/star/badge.svg)](https://atomgit.com/zhizuqiu/kvpilot)
 
 <strong>KVPilot은 Mac, Windows, Linux에서 사용할 수 있는 현대적이고 가벼운 크로스 플랫폼 Redis 데스크톱 관리자입니다. Docker를 통해 배포할 수 있는 웹 버전도
 제공합니다.</strong>
 </div>
 
-<picture>
- <source media="(prefers-color-scheme: dark)" srcset="screenshots/dark_en.png">
- <source media="(prefers-color-scheme: light)" srcset="screenshots/light_en.png">
- <img alt="screenshot" src="screenshots/dark_en.png">
-</picture>
+<div align="center">
+<img alt="KVPilot dashboard" src="docs/assets/03-browser.png" />
 
-<picture>
- <source media="(prefers-color-scheme: dark)" srcset="screenshots/dark_en2.png">
- <source media="(prefers-color-scheme: light)" srcset="screenshots/light_en2.png">
- <img alt="screenshot" src="screenshots/dark_en2.png">
-</picture>
+<img alt="KVPilot preferences" src="docs/assets/04-preferences.png" />
+</div>
 
 ## 기능
 

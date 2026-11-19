@@ -1,6 +1,7 @@
 <div align="center">
 <a href="https://github.com/zhizuqiu/kvpilot/"><img src="build/appicon.png" width="120"/></a>
 </div>
+
 <h1 align="center">KVPilot</h1>
 <h4 align="center"><a href="/">English</a> | <strong>简体中文</strong> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_tw.md">繁體中文</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ja.md">日本語</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ko.md">한국어</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_fr.md">Français</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_es.md">Español</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_pt.md">Português (BR)</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ru.md">Русский</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_tr.md">Türkçe</a></h4>
 
@@ -14,22 +15,15 @@
 ![GitHub All Releases](https://img.shields.io/github/downloads/zhizuqiu/kvpilot/total)
 [![GitHub stars](https://img.shields.io/github/stars/zhizuqiu/kvpilot)](https://github.com/zhizuqiu/kvpilot/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/zhizuqiu/kvpilot)](https://github.com/zhizuqiu/kvpilot/fork)
-[![AtomGitStars](https://atomgit.com/zhizuqiu/kvpilot/star/badge.svg)](https://atomgit.com/zhizuqiu/kvpilot)
 
-<str>一个现代化轻量级的跨平台Redis桌面客户端，支持Mac、Windows和Linux，同时提供Web版本，可通过Docker快速部署</strong>
+<strong>一个现代化轻量级的跨平台Redis桌面客户端，支持Mac、Windows和Linux，同时提供Web版本，可通过Docker快速部署</strong>
 </div>
 
-<picture>
- <source media="(prefers-color-scheme: dark)" srcset="screenshots/dark_zh.png">
- <source media="(prefers-color-scheme: light)" srcset="screenshots/light_zh.png">
- <img alt="screenshot" src="screenshots/dark_zh.png">
-</picture>
+<div align="center">
+<img alt="KVPilot dashboard" src="docs/assets/03-browser.png" />
 
-<picture>
- <source media="(prefers-color-scheme: dark)" srcset="screenshots/dark_zh2.png">
- <source media="(prefers-color-scheme: light)" srcset="screenshots/light_zh2.png">
- <img alt="screenshot" src="screenshots/dark_zh2.png">
-</picture>
+<img alt="KVPilot preferences" src="docs/assets/04-preferences.png" />
+</div>
 
 ## 功能特性
 

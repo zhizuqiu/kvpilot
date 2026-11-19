@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#151E33"/>
+      <stop offset="0.55" stop-color="#0E1424"/>
+      <stop offset="1" stop-color="#080B14"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.24" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="#35E0C8" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#35E0C8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="key" x1="0.25" y1="1" x2="0.85" y2="0">
+      <stop offset="0" stop-color="#E6EDFC"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect width="1280" height="640" fill="url(#glow)"/>
+
+  <!-- 背景网格点 -->
+  <g fill="#FFFFFF" fill-opacity="0.035">
+    <circle cx="880" cy="120" r="3"/><circle cx="960" cy="120" r="3"/><circle cx="1040" cy="120" r="3"/><circle cx="1120" cy="120" r="3"/>
+    <circle cx="880" cy="200" r="3"/><circle cx="960" cy="200" r="3"/><circle cx="1040" cy="200" r="3"/><circle cx="1120" cy="200" r="3"/>
+    <circle cx="880" cy="280" r="3"/><circle cx="960" cy="280" r="3"/><circle cx="1040" cy="280" r="3"/><circle cx="1120" cy="280" r="3"/>
+    <circle cx="880" cy="360" r="3"/><circle cx="960" cy="360" r="3"/><circle cx="1040" cy="360" r="3"/><circle cx="1120" cy="360" r="3"/>
+    <circle cx="880" cy="440" r="3"/><circle cx="960" cy="440" r="3"/><circle cx="1040" cy="440" r="3"/><circle cx="1120" cy="440" r="3"/>
+    <circle cx="880" cy="520" r="3"/><circle cx="960" cy="520" r="3"/><circle cx="1040" cy="520" r="3"/><circle cx="1120" cy="520" r="3"/>
+  </g>
+
+  <!-- 图标：与 appicon.svg 同一几何，等比缩放 -->
+  <g transform="translate(96,196) scale(0.243)">
+    <rect x="0" y="0" width="1024" height="1024" rx="228" fill="#101A2E"/>
+    <rect x="7" y="7" width="1010" height="1010" rx="222" fill="none" stroke="#FFFFFF" stroke-opacity="0.07" stroke-width="6"/>
+    <circle cx="345" cy="690" r="100" fill="none" stroke="#35E0C8" stroke-width="52"/>
+    <line x1="430" y1="605" x2="745" y2="290" stroke="url(#key)" stroke-width="54" stroke-linecap="round"/>
+    <path d="M745 290 L713 428 M745 290 L607 322" fill="none" stroke="#FFFFFF" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M529 506 L487 464 M592 443 L550 401" fill="none" stroke="url(#key)" stroke-width="40" stroke-linecap="round"/>
+  </g>
+
+  <!-- 文案 -->
+  <text x="404" y="300" font-family="-apple-system, 'Helvetica Neue', Arial, sans-serif"
+        font-size="104" font-weight="800" fill="#F4F7FF" letter-spacing="-2">KVPilot</text>
+
+  <text x="406" y="356" font-family="-apple-system, 'Helvetica Neue', Arial, sans-serif"
+        font-size="34" fill="#93A6C9">开源 Redis / KV 桌面与 Web 客户端</text>
+
+  <text x="406" y="404" font-family="-apple-system, 'Helvetica Neue', Arial, sans-serif"
+        font-size="26" fill="#35E0C8">Tiny RDM 1.2.7 社区延续分支 · GPL-3.0</text>
+
+  <!-- 特性标签 -->
+  <g font-family="-apple-system, 'Helvetica Neue', Arial, sans-serif" font-size="22" fill="#C7D3E8">
+    <rect x="406" y="452" width="132" height="44" rx="22" fill="#FFFFFF" fill-opacity="0.06"/>
+    <text x="436" y="481">多数据库</text>
+    <rect x="552" y="452" width="132" height="44" rx="22" fill="#FFFFFF" fill-opacity="0.06"/>
+    <text x="582" y="481">哨兵 / 集群</text>
+    <rect x="698" y="452" width="176" height="44" rx="22" fill="#FFFFFF" fill-opacity="0.06"/>
+    <text x="728" y="481">桌面 + Web</text>
+  </g>
+
+  <!-- 底部链接 -->
+  <text x="96" y="576" font-family="-apple-system, 'Helvetica Neue', Arial, sans-serif"
+        font-size="24" fill="#6B7B99">github.com/zhizuqiu/kvpilot</text>
+</svg>
