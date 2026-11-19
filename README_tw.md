@@ -150,6 +150,16 @@ docker run -d --name kvpilot \
 | `ADMIN_USERNAME` | 登入帳號 | -   |
 | `ADMIN_PASSWORD` | 登入密碼 | -   |
 
+## 關於
+
+KVPilot 是 [Tiny RDM](https://github.com/tiny-craft/tiny-rdm) 1.2.7 的社群延續分支，
+面向仍在使用開源桌面客戶端、且需要跟進新 Redis / KV 相容實作的用戶。
+
+- 專案範圍：缺陷修復、依賴安全升級、Redis 協定與指令相容、Web 模式加固
+- 非目標：不做介面大改、不追上游閉源版本（Redisee）的功能
+- 維護方式：Issue / PR 驅動，見 [參與貢獻](#參與貢獻)
+- 授權條款：GPL-3.0，非官方分支，與 Tiny Craft 無隸屬關係
+
 ## 參與貢獻
 
 - 問題回饋與功能建議：<https://github.com/zhizuqiu/kvpilot/issues>

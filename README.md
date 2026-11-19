@@ -153,6 +153,17 @@ docker run -d --name kvpilot \
 | `ADMIN_USERNAME` | Login username | -       |
 | `ADMIN_PASSWORD` | Login password | -       |
 
+## About
+
+KVPilot is a community continuation of [Tiny RDM](https://github.com/tiny-craft/tiny-rdm) 1.2.7,
+aimed at users who still rely on the open-source desktop client and need to keep up with
+new Redis / KV compatible implementations.
+
+- Scope: bug fixes, dependency and security updates, Redis protocol/command compatibility, hardening of the web mode
+- Non-goals: major UI redesigns, chasing features of the closed-source successor (Redisee)
+- Maintenance: issue/PR driven, see [Contributing](#contributing)
+- License: GPL-3.0; unofficial fork, not affiliated with Tiny Craft
+
 ## Contributing
 
 - Issues and feature requests: <https://github.com/zhizuqiu/kvpilot/issues>
