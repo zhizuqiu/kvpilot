@@ -48,8 +48,7 @@
       "key_icon_style3": "Common",
       "update": "Update",
       "auto_check_update": "Auto check for updates",
-      "privacy": "Privacy",
-      "allow_track": "Allows anonymous data to be collected"
+      "privacy": "Privacy"
     },
     "editor": {
       "name": "Editor",
@@ -169,7 +168,7 @@
     "browser": "Data Browser",
     "log": "Log",
     "wechat_official": "WeChat Official Account",
-    "follow_x": "Follow \uD835\uDD4F",
+    "follow_x": "Follow 𝕏",
     "github": "Github",
     "logout": "Sign Out"
   },
@@ -392,12 +391,6 @@
       "later": "Later",
       "skip": "Skip This Version"
     },
-    "welcome": {
-      "title": "Welcome to KVPilot！",
-      "content": "In order to provide a better user experience, KVPilot collects some anonymous data to help optimize the software and improve the user experience, please rest assured that this does not involve your personal privacy information.\n\nIf you have any concerns, you can turn off this data collection feature at any time by going to Preferences. If you have any questions, feel free to contact the developer. I hope KVPilot can become your helpful assistant!",
-      "accept": "Help Improve",
-      "reject": "Reject"
-    },
     "about": {
       "source": "Source Code",
       "website": "Official Website"
@@ -486,5 +479,23 @@
     "message": "Message",
     "receive_message": "Received {total} messages",
     "always_show_last": "Auto Scroll to Latest"
+  },
+  "topology": {
+    "mode_standalone": "Standalone",
+    "mode_master_replica": "Master / Replica",
+    "mode_sentinel": "Sentinel",
+    "mode_cluster": "Cluster",
+    "master": "Master",
+    "replica": "Replica",
+    "sentinel": "Sentinel",
+    "self": "current node",
+    "online": "online",
+    "down": "down",
+    "offset": "offset",
+    "lag": "lag (s)",
+    "slots": "slots",
+    "master_node": "master",
+    "refresh": "Refresh",
+    "empty": "No topology information"
   }
 }

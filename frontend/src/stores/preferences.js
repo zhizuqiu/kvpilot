@@ -37,7 +37,6 @@ const usePreferencesStore = defineStore('preferences', {
      */
     state: () => ({
         behavior: {
-            welcomed: false,
             asideWidth: 300,
             windowWidth: 0,
             windowHeight: 0,
@@ -55,7 +54,6 @@ const usePreferencesStore = defineStore('preferences', {
             useSysProxyHttp: false,
             checkUpdate: true,
             skipVersion: '',
-            allowTrack: false,
         },
         editor: {
             font: '',
@@ -483,11 +481,6 @@ const usePreferencesStore = defineStore('preferences', {
             return true
         },
 
-        setAsWelcomed(acceptTrack) {
-            this.behavior.welcomed = true
-            this.general.allowTrack = acceptTrack
-            this.savePreferences()
-        },
 
         async checkForUpdate(manual = false) {
             let msgRef = null

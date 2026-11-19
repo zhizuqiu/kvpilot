@@ -24,7 +24,6 @@ func NewPreferences() Preferences {
 			ScanSize:     consts.DEFAULT_SCAN_SIZE,
 			KeyIconStyle: 0,
 			CheckUpdate:  true,
-			AllowTrack:   true,
 		},
 		Editor: PreferencesEditor{
 			FontSize:       consts.DEFAULT_FONT_SIZE,
@@ -43,7 +42,6 @@ func NewPreferences() Preferences {
 }
 
 type PreferencesBehavior struct {
-	Welcomed        bool `json:"welcomed" yaml:"welcomed"`
 	AsideWidth      int  `json:"asideWidth" yaml:"aside_width"`
 	WindowWidth     int  `json:"windowWidth" yaml:"window_width"`
 	WindowHeight    int  `json:"windowHeight" yaml:"window_height"`
@@ -64,7 +62,6 @@ type PreferencesGeneral struct {
 	UseSysProxyHttp bool     `json:"useSysProxyHttp" yaml:"use_sys_proxy_http,omitempty"`
 	CheckUpdate     bool     `json:"checkUpdate" yaml:"check_update"`
 	SkipVersion     string   `json:"skipVersion" yaml:"skip_version,omitempty"`
-	AllowTrack      bool     `json:"allowTrack" yaml:"allow_track"`
 }
 
 type PreferencesEditor struct {

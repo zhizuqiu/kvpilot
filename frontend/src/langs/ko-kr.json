@@ -48,8 +48,7 @@
       "key_icon_style3": "일반 아이콘",
       "update": "업데이트",
       "auto_check_update": "자동 업데이트 확인",
-      "privacy": "개인 정보 보호 정책",
-      "allow_track": "익명 데이터 수집 허용"
+      "privacy": "개인 정보 보호 정책"
     },
     "editor": {
       "name": "에디터",
@@ -169,7 +168,7 @@
     "browser": "데이터 브라우저",
     "log": "로그",
     "wechat_official": "공식 계정",
-    "follow_x": "팔로우 \uD835\uDD4F",
+    "follow_x": "팔로우 𝕏",
     "github": "Github",
     "logout": "로그아웃"
   },
@@ -391,12 +390,6 @@
       "download_now": "지금 다운로드",
       "later": "나중에",
       "skip": "이 버전 건너뛰기"
-    },
-    "welcome": {
-      "title": "KVPilot에 오신 것을 환영합니다!",
-      "content": "더 나은 사용자 경험을 제공하기 위해 KVPilot은 일부 익명 데이터를 수집하여 소프트웨어를 최적화하고 사용자 경험을 개선하는 데 사용합니다. 이는 개인 정보와는 무관함을 알려드립니다.\n\n만약 우려되는 점이 있다면 설정에서 이 데이터 수집 기능을 언제든 끌 수 있습니다. 문의 사항이 있으면 개발자에게 연락하시기 바랍니다. KVPilot이 좋은 도우미가 되길 바랍니다!",
-      "accept": "개선에 동의",
-      "reject": "거부"
     },
     "about": {
       "source": "소스 코드",

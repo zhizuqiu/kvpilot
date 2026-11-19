@@ -266,12 +266,9 @@ const onClose = () => {
                             </n-checkbox>
                         </n-form-item-gi>
                         <n-form-item-gi :label="$t('preferences.general.privacy')" :span="24">
-                            <n-checkbox v-model:checked="prefStore.general.allowTrack">
-                                {{ $t('preferences.general.allow_track') }}
-                                <n-button style="text-decoration: underline" text type="primary" @click="onOpenPrivacy">
-                                    {{ $t('preferences.general.privacy') }}
-                                </n-button>
-                            </n-checkbox>
+                            <n-button style="text-decoration: underline" text type="primary" @click="onOpenPrivacy">
+                                {{ $t('preferences.general.privacy') }}
+                            </n-button>
                         </n-form-item-gi>
                     </n-grid>
                 </n-form>

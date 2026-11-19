@@ -48,8 +48,7 @@
       "key_icon_style3": "Ortak",
       "update": "Güncelle",
       "auto_check_update": "Güncellemeleri otomatik kontrol et",
-      "privacy": "Gizlilik",
-      "allow_track": "Anonim veri toplanmasına izin ver"
+      "privacy": "Gizlilik"
     },
     "editor": {
       "name": "Editör",
@@ -391,12 +390,6 @@
       "download_now": "Şimdi İndir",
       "later": "Sonra",
       "skip": "Bu Sürümü Atla"
-    },
-    "welcome": {
-      "title": "KVPilot'e Hoş Geldiniz!",
-      "content": "Daha iyi bir kullanıcı deneyimi sağlamak için KVPilot, yazılımı optimize etmeye ve kullanıcı deneyimini iyileştirmeye yardımcı olmak için bazı anonim veriler toplamaktadır. Bunun kişisel gizlilik bilgilerinizi içermediğinden emin olabilirsiniz.\n\nHerhangi bir endişeniz varsa, Tercihler'e giderek bu veri toplama özelliğini istediğiniz zaman kapatabilirsiniz. Herhangi bir sorunuz varsa, geliştiriciye ulaşmaktan çekinmeyin. Umarım KVPilot yararlı asistanınız olur!",
-      "accept": "İyileştirmeye Yardım Et",
-      "reject": "Reddet"
     },
     "about": {
       "source": "Kaynak Kod",

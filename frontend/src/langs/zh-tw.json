@@ -48,8 +48,7 @@
       "key_icon_style3": "通用圖示",
       "update": "更新",
       "auto_check_update": "自動檢查更新",
-      "privacy": "隱私權政策",
-      "allow_track": "允許收集匿名數據"
+      "privacy": "隱私權政策"
     },
     "editor": {
       "name": "編輯器",
@@ -169,7 +168,7 @@
     "browser": "資料瀏覽器",
     "log": "日誌",
     "wechat_official": "微信公眾號",
-    "follow_x": "關注我的\uD835\uDD4F",
+    "follow_x": "關注我的𝕏",
     "github": "Github",
     "logout": "登出"
   },
@@ -392,12 +391,6 @@
       "later": "稍後提醒我",
       "skip": "忽略本次更新"
     },
-    "welcome": {
-      "title": "歡迎使用KVPilot！",
-      "content": "為了提供更好的使用者體驗，KVPilot 會收集一些匿名的數據，以幫助最佳化軟體和改進使用者體驗，請放心這不會涉及到您的個人隱私資訊。\n\n如果您對此有任何顧慮，可以隨時前往\"偏好設定\"中關閉此項數據收集功能。有任何問題可聯繫開發者，希望KVPilot可以成為您的好幫手！",
-      "accept": "幫助改進",
-      "reject": "不接受"
-    },
     "about": {
       "source": "源碼地址",
       "website": "官方網站"
@@ -486,5 +479,23 @@
     "message": "訊息",
     "receive_message": "已接收訊息 {total} 條",
     "always_show_last": "自動捲動到最新"
+  },
+  "topology": {
+    "mode_standalone": "單機",
+    "mode_master_replica": "主從",
+    "mode_sentinel": "哨兵",
+    "mode_cluster": "叢集",
+    "master": "主節點",
+    "replica": "從節點",
+    "sentinel": "哨兵",
+    "self": "目前節點",
+    "online": "線上",
+    "down": "離線",
+    "offset": "複製偏移",
+    "lag": "延遲(秒)",
+    "slots": "槽位",
+    "master_node": "主節點",
+    "refresh": "重新整理",
+    "empty": "尚無拓撲資訊"
   }
 }

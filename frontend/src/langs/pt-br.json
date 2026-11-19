@@ -48,8 +48,7 @@
       "key_icon_style3": "Comum",
       "update": "Atualizar",
       "auto_check_update": "Verificar atualizações automaticamente",
-      "privacy": "Política de Privacidade",
-      "allow_track": "Permitir a coleta de dados anônimos"
+      "privacy": "Política de Privacidade"
     },
     "editor": {
       "name": "Editor",
@@ -169,7 +168,7 @@
     "browser": "Navegador de Dados",
     "log": "Log",
     "wechat_official": "Conta Oficial do WeChat",
-    "follow_x": "Siga \uD835\uDD4F",
+    "follow_x": "Siga 𝕏",
     "github": "Github",
     "logout": "Sair"
   },
@@ -391,12 +390,6 @@
       "download_now": "Baixar Agora",
       "later": "Depois",
       "skip": "Ignorar Esta Versão"
-    },
-    "welcome": {
-      "title": "Bem-vindo ao KVPilot!",
-      "content": "Para fornecer uma melhor experiência ao usuário, o KVPilot coleta alguns dados anônimos para ajudar a otimizar o software e melhorar a experiência do usuário. Fique tranquilo, isso não envolve suas informações de privacidade pessoal.\n\nSe você tiver alguma preocupação, pode desativar esse recurso de coleta de dados a qualquer momento indo em Preferências. Se tiver alguma dúvida, sinta-se à vontade para entrar em contato com o desenvolvedor. Espero que o KVPilot possa se tornar um assistente útil para você!",
-      "accept": "Ajudar a Melhorar",
-      "reject": "Rejeitar"
     },
     "about": {
       "source": "Código Fonte",
