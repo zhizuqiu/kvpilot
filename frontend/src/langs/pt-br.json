@@ -153,7 +153,7 @@
     "empty_server_list": "Nenhum servidor Redis adicionado",
     "action": "Ação",
     "type": "Tipo",
-    "cli_welcome": "Bem-vindo ao Console Redis Tiny RDM",
+    "cli_welcome": "Bem-vindo ao Console Redis KVPilot",
     "retrieving_version": "Verificando atualizações",
     "sub_tab": {
       "status": "Status",
@@ -393,8 +393,8 @@
       "skip": "Ignorar Esta Versão"
     },
     "welcome": {
-      "title": "Bem-vindo ao Tiny RDM!",
-      "content": "Para fornecer uma melhor experiência ao usuário, o Tiny RDM coleta alguns dados anônimos para ajudar a otimizar o software e melhorar a experiência do usuário. Fique tranquilo, isso não envolve suas informações de privacidade pessoal.\n\nSe você tiver alguma preocupação, pode desativar esse recurso de coleta de dados a qualquer momento indo em Preferências. Se tiver alguma dúvida, sinta-se à vontade para entrar em contato com o desenvolvedor. Espero que o Tiny RDM possa se tornar um assistente útil para você!",
+      "title": "Bem-vindo ao KVPilot!",
+      "content": "Para fornecer uma melhor experiência ao usuário, o KVPilot coleta alguns dados anônimos para ajudar a otimizar o software e melhorar a experiência do usuário. Fique tranquilo, isso não envolve suas informações de privacidade pessoal.\n\nSe você tiver alguma preocupação, pode desativar esse recurso de coleta de dados a qualquer momento indo em Preferências. Se tiver alguma dúvida, sinta-se à vontade para entrar em contato com o desenvolvedor. Espero que o KVPilot possa se tornar um assistente útil para você!",
       "accept": "Ajudar a Melhorar",
       "reject": "Rejeitar"
     },

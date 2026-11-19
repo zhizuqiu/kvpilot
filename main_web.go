@@ -75,7 +75,7 @@ func main() {
 		srv.Close()
 	}()
 
-	log.Printf("Tiny RDM Web starting on http://0.0.0.0:%s", port)
+	log.Printf("KVPilot Web starting on http://0.0.0.0:%s", port)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Failed to start server: %v", err)
 	}

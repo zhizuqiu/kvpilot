@@ -153,7 +153,7 @@
     "empty_server_list": "Redis sunucusu eklenmedi",
     "action": "İşlem",
     "type": "Tür",
-    "cli_welcome": "Tiny RDM Redis Konsoluna Hoş Geldiniz",
+    "cli_welcome": "KVPilot Redis Konsoluna Hoş Geldiniz",
     "retrieving_version": "Güncellemeler kontrol ediliyor",
     "sub_tab": {
       "status": "Durum",
@@ -393,8 +393,8 @@
       "skip": "Bu Sürümü Atla"
     },
     "welcome": {
-      "title": "Tiny RDM'e Hoş Geldiniz!",
-      "content": "Daha iyi bir kullanıcı deneyimi sağlamak için Tiny RDM, yazılımı optimize etmeye ve kullanıcı deneyimini iyileştirmeye yardımcı olmak için bazı anonim veriler toplamaktadır. Bunun kişisel gizlilik bilgilerinizi içermediğinden emin olabilirsiniz.\n\nHerhangi bir endişeniz varsa, Tercihler'e giderek bu veri toplama özelliğini istediğiniz zaman kapatabilirsiniz. Herhangi bir sorunuz varsa, geliştiriciye ulaşmaktan çekinmeyin. Umarım Tiny RDM yararlı asistanınız olur!",
+      "title": "KVPilot'e Hoş Geldiniz!",
+      "content": "Daha iyi bir kullanıcı deneyimi sağlamak için KVPilot, yazılımı optimize etmeye ve kullanıcı deneyimini iyileştirmeye yardımcı olmak için bazı anonim veriler toplamaktadır. Bunun kişisel gizlilik bilgilerinizi içermediğinden emin olabilirsiniz.\n\nHerhangi bir endişeniz varsa, Tercihler'e giderek bu veri toplama özelliğini istediğiniz zaman kapatabilirsiniz. Herhangi bir sorunuz varsa, geliştiriciye ulaşmaktan çekinmeyin. Umarım KVPilot yararlı asistanınız olur!",
       "accept": "İyileştirmeye Yardım Et",
       "reject": "Reddet"
     },

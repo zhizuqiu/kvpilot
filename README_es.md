@@ -1,18 +1,22 @@
 <div align="center">
-<a href="https://github.com/tiny-craft/tiny-rdm/"><img src="build/appicon.png" width="120"/></a>
+<a href="https://github.com/zhizuqiu/kvpilot/"><img src="build/appicon.png" width="120"/></a>
 </div>
-<h1 align="center">Tiny RDM</h1>
-<h4 align="center"><a href="/">English</a> | <a href="https://github.com/tiny-craft/tiny-rdm/blob/main/README_zh.md">简体中文</a> | <a href="https://github.com/tiny-craft/tiny-rdm/blob/main/README_tw.md">繁體中文</a> | <a href="https://github.com/tiny-craft/tiny-rdm/blob/main/README_ja.md">日本語</a> | <a href="https://github.com/tiny-craft/tiny-rdm/blob/main/README_ko.md">한국어</a> | <a href="https://github.com/tiny-craft/tiny-rdm/blob/main/README_fr.md">Français</a> | <strong>Español</strong> | <a href="https://github.com/tiny-craft/tiny-rdm/blob/main/README_pt.md">Português (BR)</a> | <a href="https://github.com/tiny-craft/tiny-rdm/blob/main/README_ru.md">Русский</a> | <a href="https://github.com/tiny-craft/tiny-rdm/blob/main/README_tr.md">Türkçe</a></h4>
+<h1 align="center">KVPilot</h1>
+<h4 align="center"><a href="/">English</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_zh.md">简体中文</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_tw.md">繁體中文</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ja.md">日本語</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ko.md">한국어</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_fr.md">Français</a> | <strong>Español</strong> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_pt.md">Português (BR)</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ru.md">Русский</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_tr.md">Türkçe</a></h4>
+
+> **KVPilot** is an unofficial community continuation of **Tiny RDM** 1.2.7 (GPL-3.0).
+> Not affiliated with, endorsed by, or sponsored by Tiny Craft.
+
 <div align="center">
 
-[![License](https://img.shields.io/github/license/tiny-craft/tiny-rdm)](https://github.com/tiny-craft/tiny-rdm/blob/main/LICENSE)
-[![GitHub release](https://img.shields.io/github/release/tiny-craft/tiny-rdm)](https://github.com/tiny-craft/tiny-rdm/releases)
-![GitHub All Releases](https://img.shields.io/github/downloads/tiny-craft/tiny-rdm/total)
-[![GitHub stars](https://img.shields.io/github/stars/tiny-craft/tiny-rdm)](https://github.com/tiny-craft/tiny-rdm/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/tiny-craft/tiny-rdm)](https://github.com/tiny-craft/tiny-rdm/fork)
-[![AtomGitStars](https://atomgit.com/tiny-craft/tiny-rdm/star/badge.svg)](https://atomgit.com/tiny-craft/tiny-rdm)
+[![License](https://img.shields.io/github/license/zhizuqiu/kvpilot)](https://github.com/zhizuqiu/kvpilot/blob/main/LICENSE)
+[![GitHub release](https://img.shields.io/github/release/zhizuqiu/kvpilot)](https://github.com/zhizuqiu/kvpilot/releases)
+![GitHub All Releases](https://img.shields.io/github/downloads/zhizuqiu/kvpilot/total)
+[![GitHub stars](https://img.shields.io/github/stars/zhizuqiu/kvpilot)](https://github.com/zhizuqiu/kvpilot/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/zhizuqiu/kvpilot)](https://github.com/zhizuqiu/kvpilot/fork)
+[![AtomGitStars](https://atomgit.com/zhizuqiu/kvpilot/star/badge.svg)](https://atomgit.com/zhizuqiu/kvpilot)
 
-<strong>Tiny RDM es un gestor Redis moderno, ligero y multiplataforma, disponible para Mac, Windows y Linux. También
+<strong>KVPilot es un gestor Redis moderno, ligero y multiplataforma, disponible para Mac, Windows y Linux. También
 ofrece una versión web que se puede desplegar mediante Docker.</strong>
 </div>
 
@@ -49,11 +53,11 @@ ofrece una versión web que se puede desplegar mediante Docker.</strong>
 * Publicación/suscripción
 * Importación/exportación de perfiles de conexión
 * Codificador y decodificador de datos personalizados para la visualización de
-  valores ([Instrucciones aquí](https://tinyrdm.com/guide/custom-decoder/))
+  valores ([Instrucciones aquí](https://github.com/zhizuqiu/kvpilot/blob/main/docs/custom-decoder.md))
 
 ## Instalación
 
-Disponible para descargar gratis [aquí](https://github.com/tiny-craft/tiny-rdm/releases).
+Disponible para descargar gratis [aquí](https://github.com/zhizuqiu/kvpilot/releases).
 
 > Si no puedes abrirlo después de la instalación en macOS, ejecuta el siguiente comando y vuelve a abrirlo:
 > ``` shell
@@ -77,7 +81,7 @@ go install github.com/wailsapp/wails/v2/cmd/wails@latest
 ### Obtener el código
 
 ```bash
-git clone https://github.com/tiny-craft/tiny-rdm --depth=1
+git clone https://github.com/zhizuqiu/kvpilot --depth=1
 ```
 
 ### Compilar el frontend
@@ -101,7 +105,7 @@ wails dev
 
 ## Despliegue con Docker
 
-Además del cliente de escritorio, Tiny RDM también ofrece una versión web que se puede desplegar rápidamente con Docker.
+Además del cliente de escritorio, KVPilot también ofrece una versión web que se puede desplegar rápidamente con Docker.
 
 ### Usando Docker Compose (recomendado)
 
@@ -110,7 +114,7 @@ Crea un archivo `docker-compose.yml`:
 ```yaml
 services:
   tinyrdm:
-    image: ghcr.io/tiny-craft/tiny-rdm:latest
+    image: ghcr.io/zhizuqiu/kvpilot:latest
     container_name: tinyrdm
     restart: unless-stopped
     ports:
@@ -138,7 +142,7 @@ docker run -d --name tinyrdm \
   -e ADMIN_USERNAME=admin \
   -e ADMIN_PASSWORD=tinyrdm \
   -v ./data:/app/tinyrdm \
-  ghcr.io/tiny-craft/tiny-rdm:latest
+  ghcr.io/zhizuqiu/kvpilot:latest
 ```
 
 ### Variables de entorno

@@ -151,7 +151,7 @@ const handleLogin = async () => {
         <div class="login-card">
             <div class="login-header">
                 <n-avatar :size="64" :src="iconUrl" color="#0000" />
-                <div class="login-title">Tiny RDM</div>
+                <div class="login-title">KVPilot</div>
                 <!--                <n-text depth="3" style="font-size: 13px">Redis Web Manager</n-text>-->
             </div>
 
@@ -215,7 +215,7 @@ const handleLogin = async () => {
                     <n-divider style="margin: 0 4px" vertical />
                     <a
                         class="toolbar-btn toolbar-link"
-                        href="https://github.com/tiny-craft/tiny-rdm"
+                        href="https://github.com/zhizuqiu/kvpilot"
                         rel="noopener noreferrer"
                         target="_blank">
                         {{ prefStore.appVersion }}

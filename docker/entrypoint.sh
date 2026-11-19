@@ -5,4 +5,4 @@ set -e
 nginx
 
 # Start Go backend in foreground
-exec ./tinyrdm-server
+exec ./kvpilot-server

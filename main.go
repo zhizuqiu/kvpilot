@@ -30,7 +30,7 @@ var icon []byte
 var version = "0.0.0"
 var gaMeasurementID, gaSecretKey string
 
-const appName = "Tiny RDM"
+const appName = "KVPilot"
 
 func main() {
 	// Create an instance of the app structure
@@ -113,9 +113,11 @@ func main() {
 		Mac: &mac.Options{
 			TitleBar: mac.TitleBarHiddenInset(),
 			About: &mac.AboutInfo{
-				Title:   fmt.Sprintf("%s %s", appName, version),
-				Message: "A modern lightweight cross-platform Redis desktop client.\n\nCopyright © " + time.Now().Format("2006"),
-				Icon:    icon,
+				Title: fmt.Sprintf("%s %s", appName, version),
+				Message: "An open-source KV client for Redis-compatible stores.\n\n" +
+					"Community continuation of Tiny RDM, licensed under GPL-3.0.\n" +
+					"Copyright © " + time.Now().Format("2006") + " KVPilot Project",
+				Icon: icon,
 			},
 			WebviewIsTransparent: false,
 			WindowIsTranslucent:  false,

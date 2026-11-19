@@ -1,0 +1,27 @@
+KVPilot
+Copyright (C) 2026 KVPilot Project contributors
+
+KVPilot is a community continuation (fork) of Tiny RDM 1.2.7:
+
+    https://github.com/tiny-craft/tiny-rdm
+    Copyright (C) Tiny Craft
+    Licensed under the GNU General Public License, version 3
+
+KVPilot is licensed under the GNU General Public License v3.0; see LICENSE.
+It is not affiliated with, endorsed by, or sponsored by Tiny Craft.
+"Tiny RDM" and the Tiny RDM logo are used only to describe the origin of
+this work and remain the property of their respective owners.
+
+Modifications in this fork, starting from v1.2.8:
+
+  - Fix SENTINEL MASTERS parsing under RESP2, which made the sentinel
+    master-name auto-discovery always return an empty list.
+  - Complete the missing go.sum checksums so a fresh clone builds.
+  - Add a native arm64 Dockerfile for the web/server mode.
+  - Pin the Go toolchain version used for builds (macOS 26+ requires a
+    recent Go toolchain to produce loadable binaries).
+  - Rebrand the application to KVPilot (name, bundle identifier, UI).
+
+Bundled third-party components keep their own licenses, including but not
+limited to: Vue, Naive UI, Vite (MIT); gin, Wails (MIT); go-redis
+(BSD-2-Clause).

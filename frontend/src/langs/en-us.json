@@ -153,7 +153,7 @@
     "empty_server_list": "No Redis server added",
     "action": "Action",
     "type": "Type",
-    "cli_welcome": "Welcome to Tiny RDM Redis Console",
+    "cli_welcome": "Welcome to KVPilot Redis Console",
     "retrieving_version": "Checking for updates",
     "sub_tab": {
       "status": "Status",
@@ -393,8 +393,8 @@
       "skip": "Skip This Version"
     },
     "welcome": {
-      "title": "Welcome to Tiny RDM！",
-      "content": "In order to provide a better user experience, Tiny RDM collects some anonymous data to help optimize the software and improve the user experience, please rest assured that this does not involve your personal privacy information.\n\nIf you have any concerns, you can turn off this data collection feature at any time by going to Preferences. If you have any questions, feel free to contact the developer. I hope Tiny RDM can become your helpful assistant!",
+      "title": "Welcome to KVPilot！",
+      "content": "In order to provide a better user experience, KVPilot collects some anonymous data to help optimize the software and improve the user experience, please rest assured that this does not involve your personal privacy information.\n\nIf you have any concerns, you can turn off this data collection feature at any time by going to Preferences. If you have any questions, feel free to contact the developer. I hope KVPilot can become your helpful assistant!",
       "accept": "Help Improve",
       "reject": "Reject"
     },

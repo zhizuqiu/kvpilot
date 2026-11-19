@@ -50,7 +50,9 @@ watchEffect(() => {
 })
 
 const logoWrapperWidth = computed(() => {
-    return `${data.navMenuWidth + prefStore.behavior.asideWidth - 4}px`
+    // macOS 需要为交通灯留出额外左侧空间，宽度同步补偿，避免标题被挤压
+    const macOffset = isMacOS() ? 14 : 0
+    return `${data.navMenuWidth + prefStore.behavior.asideWidth - 4 + macOffset}px`
 })
 
 const logoPaddingLeft = ref(10)
@@ -88,7 +90,8 @@ const onToggleFullscreen = (fullscreen) => {
     if (fullscreen) {
         logoPaddingLeft.value = 10
     } else {
-        logoPaddingLeft.value = isMacOS() ? 70 : 10
+        // macOS 的交通灯（含全屏按钮）右侧约在 72px，留出安全间距避免压住图标
+        logoPaddingLeft.value = isMacOS() ? 84 : 10
     }
 }
 
@@ -161,8 +164,8 @@ const onKeyShortcut = (e) => {
                         paddingLeft: `${logoPaddingLeft}px`,
                     }">
                     <n-space :size="3" :wrap="false" :wrap-item="false" align="center">
-                        <n-avatar :size="32" :src="iconUrl" color="#0000" style="min-width: 32px" />
-                        <div style="min-width: 68px; white-space: nowrap; font-weight: 800">Tiny RDM</div>
+                        <n-avatar :size="20" :src="iconUrl" color="#0000" style="min-width: 20px" />
+                        <div style="min-width: 68px; white-space: nowrap; font-weight: 800">KVPilot</div>
                         <transition name="fade">
                             <n-text v-if="tabStore.nav === 'browser'" class="ellipsis" strong style="font-size: 13px">
                                 - {{ tabStore.currentTabName }}

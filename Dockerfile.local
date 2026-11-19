@@ -1,0 +1,56 @@
+# ============================================================
+# 本地验证镜像（不提交上游）
+# 与上游 Dockerfile 流程一致，唯一差异：去掉 FROM 上固定的 linux/amd64，
+# 让镜像按当前主机架构（Apple Silicon = linux/arm64）构建，避免 QEMU 模拟。
+# ============================================================
+
+# Stage 1: Build frontend
+FROM node:22-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci --ignore-scripts --registry=https://registry.npmmirror.com
+COPY frontend/ ./
+ENV NODE_OPTIONS=--max-old-space-size=4096
+ENV VITE_WEB=true
+RUN npm run build
+
+# ============================================================
+# Stage 2: Build Go backend (web mode)
+# ============================================================
+FROM golang:1.25-alpine AS backend-builder
+
+WORKDIR /app
+COPY go.mod go.sum ./
+ENV GOPROXY=https://goproxy.cn,https://goproxy.io,direct
+RUN GOFLAGS="-mod=mod" go mod download
+
+COPY backend/ ./backend/
+COPY main_web.go ./
+
+ARG APP_VERSION=1.2.7.1
+RUN CGO_ENABLED=0 GOOS=linux GOFLAGS="-mod=mod" go build -tags web -ldflags "-s -w -X main.version=${APP_VERSION}" -o /app/kvpilot-server .
+
+# ============================================================
+# Stage 3: Runtime (nginx + Go backend)
+# ============================================================
+FROM alpine:3.21
+
+RUN apk add --no-cache ca-certificates tzdata nginx \
+    && rm -rf /var/cache/apk/* /tmp/*
+
+COPY --from=frontend-builder /app/frontend/dist /usr/share/nginx/html
+COPY docker/nginx.conf /etc/nginx/http.d/default.conf
+
+WORKDIR /app
+COPY --from=backend-builder /app/kvpilot-server .
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 8086
+
+ENV PORT=8088
+ENV GIN_MODE=release
+ENV XDG_CONFIG_HOME=/app
+
+ENTRYPOINT ["/entrypoint.sh"]

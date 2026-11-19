@@ -41,6 +41,10 @@ const emit = defineEmits(['update:value'])
 const iconSize = computed(() => Math.floor(props.width * 0.45))
 
 const browserStore = useBrowserStore()
+// 微信公众号入口暂时关闭（需要恢复时改为 true）
+const SHOW_WECHAT_ENTRY = false
+// X（Twitter）入口暂时关闭（需要恢复时改为 true）
+const SHOW_SOCIAL_ENTRY = false
 const showWechat = ref(false)
 const menuOptions = computed(() => {
     return [
@@ -109,13 +113,13 @@ const onSelectPreferenceMenu = (key) => {
             prefStore.checkForUpdate(true)
             break
         case 'report':
-            BrowserOpenURL('https://github.com/tiny-craft/tiny-rdm/issues')
+            BrowserOpenURL('https://github.com/zhizuqiu/kvpilot/issues')
             break
         case 'help':
             if (prefStore.currentLanguage === 'zh') {
-                BrowserOpenURL('https://tinyrdm.com/zh/guide/')
+                BrowserOpenURL('https://github.com/zhizuqiu/kvpilot/blob/main/README_zh.md')
             } else {
-                BrowserOpenURL('https://tinyrdm.com/guide/')
+                BrowserOpenURL('https://github.com/zhizuqiu/kvpilot#readme')
             }
             break
         case 'about':
@@ -136,7 +140,7 @@ const openX = () => {
 
 const openGithub = () => {
     trackEvent('open', { target: 'github' })
-    BrowserOpenURL('https://github.com/tiny-craft/tiny-rdm')
+    BrowserOpenURL('https://github.com/zhizuqiu/kvpilot')
 }
 
 const handleLogout = async () => {
@@ -186,14 +190,14 @@ const exThemeVars = computed(() => {
                 <icon-button :icon="Config" :size="iconSize" :stroke-width="3" />
             </n-dropdown>
             <icon-button
-                v-if="prefStore.currentLanguage === 'zh'"
+                v-if="SHOW_WECHAT_ENTRY && prefStore.currentLanguage === 'zh'"
                 :icon="QRCode"
                 :size="iconSize"
                 :tooltip-delay="100"
                 t-tooltip="ribbon.wechat_official"
                 @click="openWechatOfficial" />
             <icon-button
-                v-else
+                v-if="SHOW_SOCIAL_ENTRY"
                 :border="false"
                 :icon="Twitter"
                 :size="iconSize"

@@ -1,0 +1,7 @@
+# 本地构建上下文瘦身：只排除构建产物与依赖目录，不改变镜像内容语义
+.git
+frontend/node_modules
+frontend/dist
+build/bin
+build/darwin
+*.app

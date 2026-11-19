@@ -25,7 +25,7 @@ COPY backend/ ./backend/
 COPY main_web.go ./
 
 ARG APP_VERSION=1.0.0
-RUN CGO_ENABLED=0 GOOS=linux GOFLAGS="-mod=mod" go build -tags web -ldflags "-s -w -X main.version=${APP_VERSION}" -o /app/tinyrdm-server .
+RUN CGO_ENABLED=0 GOOS=linux GOFLAGS="-mod=mod" go build -tags web -ldflags "-s -w -X main.version=${APP_VERSION}" -o /app/kvpilot-server .
 
 # ============================================================
 # Stage 3: Runtime (nginx + Go backend)
@@ -43,7 +43,7 @@ COPY docker/nginx.conf /etc/nginx/http.d/default.conf
 
 # Go backend binary
 WORKDIR /app
-COPY --from=backend-builder /app/tinyrdm-server .
+COPY --from=backend-builder /app/kvpilot-server .
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

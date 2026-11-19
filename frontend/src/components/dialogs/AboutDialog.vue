@@ -10,11 +10,11 @@ const dialogStore = useDialog()
 const prefStore = usePreferencesStore()
 
 const onOpenSource = () => {
-    BrowserOpenURL('https://github.com/tiny-craft/tiny-rdm')
+    BrowserOpenURL('https://github.com/zhizuqiu/kvpilot')
 }
 
 const onOpenWebsite = () => {
-    BrowserOpenURL('https://tinyrdm.com/')
+    BrowserOpenURL('https://github.com/zhizuqiu/kvpilot')
 }
 </script>
 
@@ -22,7 +22,7 @@ const onOpenWebsite = () => {
     <n-modal v-model:show="dialogStore.aboutDialogVisible" :show-icon="false" preset="dialog" transform-origin="center">
         <n-space :size="10" :wrap="false" :wrap-item="false" align="center" vertical>
             <n-avatar :size="120" :src="iconUrl" color="#0000"></n-avatar>
-            <div class="about-app-title">Tiny RDM</div>
+            <div class="about-app-title">KVPilot</div>
             <n-text>{{ prefStore.appVersion }}</n-text>
             <n-space :size="5" :wrap="false" :wrap-item="false" align="center">
                 <n-text class="about-link" @click="onOpenSource">{{ $t('dialogue.about.source') }}</n-text>
@@ -30,7 +30,10 @@ const onOpenWebsite = () => {
                 <n-text class="about-link" @click="onOpenWebsite">{{ $t('dialogue.about.website') }}</n-text>
             </n-space>
             <div :style="{ color: themeVars.textColor3 }" class="about-copyright">
-                Copyright © {{ new Date().getFullYear() }} Tinycraft.cc All rights reserved
+                Copyright © {{ new Date().getFullYear() }} KVPilot Project · GPL-3.0
+            </div>
+            <div :style="{ color: themeVars.textColor3 }" class="about-copyright">
+                Community continuation of Tiny RDM (© Tiny Craft)
             </div>
         </n-space>
     </n-modal>

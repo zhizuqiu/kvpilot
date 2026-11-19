@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 	"tinyrdm/backend/consts"
 	storage2 "tinyrdm/backend/storage"
 	"tinyrdm/backend/types"
@@ -222,45 +223,64 @@ func (p *preferencesService) GetDecoder() []convutil.CmdConvert {
 	})
 }
 
-type sponsorItem struct {
-	Name   string   `json:"name"`
-	Link   string   `json:"link"`
-	Region []string `json:"region"`
-}
-
-type upgradeInfo struct {
-	Version      string            `json:"version"`
-	Changelog    map[string]string `json:"changelog"`
-	Description  map[string]string `json:"description"`
-	DownloadURl  map[string]string `json:"download_url"`
-	DownloadPage map[string]string `json:"download_page"`
-	Sponsor      []sponsorItem     `json:"sponsor,omitempty"`
-}
-
 func (p *preferencesService) CheckForUpdate() (resp types.JSResp) {
-	// request latest version
-	//res, err := http.Get("https://api.github.com/repos/tiny-craft/tiny-rdm/releases/latest")
-	res, err := http.Get("https://tinyrdm.com/client_version.json")
-	if err != nil || res.StatusCode != http.StatusOK {
+	// 检查 KVPilot 自身的发布版本：使用 GitHub Releases API，不再请求上游 tinyrdm.com，
+	// 避免把上游 Tiny RDM / Redisee 的版本当作本项目的更新提示。
+	const releaseAPI = "https://api.github.com/repos/zhizuqiu/kvpilot/releases/latest"
+
+	req, err := http.NewRequest(http.MethodGet, releaseAPI, nil)
+	if err != nil {
+		resp.Msg = "network error"
+		return
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "KVPilot/"+p.clientVersion)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		resp.Msg = "network error"
+		return
+	}
+	defer res.Body.Close()
+
+	// 仓库尚未发布任何 release 时 GitHub 返回 404；这不是错误，静默返回即可。
+	if res.StatusCode == http.StatusNotFound {
+		resp.Msg = "no release yet"
+		return
+	}
+	if res.StatusCode != http.StatusOK {
 		resp.Msg = "network error"
 		return
 	}
 
-	var respObj upgradeInfo
-	err = json.NewDecoder(res.Body).Decode(&respObj)
-	if err != nil {
+	var release struct {
+		TagName string `json:"tag_name"`
+		Body    string `json:"body"`
+		HTMLURL string `json:"html_url"`
+	}
+	if err = json.NewDecoder(res.Body).Decode(&release); err != nil {
 		resp.Msg = "invalid content"
 		return
 	}
 
-	// compare with current version
+	// release notes 是 Markdown，通知里只展示开头一段纯文本，避免整篇塞进弹窗。
+	notes := strings.TrimSpace(release.Body)
+	if len([]rune(notes)) > 400 {
+		notes = string([]rune(notes)[:400]) + " ..."
+	}
+	downloadPage := map[string]string{}
+	if release.HTMLURL != "" {
+		downloadPage["en"] = release.HTMLURL
+		downloadPage["zh"] = release.HTMLURL
+	}
+
 	resp.Success = true
 	resp.Data = map[string]any{
 		"version":       p.clientVersion,
-		"latest":        respObj.Version,
-		"description":   respObj.Description,
-		"download_page": respObj.DownloadPage,
-		"sponsor":       respObj.Sponsor,
+		"latest":        release.TagName,
+		"description":   map[string]string{"en": notes, "zh": notes},
+		"download_page": downloadPage,
 	}
 	return
 }

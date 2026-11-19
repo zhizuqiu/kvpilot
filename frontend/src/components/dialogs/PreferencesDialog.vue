@@ -147,29 +147,11 @@ const decoderColumns = computed(() => {
 })
 
 const onOpenPrivacy = () => {
-    let helpUrl = ''
-    switch (prefStore.currentLanguage) {
-        case 'zh':
-            helpUrl = 'https://tinyrdm.com/zh/guide/privacy.html'
-            break
-        default:
-            helpUrl = 'https://tinyrdm.com/guide/privacy.html'
-            break
-    }
-    BrowserOpenURL(helpUrl)
+    BrowserOpenURL('https://github.com/zhizuqiu/kvpilot/blob/main/docs/privacy.md')
 }
 
 const openDecodeHelp = () => {
-    let helpUrl = ''
-    switch (prefStore.currentLanguage) {
-        case 'zh':
-            helpUrl = 'https://tinyrdm.com/zh/guide/custom-decoder.html'
-            break
-        default:
-            helpUrl = 'https://tinyrdm.com/guide/custom-decoder.html'
-            break
-    }
-    BrowserOpenURL(helpUrl)
+    BrowserOpenURL('https://github.com/zhizuqiu/kvpilot/blob/main/docs/custom-decoder.md')
 }
 
 const onSavePreferences = async () => {

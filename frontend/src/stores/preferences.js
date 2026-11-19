@@ -55,7 +55,7 @@ const usePreferencesStore = defineStore('preferences', {
             useSysProxyHttp: false,
             checkUpdate: true,
             skipVersion: '',
-            allowTrack: true,
+            allowTrack: false,
         },
         editor: {
             font: '',
@@ -502,15 +502,10 @@ const usePreferencesStore = defineStore('preferences', {
                         latest,
                         download_page: pageUrl = {},
                         description = {},
-                        sponsor = [],
                         banner = [],
                     } = data
                     const downUrl = pageUrl[this.currentLanguage] || pageUrl['en']
                     const descStr = description[this.currentLanguage] || description['en']
-                    // save sponsor ad
-                    if (!isEmpty(sponsor)) {
-                        localStorage.setItem('sponsor_ad', JSON.stringify(sponsor))
-                    }
                     if (!isEmpty(banner)) {
                         localStorage.setItem('banner', JSON.stringify(banner))
                     }

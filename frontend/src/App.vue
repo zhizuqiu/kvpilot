@@ -104,7 +104,7 @@ const initApp = async () => {
             prefStore.checkForUpdate()
         }
         const env = await Environment()
-        loadModule(env.buildType !== 'dev' && prefStore.general.allowTrack !== false).then(() => {
+        loadModule(env.buildType !== 'dev' && prefStore.general.allowTrack === true).then(() => {
             Info().then(({ data }) => {
                 trackEvent('startup', data, true)
             })
