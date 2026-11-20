@@ -1,4 +1,5 @@
 import vue from '@vitejs/plugin-vue'
+import vueJsx from '@vitejs/plugin-vue-jsx'
 import AutoImport from 'unplugin-auto-import/vite'
 import Icons from 'unplugin-icons/vite'
 import { NaiveUiResolver } from 'unplugin-vue-components/resolvers'
@@ -12,6 +13,8 @@ const isWeb = process.env.VITE_WEB === 'true'
 export default defineConfig({
     plugins: [
         vue(),
+        // 允许在测试与组件中使用 JSX/TSX
+        vueJsx(),
         AutoImport({
             imports: [
                 {
@@ -68,4 +71,9 @@ export default defineConfig({
               },
           }
         : {}),
+    // 单元测试配置：纯函数与组件行为测试统一放在各目录的 __tests__/ 下
+    test: {
+        environment: 'jsdom',
+        include: ['src/**/__tests__/*.spec.{js,jsx}'],
+    },
 })
