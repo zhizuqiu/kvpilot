@@ -98,11 +98,14 @@ KVPilot 是 Tiny RDM 的社区延续版，GPL-3.0 授权，面向 Redis 及 Redi
    未设置地址时用 `t.Skip` 跳过，禁止让默认 `go test ./...` 连外网或内网主机。
    文件名统一用 `*_integration_test.go`，用例名以 `TestIntegration` 开头，便于单独运行。
 3. 集群相关逻辑必须覆盖"部分节点失败"和"节点间数据不一致"两类场景，这是历史上最容易出错的地方。
-4. 涉及写命令的集成测试必须使用唯一命名的临时对象（例如 `kvpilot_probe_<纳秒时间戳>`），
+4. go-redis 的 `ForEachShard` 是**并发执行**的（每个节点一个 goroutine）：回调内不得直接读写共享变量，
+   累加或 append 必须加锁；依赖"回调按顺序执行"的写法一律视为缺陷。
+   涉及分片读写的代码必须在 `go test -race` 下跑一遍集群集成测试。
+5. 涉及写命令的集成测试必须使用唯一命名的临时对象（例如 `kvpilot_probe_<纳秒时间戳>`），
    用 `t.Cleanup` 清理，禁止修改 `default` 或任何已有用户/数据。
-5. 客户端的 `Close` 也要注册到 `t.Cleanup` 且先于业务清理注册（`t.Cleanup` 后进先出），
+6. 客户端的 `Close` 也要注册到 `t.Cleanup` 且先于业务清理注册（`t.Cleanup` 后进先出），
    不要用 `defer client.Close()`：`defer` 会先执行，导致清理时连接已关闭、错误被静默吞掉。
-6. 测试之间不得共享状态：每个用例自己建 key、自己清理。
+7. 测试之间不得共享状态：每个用例自己建 key、自己清理。
 
 ### 4.4 测试质量
 
@@ -157,7 +160,7 @@ go build -tags web -o /tmp/kvpilot-web . && PORT=8088 /tmp/kvpilot-web
 2. `cd frontend && npm run test` 通过。
 3. `npx vite build` 通过，无新增编译告警。
 4. Go 侧改动文件通过 `gofmt`（只格式化本次改动文件，不批量重排历史文件）。
-5. 新增后端能力已按 3.4 在三处同步落地。
+5. 新增后端能力已按 3.4 在三处同步落地；涉及集群分片读写的改动已在 `-race` 下验证。
 6. 交付说明中列出：修改文件路径、核心改动、验证方式；能用 `redis-cli` 或 curl 复现的给出具体命令与预期结果。
 
 ## 6. 部署与远程环境
