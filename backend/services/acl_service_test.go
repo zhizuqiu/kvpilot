@@ -43,6 +43,17 @@ func TestParseAclListLine(t *testing.T) {
 			ok: true,
 		},
 		{
+			name: "未知修饰符归入 flags，避免新版本 ACL 规则被丢弃",
+			line: "user app on newfangled-flag ~k",
+			want: aclUserInfo{
+				Name:    "app",
+				Enabled: true,
+				Flags:   []string{"on", "newfangled-flag"},
+				Keys:    "~k",
+			},
+			ok: true,
+		},
+		{
 			name: "只有名字的用户：所有规则为空",
 			line: "user empty",
 			want: aclUserInfo{Name: "empty"},
