@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"sort"
+	"strconv"
 	"strings"
 	"tinyrdm/backend/types"
 
@@ -137,10 +138,30 @@ func (b *browserService) AclOverview(name string) (resp types.JSResp) {
 	}
 
 	totalNodes := len(listResults)
+	users, firstErr := aggregateAclUsers(listResults)
+
+	if len(users) == 0 && firstErr != nil {
+		resp.Msg = "get acl list fail:" + firstErr.Error()
+		return
+	}
+
+	resp.Success = true
+	resp.Data = map[string]any{
+		"whoami": whoami,
+		"users":  users,
+		"nodes":  totalNodes,
+	}
+	return
+}
+
+// aggregateAclUsers 合并各分片的 ACL LIST 结果：同名用户只保留一份并统计出现节点数，
+// 分片报错时记录首个错误但不影响其余分片的数据。
+func aggregateAclUsers(results []aclShardResult) ([]aclUserInfo, error) {
+	totalNodes := len(results)
 	users := make([]aclUserInfo, 0, 8)
 	index := map[string]int{}
 	var firstErr error
-	for _, result := range listResults {
+	for _, result := range results {
 		if result.Err != nil {
 			if firstErr == nil {
 				firstErr = result.Err
@@ -168,20 +189,8 @@ func (b *browserService) AclOverview(name string) (resp types.JSResp) {
 		}
 	}
 
-	if len(users) == 0 && firstErr != nil {
-		resp.Msg = "get acl list fail:" + firstErr.Error()
-		return
-	}
-
 	sort.Slice(users, func(i, j int) bool { return users[i].Name < users[j].Name })
-
-	resp.Success = true
-	resp.Data = map[string]any{
-		"whoami": whoami,
-		"users":  users,
-		"nodes":  totalNodes,
-	}
-	return
+	return users, firstErr
 }
 
 // aclUserDetail 是规范化后的 ACL 用户详情。
@@ -494,10 +503,18 @@ func toSlice(v interface{}) []string {
 	return nil
 }
 
+// toText 把命令返回值转成展示文本。
+// ACL LOG 的条目里混有整型字段（例如 count），必须一并转换，否则会变成空字符串。
 func toText(v interface{}) string {
 	switch data := v.(type) {
 	case string:
 		return data
+	case int:
+		return strconv.Itoa(data)
+	case int64:
+		return strconv.FormatInt(data, 10)
+	case float64:
+		return strconv.FormatFloat(data, 'f', -1, 64)
 	case []interface{}:
 		return strings.Join(toSlice(data), " ")
 	}

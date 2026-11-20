@@ -22,9 +22,9 @@ type topologyNode struct {
 	Lag    int64  `json:"lag,omitempty"`
 	Slots  string `json:"slots,omitempty"`
 	// SlotStart 是该节点负责的第一个槽位，用于稳定排序
-	SlotStart int `json:"slotStart"`
-	Master string `json:"master,omitempty"`
-	Self   bool   `json:"self"`
+	SlotStart int    `json:"slotStart"`
+	Master    string `json:"master,omitempty"`
+	Self      bool   `json:"self"`
 }
 
 // topologyData 部署拓扑的完整描述。
@@ -105,10 +105,10 @@ func (b *browserService) clientSelfAddr(ctx context.Context, client redis.Univer
 func replicationTopology(info map[string]map[string]string, self string) []topologyNode {
 	repl := info["Replication"]
 	nodes := []topologyNode{{
-		Addr:  self,
-		Role:  "master",
-		State: "online",
-		Self:  true,
+		Addr:   self,
+		Role:   "master",
+		State:  "online",
+		Self:   true,
 		Offset: toInt64(repl["master_repl_offset"]),
 	}}
 
@@ -291,7 +291,11 @@ func (b *browserService) clusterTopology(ctx context.Context, client redis.Unive
 	if err != nil {
 		return nil
 	}
+	return parseClusterNodes(text, selfAddr)
+}
 
+// parseClusterNodes 把 CLUSTER NODES 的文本结果转成拓扑节点，并排成稳定顺序。
+func parseClusterNodes(text, selfAddr string) []topologyNode {
 	nodes := []topologyNode{}
 	for _, line := range strings.Split(text, "\n") {
 		line = strings.TrimSpace(line)
