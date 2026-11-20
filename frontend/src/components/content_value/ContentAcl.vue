@@ -23,6 +23,7 @@ import Play from '@/components/icons/Play.vue'
 import Plus from '@/components/icons/Plus.vue'
 import Save from '@/components/icons/Save.vue'
 import Delete from '@/components/icons/Delete.vue'
+import { aclFormFromDetail, aclSnapshot, buildAclRules } from '@/utils/acl.js'
 import {
     AclCategories,
     AclDeleteUser,
@@ -87,24 +88,7 @@ const hashCount = computed(() => form.hashes.length)
 const isPartial = computed(() => (detail.value?.nodes || 0) > 0 && detail.value.nodes < detail.value.totalNodes)
 
 // 把可编辑字段规整成可比较的字符串，用于判断是否有未保存修改
-const snapshot = () =>
-    JSON.stringify({
-        enabled: form.enabled,
-        nopass: form.nopass,
-        hashes: [...form.hashes].sort(),
-        mode: form.commandMode,
-        categories: [...form.categories].sort(),
-        extraRules: form.extraRules
-            .split(/\s+/)
-            .filter(Boolean)
-            .sort()
-            .join(' '),
-        keysAll: form.keysAll,
-        keys: form.keysAll ? [] : [...form.keyPatterns].sort(),
-        channelsAll: form.channelsAll,
-        channels: form.channelsAll ? [] : [...form.channelPatterns].sort(),
-        hasNewPassword: form.newPassword.trim() !== '',
-    })
+const snapshot = () => aclSnapshot(form)
 
 const dirty = computed(() => baseline.value !== '' && snapshot() !== baseline.value)
 
@@ -112,36 +96,10 @@ const categoryOptions = computed(() =>
     categories.value.map((cat) => ({ label: '@' + cat, value: cat }))
 )
 
-const parseCommands = (text) => {
-    const tokens = (text || '').split(/\s+/).filter(Boolean)
-    const cats = []
-    const extras = []
-    let all = false
-    tokens.forEach((t) => {
-        if (t === '+@all') all = true
-        else if (t === '-@all') all = false
-        else if (t.startsWith('+@')) cats.push(t.slice(2))
-        else extras.push(t)
-    })
-    return { all, cats, extras }
-}
-
 const fillForm = (data) => {
     if (!data) return
-    const { all, cats, extras } = parseCommands(data.commands)
-    form.enabled = (data.flags || []).includes('on')
-    form.nopass = (data.flags || []).includes('nopass')
-    form.hashes = [...(data.passwordHashes || [])]
+    Object.assign(form, aclFormFromDetail(data))
     form.newPassword = ''
-    form.commandMode = all && cats.length === 0 ? 'all' : 'custom'
-    form.categories = cats
-    form.extraRules = extras.join(' ')
-    const keys = (data.keys || '').trim()
-    form.keysAll = keys === '~*'
-    form.keyPatterns = form.keysAll ? [] : keys.split(/\s+/).filter(Boolean)
-    const channels = (data.channels || '').trim()
-    form.channelsAll = channels === '&*'
-    form.channelPatterns = form.channelsAll ? [] : channels.split(/\s+/).filter(Boolean)
 }
 
 const loadOverview = async (silent = false) => {
@@ -217,36 +175,7 @@ const removePattern = (kind, value) => {
 }
 
 
-const buildRules = () => {
-    const rules = ['reset', form.enabled ? 'on' : 'off']
-
-    if (form.nopass) {
-        rules.push('nopass')
-    } else {
-        form.hashes.forEach((hash) => rules.push('#' + hash))
-        const password = form.newPassword.trim()
-        if (password !== '') rules.push('>' + password)
-    }
-
-    if (form.commandMode === 'all') {
-        rules.push('+@all')
-    } else {
-        rules.push('-@all')
-        form.categories.forEach((cat) => rules.push('+@' + cat))
-        form.extraRules
-            .split(/\s+/)
-            .filter(Boolean)
-            .forEach((rule) => rules.push(rule))
-    }
-
-    if (form.keysAll) rules.push('~*')
-    else form.keyPatterns.forEach((p) => rules.push(/^(~|%R~|%W~)/.test(p) ? p : '~' + p))
-
-    if (form.channelsAll) rules.push('&*')
-    else form.channelPatterns.forEach((p) => rules.push(p.startsWith('&') ? p : '&' + p))
-
-    return rules
-}
+const buildRules = () => buildAclRules(form)
 
 const removeHash = (hash) => {
     form.hashes = form.hashes.filter((item) => item !== hash)
