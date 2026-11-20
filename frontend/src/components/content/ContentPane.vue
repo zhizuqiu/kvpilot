@@ -16,7 +16,9 @@ import ContentSlog from '@/components/content_value/ContentSlog.vue'
 import ContentMonitor from '@/components/content_value/ContentMonitor.vue'
 import { decodeRedisKey } from '@/utils/key_convert.js'
 import ContentPubsub from '@/components/content_value/ContentPubsub.vue'
+import ContentAcl from '@/components/content_value/ContentAcl.vue'
 import Subscribe from '@/components/icons/Subscribe.vue'
+import Acl from '@/components/icons/Acl.vue'
 
 const themeVars = useThemeVars()
 
@@ -206,6 +208,21 @@ watch(
                     </n-space>
                 </template>
                 <content-pubsub :server="props.server" />
+            </n-tab-pane>
+            <!-- acl pane -->
+            <n-tab-pane :name="BrowserTabType.Acl.toString()" display-directive="show:lazy">
+                <template #tab>
+                    <n-space :size="5" :wrap-item="false" align="center" inline justify="center">
+                        <n-icon size="16">
+                            <acl
+                                :inverse="selectedSubTab === BrowserTabType.Acl.toString()"
+                                :stroke-color="themeVars.tabColor"
+                                stroke-width="4" />
+                        </n-icon>
+                        <span>{{ $t('interface.sub_tab.acl') }}</span>
+                    </n-space>
+                </template>
+                <content-acl :pause="selectedSubTab !== BrowserTabType.Acl.toString()" :server="props.server" />
             </n-tab-pane>
         </n-tabs>
     </div>

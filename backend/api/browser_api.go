@@ -69,6 +69,87 @@ func registerBrowserRoutes(rg *gin.RouterGroup) {
 		c.JSON(http.StatusOK, services.Browser().Topology(req.Name))
 	})
 
+	g.POST("/acl/overview", func(c *gin.Context) {
+		var req struct {
+			Name string `json:"name"`
+		}
+		if c.ShouldBindJSON(&req) != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().AclOverview(req.Name))
+	})
+
+	g.POST("/acl/user", func(c *gin.Context) {
+		var req struct {
+			Name string `json:"name"`
+			User string `json:"user"`
+		}
+		if c.ShouldBindJSON(&req) != nil || req.User == "" {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().AclUser(req.Name, req.User))
+	})
+
+	g.POST("/acl/categories", func(c *gin.Context) {
+		var req struct {
+			Name string `json:"name"`
+		}
+		if c.ShouldBindJSON(&req) != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().AclCategories(req.Name))
+	})
+
+	g.POST("/acl/setuser", func(c *gin.Context) {
+		var req struct {
+			Name  string   `json:"name"`
+			User  string   `json:"user"`
+			Rules []string `json:"rules"`
+		}
+		if c.ShouldBindJSON(&req) != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().AclSetUser(req.Name, req.User, req.Rules))
+	})
+
+	g.DELETE("/acl/user", func(c *gin.Context) {
+		user := c.Query("user")
+		if user == "" {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().AclDeleteUser(c.Query("name"), user))
+	})
+
+	g.POST("/acl/log", func(c *gin.Context) {
+		var req struct {
+			Name  string `json:"name"`
+			Count int    `json:"count"`
+		}
+		if c.ShouldBindJSON(&req) != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().AclLog(req.Name, req.Count))
+	})
+
+	g.POST("/acl/dryrun", func(c *gin.Context) {
+		var req struct {
+			Name    string   `json:"name"`
+			User    string   `json:"user"`
+			Command []string `json:"command"`
+		}
+		if c.ShouldBindJSON(&req) != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().AclDryRun(req.Name, req.User, req.Command))
+	})
+
 	g.POST("/load-next-keys", func(c *gin.Context) {
 		var req struct {
 			Server     string `json:"server"`

@@ -9,4 +9,5 @@ export const BrowserTabType = {
     SlowLog: 'slow_log',
     CmdMonitor: 'cmd_monitor',
     PubMessage: 'pub_message',
+    Acl: 'acl',
 }

@@ -181,6 +181,34 @@ export function Topology(name) {
     return post('/browser/topology', { name })
 }
 
+export function AclOverview(name) {
+    return post('/browser/acl/overview', { name })
+}
+
+export function AclUser(name, user) {
+    return post('/browser/acl/user', { name, user })
+}
+
+export function AclLog(name, count) {
+    return post('/browser/acl/log', { name, count })
+}
+
+export function AclDryRun(name, user, command) {
+    return post('/browser/acl/dryrun', { name, user, command })
+}
+
+export function AclCategories(name) {
+    return post('/browser/acl/categories', { name })
+}
+
+export function AclSetUser(name, user, rules) {
+    return post('/browser/acl/setuser', { name, user, rules })
+}
+
+export function AclDeleteUser(name, user) {
+    return del('/browser/acl/user', { name, user })
+}
+
 export function LoadNextKeys(server, db, match, keyType, exactMatch) {
     return post('/browser/load-next-keys', { server, db, match, keyType, exactMatch })
 }
