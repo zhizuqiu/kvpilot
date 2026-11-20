@@ -2,9 +2,11 @@ package services
 
 import (
 	"context"
+	"errors"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"tinyrdm/backend/types"
 
 	"github.com/redis/go-redis/v9"
@@ -40,12 +42,18 @@ type aclShardResult struct {
 
 // aclAllShards 在所有分片上执行命令并按节点地址排序返回，保证读取顺序稳定。
 // 单机/哨兵模式只有一个结果。
+//
+// 注意：go-redis 的 ForEachShard 是并发执行的（每个节点一个 goroutine），
+// 回调内写共享切片必须加锁，否则会出现数据竞争并丢结果。
 func (b *browserService) aclAllShards(ctx context.Context, client redis.UniversalClient, args ...interface{}) []aclShardResult {
 	if cc, ok := client.(*redis.ClusterClient); ok {
 		results := make([]aclShardResult, 0, 3)
+		var mu sync.Mutex
 		_ = cc.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
 			value, err := shard.Do(ctx, args...).Result()
+			mu.Lock()
 			results = append(results, aclShardResult{Addr: shard.Options().Addr, Value: value, Err: err})
+			mu.Unlock()
 			return nil
 		})
 		sort.Slice(results, func(i, j int) bool { return results[i].Addr < results[j].Addr })
@@ -88,25 +96,33 @@ func (b *browserService) aclDo(ctx context.Context, client redis.UniversalClient
 	return client.Do(ctx, args...).Err()
 }
 
-// aclRead 读取 ACL 信息：集群模式下固定取第一个分片，避免命令被随机路由到
+// aclRead 读取 ACL 信息：集群模式下固定取地址最小的分片，避免命令被随机路由到
 // 不同节点导致"刚写入的用户读不到"。
+// ForEachShard 并发执行，因此先收集全部结果再排序挑选，不能依赖回调执行顺序。
 func (b *browserService) aclRead(ctx context.Context, client redis.UniversalClient, args ...interface{}) (interface{}, error) {
 	if cc, ok := client.(*redis.ClusterClient); ok {
-		var result interface{}
-		var readErr error
-		done := false
-		err := cc.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
-			if done {
-				return nil
-			}
-			result, readErr = shard.Do(ctx, args...).Result()
-			done = true
+		results := make([]aclShardResult, 0, 3)
+		var mu sync.Mutex
+		loopErr := cc.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
+			value, err := shard.Do(ctx, args...).Result()
+			mu.Lock()
+			results = append(results, aclShardResult{Addr: shard.Options().Addr, Value: value, Err: err})
+			mu.Unlock()
 			return nil
 		})
-		if err != nil {
-			return nil, err
+		if len(results) == 0 {
+			if loopErr != nil {
+				return nil, loopErr
+			}
+			return nil, redis.Nil
 		}
-		return result, readErr
+		sort.Slice(results, func(i, j int) bool { return results[i].Addr < results[j].Addr })
+		for _, result := range results {
+			if result.Err == nil {
+				return result.Value, nil
+			}
+		}
+		return nil, results[0].Err
 	}
 	return client.Do(ctx, args...).Result()
 }
@@ -229,33 +245,44 @@ func (b *browserService) AclUser(name, user string) (resp types.JSResp) {
 		}
 		found++
 	}
-	if chosen == nil {
+	detail, ok := buildAclUserDetail(chosen, found, len(results))
+	if !ok {
+		// chosen 为 nil（命令无返回）与返回结构为空都归为"用户不存在"
 		resp.Msg = "user not found"
 		return
 	}
 
-	m := toStringMap(chosen)
+	resp.Success = true
+	resp.Data = detail
+	return
+}
+
+// buildAclUserDetail 把 ACL GETUSER 的原始返回规整成详情结构。
+// ok 为 false 表示返回内容为空（用户已不存在或返回结构不可识别）。
+func buildAclUserDetail(value interface{}, found, total int) (detail aclUserDetail, ok bool) {
+	m := toStringMap(value)
 	if len(m) == 0 {
-		resp.Msg = "user not found"
-		return
+		return detail, false
 	}
 
 	hashes := toSlice(m["passwords"])
-	detail := aclUserDetail{
+	// selectors 是对象数组（每个 selector 是一个 map），不能按字符串过滤计数，
+	// 否则详情里永远显示 0 个 selector。
+	selectors := 0
+	if list, ok := m["selectors"].([]interface{}); ok {
+		selectors = len(list)
+	}
+	return aclUserDetail{
 		Flags:          toSlice(m["flags"]),
 		Passwords:      len(hashes),
 		PasswordHashes: hashes,
 		Commands:       toText(m["commands"]),
 		Keys:           toText(m["keys"]),
 		Channels:       toText(m["channels"]),
-		Selectors:      len(toSlice(m["selectors"])),
+		Selectors:      selectors,
 		Nodes:          found,
-		TotalNodes:     len(results),
-	}
-
-	resp.Success = true
-	resp.Data = detail
-	return
+		TotalNodes:     total,
+	}, true
 }
 
 // AclCategories 返回 ACL 的全部命令类别，供前端规则编辑器使用。
@@ -293,19 +320,25 @@ func (b *browserService) AclSetUser(name, user string, rules []string) (resp typ
 		resp.Msg = err.Error()
 		return
 	}
-	args := make([]interface{}, 0, len(rules)+3)
-	args = append(args, "acl", "setuser", user)
-	for _, rule := range rules {
-		if rule == "" {
-			continue
-		}
-		args = append(args, rule)
-	}
-	if err = b.aclDo(item.ctx, item.client, args...); err != nil {
+	if err = b.aclDo(item.ctx, item.client, buildAclSetUserArgs(user, rules)...); err != nil {
 		resp.Msg = err.Error()
 		return
 	}
 	return b.AclUser(name, user)
+}
+
+// buildAclSetUserArgs 拼装 ACL SETUSER 的完整参数，丢弃空字符串规则。
+// 空规则会被服务端当成非法修饰符，导致整条命令失败，必须在客户端先剔除。
+func buildAclSetUserArgs(user string, rules []string) []interface{} {
+	args := make([]interface{}, 0, len(rules)+3)
+	args = append(args, "acl", "setuser", user)
+	for _, rule := range rules {
+		if strings.TrimSpace(rule) == "" {
+			continue
+		}
+		args = append(args, rule)
+	}
+	return args
 }
 
 // AclDeleteUser 删除用户（ACL DELUSER），禁止删除当前连接所使用的用户与 default。
@@ -325,33 +358,61 @@ func (b *browserService) AclDeleteUser(name, user string) (resp types.JSResp) {
 		return
 	}
 	whoami := toText(whoamiRaw)
-	if user == whoami {
-		resp.Msg = "cannot delete the user used by the current connection"
-		return
-	}
-	if user == "default" {
-		resp.Msg = "the default user cannot be deleted"
-		return
-	}
-	if err = b.aclDo(item.ctx, item.client, "ACL", "DELUSER", user); err != nil {
+	if err = validateAclDelete(whoami, user); err != nil {
 		resp.Msg = err.Error()
 		return
 	}
-	deleted := 1
-	if deleted == 0 {
+	removed, err := b.aclDeleteUser(item.ctx, item.client, user)
+	if err != nil {
+		resp.Msg = err.Error()
+		return
+	}
+	if removed == 0 {
 		resp.Msg = "user not found"
 		return
 	}
+	// 集群下每个分片各删一次，对外仍表达"删除了 1 个用户"
 	resp.Success = true
-	resp.Data = map[string]any{"deleted": deleted}
+	resp.Data = map[string]any{"deleted": 1}
 	return
+}
+
+// aclDeleteUser 执行 ACL DELUSER 并返回实际删除数量，
+// 集群模式下逐分片累加，用于识别"用户本就不存在"的情况。
+func (b *browserService) aclDeleteUser(ctx context.Context, client redis.UniversalClient, user string) (int64, error) {
+	if cc, ok := client.(*redis.ClusterClient); ok {
+		var total int64
+		var mu sync.Mutex // ForEachShard 并发执行，累加必须加锁
+		err := cc.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
+			removed, err := shard.Do(ctx, "ACL", "DELUSER", user).Int64()
+			mu.Lock()
+			total += removed
+			mu.Unlock()
+			return err
+		})
+		return total, err
+	}
+	return client.Do(ctx, "ACL", "DELUSER", user).Int64()
+}
+
+// validateAclDelete 校验用户是否允许被删除：
+// 空用户名、当前连接使用的用户、default 用户都不允许删除。
+func validateAclDelete(whoami, user string) error {
+	if user == "" {
+		return errors.New("user is required")
+	}
+	if user == whoami {
+		return errors.New("cannot delete the user used by the current connection")
+	}
+	if user == "default" {
+		return errors.New("the default user cannot be deleted")
+	}
+	return nil
 }
 
 // AclLog 返回最近的 ACL 拒绝事件。
 func (b *browserService) AclLog(name string, count int) (resp types.JSResp) {
-	if count <= 0 || count > 200 {
-		count = 20
-	}
+	count = clampAclLogCount(count)
 	item, err := b.getRedisClient(name, -1)
 	if err != nil {
 		resp.Msg = err.Error()
@@ -371,6 +432,14 @@ func (b *browserService) AclLog(name string, count int) (resp types.JSResp) {
 	return
 }
 
+// clampAclLogCount 把 ACL LOG 的条数限制在 1-200，非法值回退到默认 20。
+func clampAclLogCount(count int) int {
+	if count <= 0 || count > 200 {
+		return 20
+	}
+	return count
+}
+
 // AclDryRun 校验某个用户能否执行给定命令（ACL DRYRUN）。
 func (b *browserService) AclDryRun(name, user string, command []string) (resp types.JSResp) {
 	if user == "" || len(command) == 0 {
@@ -386,22 +455,30 @@ func (b *browserService) AclDryRun(name, user string, command []string) (resp ty
 
 	args := append([]interface{}{"acl", "dryrun", user}, stringsToInterfaces(command)...)
 	result, err := b.aclFirst(ctx, client, args...)
-	text := toText(result)
-	if err != nil {
-		// 权限不足时服务端返回 ERR 文本，这属于正常判定结果而非执行失败
-		msg := err.Error()
-		if strings.Contains(msg, "has no permissions") {
-			resp.Success = true
-			resp.Data = map[string]any{"allowed": false, "message": msg}
-			return
-		}
-		resp.Msg = msg
+	allowed, message, failure := normalizeDryRunResult(result, err)
+	if failure != "" {
+		resp.Msg = failure
 		return
 	}
 
 	resp.Success = true
-	resp.Data = map[string]any{"allowed": strings.EqualFold(text, "OK"), "message": text}
+	resp.Data = map[string]any{"allowed": allowed, "message": message}
 	return
+}
+
+// normalizeDryRunResult 把 ACL DRYRUN 的返回规整成判定结果。
+// 权限不足在部分版本以错误返回、在 Redis 7.2 以普通文本返回，两者都属于判定结果；
+// 只有真正的执行错误才通过 failure 抛出。
+func normalizeDryRunResult(result interface{}, err error) (allowed bool, message, failure string) {
+	text := toText(result)
+	if err != nil {
+		msg := err.Error()
+		if strings.Contains(msg, "has no permissions") {
+			return false, msg, ""
+		}
+		return false, "", msg
+	}
+	return strings.EqualFold(text, "OK"), text, ""
 }
 
 // normalizeAclLog 把 ACL LOG 的返回（数组套数组/映射）规整成键值对数组。
