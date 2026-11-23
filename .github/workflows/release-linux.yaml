@@ -166,7 +166,12 @@ jobs:
         run: mv "kvpilot_${{ steps.normalise_version.outputs.version }}_amd64.deb" "kvpilot_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.deb"
 
       - name: Rename appimage
-        run: mv Tiny_RDM-${{ steps.normalise_platform_arch.outputs.arch }}.AppImage "kvpilot_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.AppImage"
+        shell: bash
+        run: |
+          set -euo pipefail
+          # 产物名随产品名变化，用通配符而不是硬编码上游名字
+          src=$(ls *.AppImage | head -n 1)
+          mv "$src" "kvpilot_${{ steps.normalise_version.outputs.version }}_${{ steps.normalise_platform.outputs.tag }}.AppImage"
 
       - name: Upload release asset
         uses: softprops/action-gh-release@v1
