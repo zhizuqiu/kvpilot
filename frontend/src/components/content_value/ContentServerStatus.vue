@@ -229,7 +229,8 @@ const stopAutoRefresh = () => {
 
 const onToggleRefresh = (on) => {
     if (on) {
-        tabVal.value = 'activity'
+        // 开启自动刷新时停留在当前页签：用户往往正在看拓扑/状态信息，
+        // 强制跳回"活动状态"会打断阅读
         connectionStore.saveRefreshInterval(props.server, pageState.refreshInterval || 5)
         startAutoRefresh()
     } else {
