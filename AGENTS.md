@@ -163,7 +163,56 @@ go build -tags web -o /tmp/kvpilot-web . && PORT=8088 /tmp/kvpilot-web
 5. 新增后端能力已按 3.4 在三处同步落地；涉及集群分片读写的改动已在 `-race` 下验证。
 6. 交付说明中列出：修改文件路径、核心改动、验证方式；能用 `redis-cli` 或 curl 复现的给出具体命令与预期结果。
 
-## 6. 部署与远程环境
+## 6. 构建产物与发布
+
+### 6.1 版本号
+
+- 唯一来源是仓库根目录的 `VERSION`，`version.go` 用 `go:embed` 读入，桌面端与 Docker 构建自动生效。
+- 改版本时同时更新 `VERSION` 与 `wails.json` 的 `info.productVersion`。
+- 发布流水线仍可用 `-ldflags "-X main.version=x.y.z"` 覆盖。
+
+### 6.2 桌面端（本机安装）
+
+```bash
+wails build -clean
+osascript -e 'quit app "KVPilot"'; sleep 3
+rm -rf /tmp/KVPilot.app.bak && mv /Applications/KVPilot.app /tmp/KVPilot.app.bak
+ditto build/bin/kvpilot.app /Applications/KVPilot.app
+open -a /Applications/KVPilot.app
+git checkout -- go.sum   # wails build 会改写 go.sum，必须还原
+```
+
+- `build/bin` 里的产物名是小写 `kvpilot.app`，安装目标用 `/Applications/KVPilot.app`。
+- 安装后确认进程与版本：`pgrep -fl "KVPilot.app/Contents/MacOS"`、读 `Info.plist`。
+
+### 6.3 Web / Docker（本机验证）
+
+```bash
+set -o pipefail
+docker build -f Dockerfile.local -t kvpilot:<version> .
+docker rm -f kvpilot-web-demo
+docker run -d --name kvpilot-web-demo --restart unless-stopped -p 8086:8086 \
+  -v kvpilot-demo-data-v2:/app/tinyrdm -e XDG_CONFIG_HOME=/app \
+  -e ADMIN_USERNAME=admin -e ADMIN_PASSWORD=*** kvpilot:<version>
+curl -s http://127.0.0.1:8086/api/preferences/version
+```
+
+- 构建命令必须带 `set -o pipefail`，否则 `docker build ... | tail` 会吞掉失败退出码。
+- 容器启动需要几秒，探测 200 要重试，不能一次判断。
+- 保留 `kvpilot-demo-data-v2` 卷（含用户连接配置），禁止 `down -v`。
+- 生产镜像用根目录 `Dockerfile`，本地快速验证用 `Dockerfile.local`。
+
+### 6.4 GitHub Release 与自动发布
+
+触发方式：`git tag vX.Y.Z && git push origin vX.Y.Z`，或在网页发布 Release、手动 dispatch。
+
+- **tag 必须指向包含最新 workflow 的提交**：release 事件执行的是 tag 所在提交里的 workflow，指向旧提交会跑旧流水线。
+- Docker：`docker-publish.yml` 推 Docker Hub `zhizuqiu/kvpilot`，amd64 + arm64，标签 `X.Y.Z`、`X.Y`、`latest`、`sha-*`。
+- 桌面端：`release-{macos,windows,linux}.yaml` 打包并上传 Release 附件。
+- 需要的 secrets：`DOCKERHUB_USERNAME`、`DOCKERHUB_TOKEN`；仓库 workflow 默认权限必须是 Read and write，否则上传附件 403。
+- 发布前更新 `VERSION` 与 `CHANGELOG.md`；发布后核对附件数量（mac 2 / win 4 / linux 3）与 Docker Hub 标签。
+
+### 6.5 远程主机部署物料
 
 1. 远程主机上的部署物料按项目分目录存放，包含 compose 文件、配置与 README，不与其他项目混放。
 2. 部署前先确认目标主机已有的容器、端口和目录占用，避免与本项目容器重名或抢端口。
