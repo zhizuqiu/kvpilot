@@ -60,6 +60,9 @@
 >  sudo xattr -d com.apple.quarantine /Applications/KVPilot.app
 > ```
 
+> Windows 版本暂未代码签名，首次运行可能弹出 SmartScreen 提示，选择**更多信息 → 仍要运行**即可。
+> 代码签名正在申请中，通过后会替换为已签名的安装包，提示随之消失。
+
 想用浏览器访问？参见 [Docker 部署](#docker-部署)。
 
 ## 构建客户端

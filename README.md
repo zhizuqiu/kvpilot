@@ -66,6 +66,10 @@ the [releases page](https://github.com/zhizuqiu/kvpilot/releases).
 >  sudo xattr -d com.apple.quarantine /Applications/KVPilot.app
 > ```
 
+> Windows builds are not code signed yet, so SmartScreen may warn on first launch.
+> Choose **More info → Run anyway**. Code signing is being arranged; once it is in place
+> the release assets will be signed and the warning disappears.
+
 Prefer the browser? See [Docker Deployment](#docker-deployment) for the web version.
 
 ## Build Guidelines
