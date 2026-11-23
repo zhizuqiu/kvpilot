@@ -3,7 +3,7 @@
 </div>
 
 <h1 align="center">KVPilot</h1>
-<h4 align="center"><strong>English</strong> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_zh.md">简体中文</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_tw.md">繁體中文</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ja.md">日本語</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ko.md">한국어</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_fr.md">Français</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_es.md">Español</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_pt.md">Português (BR)</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ru.md">Русский</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_tr.md">Türkçe</a></h4>
+<h4 align="center"><strong>English</strong> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_zh.md">简体中文</a></h4>
 
 > **KVPilot** is an unofficial community continuation of **Tiny RDM** 1.2.7 (GPL-3.0).
 > Not affiliated with, endorsed by, or sponsored by Tiny Craft.
@@ -47,6 +47,8 @@ also provides a web version that can be deployed via Docker.</strong>
 * Provide value decode/decompression for List/Hash/Set/Sorted Set.
 * Integrate with Monaco Editor
 * Support real-time commands monitoring.
+* Visual ACL management with permission dry-run and denial logs.
+* Deployment topology for standalone, master-replica, sentinel and cluster.
 * Support import/export data.
 * Support publish/subscribe.
 * Support import/export connection profile.
@@ -55,12 +57,16 @@ also provides a web version that can be deployed via Docker.</strong>
 
 ## Installation
 
-Available to download for free from [here](https://github.com/zhizuqiu/kvpilot/releases).
+Prebuilt packages for macOS (Apple Silicon / Intel), Windows and Linux are available on
+the [releases page](https://github.com/zhizuqiu/kvpilot/releases).
 
-> If you can't open it after installation on macOS, exec the following command then reopen:
+> macOS builds are ad-hoc signed, so Gatekeeper may block the first launch. Remove the
+> quarantine attribute once, then reopen:
 > ``` shell
->  sudo xattr -d com.apple.quarantine /Applications/Tiny\ RDM.app
+>  sudo xattr -d com.apple.quarantine /Applications/KVPilot.app
 > ```
+
+Prefer the browser? See [Docker Deployment](#docker-deployment) for the web version.
 
 ## Build Guidelines
 
@@ -162,7 +168,7 @@ new Redis / KV compatible implementations.
 - Scope: bug fixes, dependency and security updates, Redis protocol/command compatibility, hardening of the web mode
 - Non-goals: major UI redesigns, chasing features of the closed-source successor (Redisee)
 - Maintenance: issue/PR driven, see [Contributing](#contributing)
-- License: GPL-3.0; unofficial fork, not affiliated with Tiny Craft
+- License: GPL-3.0; unofficial derivative work, not affiliated with Tiny Craft
 
 ## Contributing
 

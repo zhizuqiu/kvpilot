@@ -3,7 +3,7 @@
 </div>
 
 <h1 align="center">KVPilot</h1>
-<h4 align="center"><a href="/">English</a> | <strong>简体中文</strong> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_tw.md">繁體中文</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ja.md">日本語</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ko.md">한국어</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_fr.md">Français</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_es.md">Español</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_pt.md">Português (BR)</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_ru.md">Русский</a> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_tr.md">Türkçe</a></h4>
+<h4 align="center"><a href="https://github.com/zhizuqiu/kvpilot/blob/main/README.md">English</a> | <strong>简体中文</strong></h4>
 
 > **KVPilot** 是 **Tiny RDM** 1.2.7 的非官方社区延续分支（GPL-3.0）。
 > 与 Tiny Craft 无隶属、背书或赞助关系。
@@ -44,6 +44,8 @@
 * List/Hash/Set/Sorted Set值的转码显示
 * 内置高级编辑器Monaco Editor
 * 支持命令实时监控
+* 可视化 ACL 管理，支持权限试算与拒绝日志
+* 部署拓扑视图，支持单机/主从/哨兵/集群
 * 支持导入/导出数据
 * 支持发布订阅
 * 支持导入/导出连接配置
@@ -51,12 +53,14 @@
 
 ## 安装
 
-提供Mac、Windows和Linux安装包，可[免费下载](https://github.com/zhizuqiu/kvpilot/releases)。
+提供 macOS（Apple Silicon / Intel）、Windows 和 Linux 安装包，可在[发布页](https://github.com/zhizuqiu/kvpilot/releases)下载。
 
-> 如果在macOS上安装后无法打开，报错**不受信任**或者**移到垃圾箱**，执行下面命令后再启动即可：
+> macOS 版本为 ad-hoc 签名，首次打开可能被系统拦截。执行一次下面的命令后再启动即可：
 > ``` shell
->  sudo xattr -d com.apple.quarantine /Applications/Tiny\ RDM.app
+>  sudo xattr -d com.apple.quarantine /Applications/KVPilot.app
 > ```
+
+想用浏览器访问？参见 [Docker 部署](#docker-部署)。
 
 ## 构建客户端
 
@@ -157,7 +161,7 @@ KVPilot 是 [Tiny RDM](https://github.com/tiny-craft/tiny-rdm) 1.2.7 的社区�
 - 项目范围：缺陷修复、依赖安全升级、Redis 协议与命令兼容、Web 模式加固
 - 非目标：不做界面大改、不追上游闭源版本（Redisee）的功能
 - 维护方式：Issue / PR 驱动，见 [参与贡献](#参与贡献)
-- 许可证：GPL-3.0，非官方分支，与 Tiny Craft 无隶属关系
+- 许可证：GPL-3.0，非官方衍生版本，与 Tiny Craft 无隶属关系
 
 ## 参与贡献
 
