@@ -1,47 +1,36 @@
-name: Release Docker Image
-run-name: ${{ github.event.release.tag_name || github.event.inputs.tag || 'manual' }}
+name: Docker Image
 
 on:
+  # 推送 v1.2.8 这类版本标签时构建
+  push:
+    tags:
+      - 'v*'
+  # 发布 Release 时也构建一次，避免只打 tag 不发 Release 的情况
   release:
-    types: [ published ]
+    types: [published]
+  # 手动触发，可附加一个自定义标签（例如 dev）
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Version tag'
-        required: true
-        default: '1.0.0'
+        description: 'Extra image tag (optional, e.g. dev)'
+        required: false
 
 env:
-  REGISTRY: ghcr.io
   IMAGE_NAME: zhizuqiu/kvpilot
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
-            type=raw,value=${{ github.event.inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
-            type=raw,value=latest
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -49,24 +38,37 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Determine version
-        id: version
-        run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          else
-            echo "value=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            # 1.2.8 / 1.2 / latest
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ github.event_name != 'workflow_dispatch' }}
+            # 手动触发时的自定义标签，例如 dev
+            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
+            # 版本标签之外也留一个 sha 标签，便于定位
+            type=sha,format=short,prefix=sha-
+
+      - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           provenance: false
           sbom: false
-          build-args: |
-            APP_VERSION=${{ steps.version.outputs.value }}

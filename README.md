@@ -109,10 +109,9 @@ wails dev
 
 ## Docker Deployment
 
-> No official image is published yet. Build it locally from the repository root: `docker build -f Dockerfile.local -t kvpilot:1.2.8 .`
-
-
-In addition to the desktop client, KVPilot also provides a web version that can be quickly deployed via Docker.
+Images are published to Docker Hub as [`zhizuqiu/kvpilot`](https://hub.docker.com/r/zhizuqiu/kvpilot)
+for `linux/amd64` and `linux/arm64`. In addition to the desktop client, the same image
+serves the web version.
 
 ### Using Docker Compose (Recommended)
 
@@ -121,7 +120,7 @@ Create a `docker-compose.yml` file:
 ```yaml
 services:
   kvpilot:
-    image: kvpilot:1.2.8
+    image: zhizuqiu/kvpilot:latest
     container_name: kvpilot
     restart: unless-stopped
     ports:
@@ -149,7 +148,7 @@ docker run -d --name kvpilot \
   -e ADMIN_USERNAME=admin \
   -e ADMIN_PASSWORD=change-me \
   -v ./data:/app/tinyrdm \
-  kvpilot:1.2.8
+  zhizuqiu/kvpilot:latest
 ```
 
 ### Environment Variables

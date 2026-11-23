@@ -103,10 +103,8 @@ wails dev
 
 ## Docker 部署
 
-> 当前尚未发布官方镜像，请先在仓库根目录执行 `docker build -f Dockerfile.local -t kvpilot:1.2.8 .` 构建本地镜像。
-
-
-除桌面客户端外，KVPilot 还提供 Web 版本，可通过 Docker 快速部署。
+镜像发布在 Docker Hub：[`zhizuqiu/kvpilot`](https://hub.docker.com/r/zhizuqiu/kvpilot)，
+提供 `linux/amd64` 与 `linux/arm64` 两个架构。除桌面客户端外，Web 版也由同一个镜像提供。
 
 ### 使用 Docker Compose（推荐）
 
@@ -115,7 +113,7 @@ wails dev
 ```yaml
 services:
   kvpilot:
-    image: kvpilot:1.2.8
+    image: zhizuqiu/kvpilot:latest
     container_name: kvpilot
     restart: unless-stopped
     ports:
@@ -143,7 +141,7 @@ docker run -d --name kvpilot \
   -e ADMIN_USERNAME=admin \
   -e ADMIN_PASSWORD=change-me \
   -v ./data:/app/tinyrdm \
-  kvpilot:1.2.8
+  zhizuqiu/kvpilot:latest
 ```
 
 ### 环境变量说明
