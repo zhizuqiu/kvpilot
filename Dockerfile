@@ -23,9 +23,12 @@ RUN GOFLAGS="-mod=mod" go mod download
 
 COPY backend/ ./backend/
 COPY main_web.go ./
+# 版本号默认取自 VERSION 文件；发布时可用 APP_VERSION 覆盖
+COPY version.go ./
+COPY VERSION ./
 
-ARG APP_VERSION=1.0.0
-RUN CGO_ENABLED=0 GOOS=linux GOFLAGS="-mod=mod" go build -tags web -ldflags "-s -w -X main.version=${APP_VERSION}" -o /app/kvpilot-server .
+ARG APP_VERSION=
+RUN CGO_ENABLED=0 GOOS=linux GOFLAGS="-mod=mod" go build -tags web -ldflags "-s -w ${APP_VERSION:+-X main.version=${APP_VERSION}}" -o /app/kvpilot-server .
 
 # ============================================================
 # Stage 3: Runtime (nginx + Go backend)

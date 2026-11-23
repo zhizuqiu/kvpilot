@@ -30,7 +30,8 @@ RUN GOFLAGS="-mod=mod" go mod download
 
 COPY backend/ ./backend/
 COPY main_web.go ./
-# 版本号来自仓库根目录 VERSION 文件（go:embed），不需要额外注入
+# 版本号来自仓库根目录 VERSION 文件（go:embed），version.go 负责展开
+COPY version.go ./
 COPY VERSION ./
 
 RUN CGO_ENABLED=0 GOOS=linux GOFLAGS="-mod=mod" go build -tags web -ldflags "-s -w" -o /app/kvpilot-server .
