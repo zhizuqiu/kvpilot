@@ -635,17 +635,17 @@ const clientTableColumns = computed(() => {
                     <template #trigger>
                         <n-button
                             :loading="pageState.loading"
-                            :type="isLoading ? 'primary' : 'default'"
+                            :type="pageState.autoRefresh || isLoading ? 'primary' : 'default'"
                             circle
                             size="small"
                             tertiary
                             @click="refreshInfo(true)">
                             <template #icon>
                                 <n-icon :size="props.size">
+                                    <!-- 只在真正拉取时旋转；自动刷新开启时用主色常亮表示状态，
+                                         否则图标一直转会被误认为卡在加载中 -->
                                     <refresh
-                                        :class="{
-                                            'auto-rotate': pageState.autoRefresh || isLoading,
-                                        }"
+                                        :class="{ 'auto-rotate': isLoading }"
                                         :color="pageState.autoRefresh ? themeVars.primaryColor : undefined"
                                         :stroke-width="pageState.autoRefresh ? 6 : 3" />
                                 </n-icon>
