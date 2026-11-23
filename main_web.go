@@ -14,8 +14,6 @@ import (
 	"tinyrdm/backend/services"
 )
 
-var version = "0.0.0"
-
 func main() {
 	// Wire up event bridge callbacks (breaks import cycle: services -> api)
 	services.EmitEventFunc = func(event string, data any) {

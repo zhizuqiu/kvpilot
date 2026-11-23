@@ -27,7 +27,6 @@ var assets embed.FS
 //go:embed build/appicon.png
 var icon []byte
 
-var version = "0.0.0"
 var gaMeasurementID, gaSecretKey string
 
 const appName = "KVPilot"
