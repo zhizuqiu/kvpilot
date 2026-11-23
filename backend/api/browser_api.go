@@ -150,6 +150,30 @@ func registerBrowserRoutes(rg *gin.RouterGroup) {
 		c.JSON(http.StatusOK, services.Browser().AclDryRun(req.Name, req.User, req.Command))
 	})
 
+	g.POST("/config/overview", func(c *gin.Context) {
+		var req struct {
+			Name string `json:"name"`
+		}
+		if c.ShouldBindJSON(&req) != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().ConfigOverview(req.Name))
+	})
+
+	g.POST("/config/set", func(c *gin.Context) {
+		var req struct {
+			Name  string `json:"name"`
+			Key   string `json:"key"`
+			Value string `json:"value"`
+		}
+		if c.ShouldBindJSON(&req) != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().ConfigSet(req.Name, req.Key, req.Value))
+	})
+
 	g.POST("/load-next-keys", func(c *gin.Context) {
 		var req struct {
 			Server     string `json:"server"`

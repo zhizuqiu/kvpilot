@@ -10,4 +10,5 @@ export const BrowserTabType = {
     CmdMonitor: 'cmd_monitor',
     PubMessage: 'pub_message',
     Acl: 'acl',
+    Config: 'config',
 }

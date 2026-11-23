@@ -17,8 +17,10 @@ import ContentMonitor from '@/components/content_value/ContentMonitor.vue'
 import { decodeRedisKey } from '@/utils/key_convert.js'
 import ContentPubsub from '@/components/content_value/ContentPubsub.vue'
 import ContentAcl from '@/components/content_value/ContentAcl.vue'
+import ContentConfig from '@/components/content_value/ContentConfig.vue'
 import Subscribe from '@/components/icons/Subscribe.vue'
 import Acl from '@/components/icons/Acl.vue'
+import ConfigTabIcon from '@/components/icons/ConfigTab.vue'
 
 const themeVars = useThemeVars()
 
@@ -223,6 +225,21 @@ watch(
                     </n-space>
                 </template>
                 <content-acl :pause="selectedSubTab !== BrowserTabType.Acl.toString()" :server="props.server" />
+            </n-tab-pane>
+            <!-- config pane -->
+            <n-tab-pane :name="BrowserTabType.Config.toString()" display-directive="show:lazy">
+                <template #tab>
+                    <n-space :size="5" :wrap-item="false" align="center" inline justify="center">
+                        <n-icon size="16">
+                            <config-tab-icon
+                                :inverse="selectedSubTab === BrowserTabType.Config.toString()"
+                                :stroke-color="themeVars.tabColor"
+                                stroke-width="4" />
+                        </n-icon>
+                        <span>{{ $t('interface.sub_tab.config') }}</span>
+                    </n-space>
+                </template>
+                <content-config :pause="selectedSubTab !== BrowserTabType.Config.toString()" :server="props.server" />
             </n-tab-pane>
         </n-tabs>
     </div>

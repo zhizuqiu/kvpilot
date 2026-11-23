@@ -161,7 +161,8 @@
       "slow_log": "Slow Log",
       "cmd_monitor": "Monitor Commands",
       "pub_message": "Pub/Sub",
-      "acl": "ACL"
+      "acl": "ACL",
+      "config": "Configuration"
     }
   },
   "ribbon": {
@@ -575,5 +576,34 @@
     "remove": "Remove",
     "reset": "Reset",
     "test_dirty_hint": "Save your changes before running the test"
+  },
+  "config": {
+    "nodes": "{n} nodes",
+    "merged_hint": "Node count exceeds the merge limit; showing one node view",
+    "search": "Search parameters",
+    "refresh": "Refresh",
+    "param": "Parameter",
+    "value": "Value",
+    "consistency": "Consistency",
+    "consistent": "consistent",
+    "view_diff": "diff",
+    "sensitive": "sensitive",
+    "immutable": "immutable",
+    "empty": "No matching parameters",
+    "category_all": "All ({n})",
+    "category": {
+      "memory": "Memory",
+      "persistence": "Persistence",
+      "replication": "Replication",
+      "cluster": "Cluster",
+      "security": "Security",
+      "network": "Network",
+      "clients": "Clients",
+      "slowlog": "Slow log",
+      "lua": "Lua",
+      "performance": "Performance",
+      "logging": "Logging",
+      "other": "Other"
+    }
   }
 }

@@ -185,6 +185,14 @@ export function AclOverview(name) {
     return post('/browser/acl/overview', { name })
 }
 
+export function ConfigOverview(name) {
+    return post('/browser/config/overview', { name })
+}
+
+export function ConfigSet(name, key, value) {
+    return post('/browser/config/set', { name, key, value })
+}
+
 export function AclUser(name, user) {
     return post('/browser/acl/user', { name, user })
 }

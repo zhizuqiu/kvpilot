@@ -161,7 +161,8 @@
       "slow_log": "慢日志",
       "cmd_monitor": "监控命令",
       "pub_message": "发布/订阅",
-      "acl": "ACL 管理"
+      "acl": "ACL 管理",
+      "config": "配置管理"
     }
   },
   "ribbon": {
@@ -575,5 +576,34 @@
     "remove": "删除",
     "reset": "重置",
     "test_dirty_hint": "有未保存的修改，保存后才能测试"
+  },
+  "config": {
+    "nodes": "共 {n} 个节点",
+    "merged_hint": "节点数超过合并上限，当前为单节点视图",
+    "search": "搜索参数",
+    "refresh": "刷新",
+    "param": "参数",
+    "value": "当前值",
+    "consistency": "节点一致性",
+    "consistent": "一致",
+    "view_diff": "差异",
+    "sensitive": "敏感",
+    "immutable": "不可变",
+    "empty": "没有匹配的参数",
+    "category_all": "全部（{n}）",
+    "category": {
+      "memory": "内存",
+      "persistence": "持久化",
+      "replication": "复制",
+      "cluster": "集群",
+      "security": "安全",
+      "network": "网络",
+      "clients": "客户端",
+      "slowlog": "慢查询",
+      "lua": "Lua",
+      "performance": "性能",
+      "logging": "日志",
+      "other": "其它"
+    }
   }
 }

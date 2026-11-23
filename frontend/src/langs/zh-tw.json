@@ -161,7 +161,8 @@
       "slow_log": "慢日誌",
       "cmd_monitor": "監控命令",
       "pub_message": "發佈/訂閱",
-      "acl": "ACL 管理"
+      "acl": "ACL 管理",
+      "config": "配置管理"
     }
   },
   "ribbon": {
@@ -575,5 +576,34 @@
     "remove": "刪除",
     "reset": "重設",
     "test_dirty_hint": "有未儲存的修改，儲存後才能測試"
+  },
+  "config": {
+    "nodes": "共 {n} 個節點",
+    "merged_hint": "節點數超過合併上限，目前為單節點視圖",
+    "search": "搜尋參數",
+    "refresh": "重新整理",
+    "param": "參數",
+    "value": "目前值",
+    "consistency": "節點一致性",
+    "consistent": "一致",
+    "view_diff": "差異",
+    "sensitive": "敏感",
+    "immutable": "不可變",
+    "empty": "沒有符合的參數",
+    "category_all": "全部（{n}）",
+    "category": {
+      "memory": "記憶體",
+      "persistence": "持久化",
+      "replication": "複製",
+      "cluster": "叢集",
+      "security": "安全",
+      "network": "網路",
+      "clients": "用戶端",
+      "slowlog": "慢查詢",
+      "lua": "Lua",
+      "performance": "效能",
+      "logging": "日誌",
+      "other": "其它"
+    }
   }
 }
