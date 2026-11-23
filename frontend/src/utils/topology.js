@@ -38,11 +38,12 @@ export const parseSlots = (slots) => {
 }
 
 /**
- * 按复制关系分组：每个主节点（含故障主节点）带上它名下的全部从节点（含故障从节点）。
+ * 按复制关系构建递归树：任何节点的 master 指向列表内的节点时就挂到它下面，
+ * 因此支持"从节点的从节点"（级联复制）。只有主节点已从列表消失时才成为孤立节点。
  * @param {Array} nodes 后端返回的节点数组
  * @return {{
  *   sentinels: Array,
- *   groups: Array<{master: object, replicas: Array}>,
+ *   groups: Array<{master: object, children: Array<{node: object, children: Array}>}>,
  *   orphans: Array,
  *   offlineCount: number,
  *   orphanCount: number,
@@ -51,18 +52,35 @@ export const parseSlots = (slots) => {
  */
 export const groupTopology = (nodes) => {
     const all = nodes || []
-
     const sentinels = all.filter((n) => n.role === 'sentinel')
-    const masters = all.filter((n) => n.role === 'master')
-    const replicas = all.filter((n) => n.role === 'replica')
+    const byAddr = new Map(all.map((n) => [n.addr, n]))
 
+    // addr -> 直接子节点列表（可能包含级联从节点）
+    const childMap = new Map()
+    for (const node of all) {
+        if (!node.master || !byAddr.has(node.master)) continue
+        if (!childMap.has(node.master)) childMap.set(node.master, [])
+        childMap.get(node.master).push(node)
+    }
+
+    // 递归构建子树，seen 用于防止异常数据造成环
+    const build = (node, seen) => {
+        const nextSeen = new Set(seen).add(node.addr)
+        const children = (childMap.get(node.addr) || [])
+            .filter((c) => !seen.has(c.addr))
+            .map((c) => build(c, nextSeen))
+        return { node, children }
+    }
+
+    const masters = all.filter((n) => n.role === 'master')
     const groups = masters.map((master) => ({
         master,
-        replicas: replicas.filter((r) => r.master === master.addr),
+        children: build(master, new Set()).children,
     }))
 
-    // 主节点已经不在列表里，无法连线，只能单独展示
-    const orphans = replicas.filter((r) => !masters.some((m) => m.addr === r.master))
+    const orphans = all.filter(
+        (n) => n.role === 'replica' && (!n.master || !byAddr.has(n.master))
+    )
 
     // 在线但没有任何槽位的主节点：不算离线，但也不健康，需要单独提示
     const slotlessCount = all.filter(

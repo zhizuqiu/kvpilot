@@ -245,9 +245,18 @@ watch(
     height: 100%;
 }
 
+/* 标签页内容必须在可用高度内裁剪：内容变高时若让 pane 自然撑开，
+   页面 body 是 overflow:hidden，超出部分既不可见也无法滚动。 */
+.content-sub-tab .n-tab-pane {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
 .content-sub-tab-pane {
     padding: 0 !important;
     height: 100%;
+    min-height: 0;
     background-color: v-bind('themeVars.bodyColor');
     overflow: hidden;
 }

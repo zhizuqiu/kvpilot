@@ -217,6 +217,39 @@ describe('ContentDeployTopology', () => {
         wrapper.unmount()
     })
 
+    it('多个从节点纵向排列，容器负责上下滚动', async () => {
+        const nodes = [master('m1', '0-5460')]
+        for (let i = 1; i <= 10; i++) nodes.push(replica(`r${i}`, 'm1'))
+        api.Topology.mockResolvedValue(topology(nodes))
+
+        const wrapper = await mountTopology()
+
+        // 不再使用横向排列容器，从节点都在纵向的 topology-children 里
+        expect(wrapper.find('.topology-replicas').exists()).toBe(false)
+        expect(wrapper.findAll('.topology-children .topology-node')).toHaveLength(10)
+
+        wrapper.unmount()
+    })
+
+    it('级联从节点按层级嵌套，并连出每一条复制关系', async () => {
+        api.Topology.mockResolvedValue(
+            topology([master('m1', '0-5460'), replica('r1', 'm1'), replica('c1', 'r1')])
+        )
+
+        const wrapper = await mountTopology()
+
+        // 两个分支：r1 与嵌套在 r1 下的 c1
+        expect(wrapper.findAll('.topology-branch')).toHaveLength(2)
+        expect(
+            wrapper.find('.topology-branch .topology-branch-children .topology-branch').exists()
+        ).toBe(true)
+
+        // m1 -> r1、r1 -> c1 两条连线
+        expect(wrapper.find('.topology-group').findAll('path')).toHaveLength(2)
+
+        wrapper.unmount()
+    })
+
     it('主节点行不换行，由容器横向滚动', async () => {
         api.Topology.mockResolvedValue(
             topology([master('m1', '0-5460'), master('m2', '5461-10922'), master('m3', '10923-16383')])

@@ -49,8 +49,8 @@ describe('groupTopology', () => {
         ])
 
         expect(view.groups.map((g) => g.master.addr)).toEqual(['m1', 'm2'])
-        expect(view.groups[0].replicas.map((r) => r.addr)).toEqual(['r1', 'r2'])
-        expect(view.groups[1].replicas.map((r) => r.addr)).toEqual(['r3'])
+        expect(view.groups[0].children.map((c) => c.node.addr)).toEqual(['r1', 'r2'])
+        expect(view.groups[1].children.map((c) => c.node.addr)).toEqual(['r3'])
         expect(view.orphans).toHaveLength(0)
         expect(view.offlineCount).toBe(0)
     })
@@ -64,7 +64,7 @@ describe('groupTopology', () => {
         ])
 
         expect(view.groups.map((g) => g.master.addr)).toEqual(['m1', 'm2'])
-        expect(view.groups[1].replicas.map((r) => r.addr)).toEqual(['r2'])
+        expect(view.groups[1].children.map((c) => c.node.addr)).toEqual(['r2'])
         expect(view.offlineCount).toBe(1)
         // 主节点还在列表里，从节点不算"失去主节点"
         expect(view.orphans).toHaveLength(0)
@@ -75,7 +75,7 @@ describe('groupTopology', () => {
         const view = groupTopology([master('m1'), replica('r1', 'm1', { state: 'down' })])
 
         expect(view.groups).toHaveLength(1)
-        expect(view.groups[0].replicas.map((r) => r.addr)).toEqual(['r1'])
+        expect(view.groups[0].children.map((c) => c.node.addr)).toEqual(['r1'])
         expect(view.offlineCount).toBe(1)
     })
 
@@ -97,6 +97,36 @@ describe('groupTopology', () => {
         expect(view.groups).toHaveLength(1)
         expect(view.orphans.map((r) => r.addr)).toEqual(['r9'])
         expect(view.orphanCount).toBe(1)
+    })
+
+    it('级联从节点递归挂在父节点下，不算失去主节点', () => {
+        const view = groupTopology([
+            master('m1'),
+            replica('r1', 'm1'),
+            replica('c1', 'r1'),
+            replica('c2', 'c1'),
+        ])
+
+        expect(view.groups).toHaveLength(1)
+        const r1 = view.groups[0].children[0]
+        expect(r1.node.addr).toBe('r1')
+        expect(r1.children[0].node.addr).toBe('c1')
+        expect(r1.children[0].children[0].node.addr).toBe('c2')
+        expect(view.orphans).toHaveLength(0)
+        expect(view.orphanCount).toBe(0)
+    })
+
+    it('主节点与从节点都可能有多个子节点', () => {
+        const view = groupTopology([
+            master('m1'),
+            replica('r1', 'm1'),
+            replica('r2', 'm1'),
+            replica('c1', 'r1'),
+            replica('c2', 'r1'),
+        ])
+
+        const r1 = view.groups[0].children.find((c) => c.node.addr === 'r1')
+        expect(r1.children.map((c) => c.node.addr)).toEqual(['c1', 'c2'])
     })
 
     it('哨兵单独成行，离线哨兵也计入离线数', () => {

@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { NButton, NEmpty, useThemeVars } from 'naive-ui'
 import Refresh from '@/components/icons/Refresh.vue'
 import TopologyNodeCard from '@/components/content_value/TopologyNodeCard.vue'
+import TopologyBranch from '@/components/content_value/TopologyBranch.vue'
 import { groupTopology } from '@/utils/topology.js'
 import { Topology } from 'wailsjs/go/services/browserService.js'
 
@@ -40,26 +41,33 @@ const modeLabel = computed(() => {
     return mode === '' ? '' : i18n.t(`topology.mode_${mode}`)
 })
 
-// 计算主节点到各从节点的连线（贝塞尔曲线，避免横向母线与级联的歧义）
+// 按复制关系绘制连线：每张带 data-parent 的卡片与其父节点连一条曲线，
+// 因此级联从节点（从节点的从节点）也能正确连线。
 const computeLinks = async () => {
     await nextTick()
     const result = {}
     groupEls.value.forEach((el) => {
         if (!el) return
-        const cards = el.querySelectorAll('.topology-node')
-        if (cards.length < 2) return
+        const cards = Array.from(el.querySelectorAll('.topology-node'))
+        if (cards.length === 0) return
+        const byAddr = new Map(cards.map((c) => [c.dataset.addr, c]))
         const base = el.getBoundingClientRect()
-        const master = cards[0].getBoundingClientRect()
-        const x1 = master.left + master.width / 2 - base.left
-        const y1 = master.bottom - base.top
         const paths = []
-        for (let i = 1; i < cards.length; i++) {
-            const replica = cards[i].getBoundingClientRect()
-            const x2 = replica.left + replica.width / 2 - base.left
-            const y2 = replica.top - base.top
+        cards.forEach((card) => {
+            const parentAddr = card.dataset.parent
+            if (!parentAddr) return
+            const parent = byAddr.get(parentAddr)
+            if (!parent) return
+            const p = parent.getBoundingClientRect()
+            const c = card.getBoundingClientRect()
+            // 从左边缘垂直下落再横向进入子节点，层级缩进时更易读
+            const x1 = p.left + 18 - base.left
+            const y1 = p.bottom - base.top
+            const x2 = c.left + 18 - base.left
+            const y2 = c.top - base.top
             const midY = y1 + (y2 - y1) / 2
             paths.push({ d: `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}` })
-        }
+        })
         result[el.dataset.key] = paths
     })
     links.value = result
@@ -166,13 +174,16 @@ watch(
                                         stroke-width="2" />
                                 </svg>
 
-                                <topology-node-card :node="group.master" :show-slots="isCluster" />
+                                <topology-node-card
+                                    :node="group.master"
+                                    :show-slots="isCluster"
+                                    :data-addr="group.master.addr" />
 
-                                <div v-if="group.replicas.length > 0" class="topology-replicas">
-                                    <topology-node-card
-                                        v-for="replica in group.replicas"
-                                        :key="replica.addr"
-                                        :node="replica"
+                                <div v-if="group.children.length > 0" class="topology-children">
+                                    <topology-branch
+                                        v-for="child in group.children"
+                                        :key="child.node.addr"
+                                        :branch="child"
                                         :show-slots="isCluster" />
                                 </div>
                             </div>
@@ -222,6 +233,7 @@ watch(
     .topology-body {
         padding: 24px 12px;
         overflow: auto;
+        min-height: 0;
     }
 
     // 主节点行不再换行，内容超出时由 .topology-body 横向滚动
@@ -285,13 +297,13 @@ watch(
         flex-direction: column;
         align-items: center;
 
-        .topology-replicas {
+        // 从节点纵向排列：数量多时形成上下滚动，列宽保持稳定
+        .topology-children {
             display: flex;
-            align-items: flex-start;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
             gap: 18px;
             margin-top: 40px;
-            flex-wrap: nowrap;
         }
 
         .group-links {
@@ -306,7 +318,7 @@ watch(
         }
 
         > .topology-node,
-        .topology-replicas {
+        .topology-children {
             position: relative;
             z-index: 1;
         }
