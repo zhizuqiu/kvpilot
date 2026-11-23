@@ -48,6 +48,9 @@ const pageState = reactive({
     loading: false, // loading status for refresh
     autoLoading: false, // loading status for auto refresh
 })
+
+// 外层刷新令牌：手动刷新与自动刷新都会递增，用于驱动子页签（如部署拓扑）一起刷新
+const topologyToken = ref(0)
 const statusHistory = 5
 
 /**
@@ -89,6 +92,7 @@ const refreshInfo = async (force) => {
         } finally {
             pageState.loading = false
             pageState.autoLoading = false
+            topologyToken.value++
         }
     }
 }
@@ -784,7 +788,10 @@ const clientTableColumns = computed(() => {
 
                 <!-- deploy topology tab pane -->
                 <n-tab-pane :tab="$t('status.deploy_topology')" display-directive="show:lazy" name="topology">
-                    <content-deploy-topology :pause="props.pause || tabVal !== 'topology'" :server="props.server" />
+                    <content-deploy-topology
+                        :pause="props.pause || tabVal !== 'topology'"
+                        :server="props.server"
+                        :refresh-token="topologyToken" />
                 </n-tab-pane>
             </n-tabs>
         </n-card>

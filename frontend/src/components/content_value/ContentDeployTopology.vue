@@ -2,7 +2,6 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NButton, NEmpty, useThemeVars } from 'naive-ui'
-import Refresh from '@/components/icons/Refresh.vue'
 import TopologyNodeCard from '@/components/content_value/TopologyNodeCard.vue'
 import TopologyBranch from '@/components/content_value/TopologyBranch.vue'
 import { groupTopology } from '@/utils/topology.js'
@@ -11,6 +10,8 @@ import { Topology } from 'wailsjs/go/services/browserService.js'
 const props = defineProps({
     server: String,
     pause: Boolean,
+    // 由外层状态页递增，手动刷新与自动刷新都会触发
+    refreshToken: { type: Number, default: 0 },
 })
 
 const i18n = useI18n()
@@ -20,7 +21,6 @@ const loading = ref(false)
 const topology = ref({ mode: '', self: '', version: '', nodes: [] })
 const groupEls = ref([])
 const links = ref({})
-let timer = null
 let resizeObserver = null
 
 const nodes = computed(() => topology.value?.nodes || [])
@@ -91,9 +91,6 @@ const load = async (silent = false) => {
 
 onMounted(() => {
     load()
-    timer = setInterval(() => {
-        if (!props.pause) load(true)
-    }, 5000)
     window.addEventListener('resize', computeLinks)
     if (typeof ResizeObserver !== 'undefined') {
         resizeObserver = new ResizeObserver(() => computeLinks())
@@ -102,11 +99,19 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-    if (timer != null) clearInterval(timer)
     window.removeEventListener('resize', computeLinks)
     resizeObserver?.disconnect()
 })
 
+// 外层"刷新/自动刷新"统一驱动：计数变化且页面可见时重新拉取
+watch(
+    () => props.refreshToken,
+    () => {
+        if (!props.pause) load(true)
+    }
+)
+
+// 从其它页签切回来时补一次，避免看到过期拓扑
 watch(
     () => props.pause,
     (paused) => {
@@ -129,13 +134,6 @@ watch(
                 :title="$t('topology.migration_partial_hint')">
                 {{ $t('topology.migration_partial') }}
             </span>
-            <div class="flex-item-expand"></div>
-            <n-button size="tiny" secondary :loading="loading" @click="load()">
-                <template #icon>
-                    <n-icon :component="Refresh" />
-                </template>
-                {{ $t('topology.refresh') }}
-            </n-button>
         </div>
 
         <div class="topology-alert" v-if="offlineCount > 0 || orphanCount > 0 || slotlessCount > 0">

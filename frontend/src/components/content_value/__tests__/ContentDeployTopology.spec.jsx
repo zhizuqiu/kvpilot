@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import { h } from 'vue'
 import { NConfigProvider } from 'naive-ui'
 import { createI18n } from 'vue-i18n'
 import zhCn from '@/langs/zh-cn.json'
@@ -22,19 +23,29 @@ const master = (addr, slots, extra = {}) => ({
 
 const replica = (addr, masterAddr, extra = {}) => ({ addr, role: 'replica', state: 'online', master: masterAddr, ...extra })
 
-const mountTopology = async () => {
+const mountTopology = async (initial = {}) => {
     window.$message = { warning: vi.fn(), error: vi.fn(), success: vi.fn(), info: vi.fn() }
     const i18n = createI18n({ legacy: false, locale: 'zh-cn', messages: { 'zh-cn': zhCn } })
-    const wrapper = mount(
-        {
-            render: () => (
-                <NConfigProvider>
-                    <ContentDeployTopology server="test-server" />
-                </NConfigProvider>
-            ),
+    // 用带 props 的宿主组件包裹，才能通过 setProps 触发 refreshToken 变化
+    const Harness = {
+        props: {
+            refreshToken: { type: Number, default: 0 },
+            pause: { type: Boolean, default: false },
         },
-        { global: { plugins: [i18n] } }
-    )
+        render() {
+            return h(NConfigProvider, null, () =>
+                h(ContentDeployTopology, {
+                    server: 'test-server',
+                    refreshToken: this.refreshToken,
+                    pause: this.pause,
+                })
+            )
+        },
+    }
+    const wrapper = mount(Harness, {
+        props: { refreshToken: 0, pause: false, ...initial },
+        global: { plugins: [i18n] },
+    })
     await flushPromises()
     return wrapper
 }
@@ -191,6 +202,45 @@ describe('ContentDeployTopology', () => {
         for (const card of cards) {
             expect(card.text()).not.toContain('槽位')
         }
+
+        wrapper.unmount()
+    })
+
+    it('不再提供独立刷新按钮，由外层状态页统一刷新', async () => {
+        api.Topology.mockResolvedValue(topology([master('m1', '0-5460')]))
+        const wrapper = await mountTopology()
+
+        const refreshButton = wrapper.findAll('button').find((b) => b.text().includes('刷新'))
+        expect(refreshButton).toBeUndefined()
+
+        wrapper.unmount()
+    })
+
+    it('外层刷新计数变化时重新拉取拓扑', async () => {
+        api.Topology.mockResolvedValue(topology([master('m1', '0-5460')]))
+        const wrapper = await mountTopology({ refreshToken: 0 })
+        expect(api.Topology).toHaveBeenCalledTimes(1)
+
+        await wrapper.setProps({ refreshToken: 1 })
+        await flushPromises()
+
+        expect(api.Topology).toHaveBeenCalledTimes(2)
+
+        wrapper.unmount()
+    })
+
+    it('页面暂停时不因外层刷新而拉取，恢复后自动补一次', async () => {
+        api.Topology.mockResolvedValue(topology([master('m1', '0-5460')]))
+        const wrapper = await mountTopology({ refreshToken: 0, pause: true })
+        const initial = api.Topology.mock.calls.length
+
+        await wrapper.setProps({ refreshToken: 1 })
+        await flushPromises()
+        expect(api.Topology.mock.calls.length).toBe(initial)
+
+        await wrapper.setProps({ pause: false })
+        await flushPromises()
+        expect(api.Topology.mock.calls.length).toBe(initial + 1)
 
         wrapper.unmount()
     })
