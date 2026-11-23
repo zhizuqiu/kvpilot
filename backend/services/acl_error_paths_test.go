@@ -177,3 +177,19 @@ func TestAclOverviewWithoutShards(t *testing.T) {
 		t.Fatal("失败时必须给出错误信息")
 	}
 }
+
+// 验证打开不存在的连接时返回错误而不是 panic：
+// 前端残留标签页、连接已被删除时会走到这里。
+func TestOpenConnectionWithUnknownName(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+
+	svc := &browserService{ctx: context.Background(), connMap: map[string]*connectionItem{}}
+	resp := svc.OpenConnection("kvpilot_missing_conn")
+
+	if resp.Success {
+		t.Fatal("连接不存在时不应返回成功")
+	}
+	if !strings.Contains(resp.Msg, "no match connection") {
+		t.Fatalf("错误信息应包含 no match connection, got %q", resp.Msg)
+	}
+}

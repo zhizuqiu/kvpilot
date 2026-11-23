@@ -97,6 +97,10 @@ func (b *browserService) Stop() {
 func (b *browserService) OpenConnection(name string) (resp types.JSResp) {
 	// get connection config
 	selConn := Connection().getConnection(name)
+	if selConn == nil {
+		resp.Msg = fmt.Sprintf("no match connection %q", name)
+		return
+	}
 	// correct last database index
 	lastDB := selConn.LastDB
 	if selConn.DBFilterType == "show" && !slices.Contains(selConn.DBFilterList, lastDB) {
@@ -278,7 +282,7 @@ func (b *browserService) createRedisClient(ctx context.Context, selConn types.Co
 
 	client, err = Connection().createRedisClient(selConn)
 	if err != nil {
-		err = fmt.Errorf("create conenction error: %s", err.Error())
+		err = fmt.Errorf("create connection error: %s", err.Error())
 		return
 	}
 

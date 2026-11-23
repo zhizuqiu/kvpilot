@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/url"
@@ -238,6 +239,22 @@ func (c *connectionService) buildOption(config types.ConnectionConfig) (*redis.O
 	return option, nil
 }
 
+// clusterDiscoveryTimeout 限制集群/哨兵拓扑发现的总耗时。
+// 不设上限时，seed 节点只接受连接但不响应会让前端一直卡在"正在打开连接"。
+var clusterDiscoveryTimeout = 5 * time.Second
+
+// newDiscoveryClient 返回用于拓扑发现的短超时客户端：
+// 降低单次拨号超时并关闭反复重试，保证坏节点能在有限时间内失败。
+func newDiscoveryClient(option *redis.Options) *redis.Client {
+	opt := *option
+	opt.MaxRetries = 1
+	if opt.DialTimeout <= 0 || opt.DialTimeout > 2*time.Second {
+		opt.DialTimeout = 2 * time.Second
+	}
+	opt.ContextTimeoutEnabled = true
+	return redis.NewClient(&opt)
+}
+
 func (c *connectionService) createRedisClient(config types.ConnectionConfig) (redis.UniversalClient, error) {
 	option, err := c.buildOption(config)
 	if err != nil {
@@ -245,14 +262,22 @@ func (c *connectionService) createRedisClient(config types.ConnectionConfig) (re
 	}
 
 	if config.Sentinel.Enable {
-		// get master address via sentinel node
-		sentinel := redis.NewSentinelClient(option)
+		// 哨兵查询同样要快速失败，否则哨兵不响应时连接会长时间卡住
+		sentinelOption := *option
+		sentinelOption.MaxRetries = 1
+		if sentinelOption.DialTimeout <= 0 || sentinelOption.DialTimeout > 2*time.Second {
+			sentinelOption.DialTimeout = 2 * time.Second
+		}
+		sentinelOption.ReadTimeout = 2 * time.Second
+		sentinelOption.ContextTimeoutEnabled = true
+		sentinel := redis.NewSentinelClient(&sentinelOption)
 		defer sentinel.Close()
 
-		var addr []string
-		addr, err = sentinel.GetMasterAddrByName(c.ctx, config.Sentinel.Master).Result()
+		ctx, cancel := context.WithTimeout(c.ctx, clusterDiscoveryTimeout)
+		addr, err := sentinel.GetMasterAddrByName(ctx, config.Sentinel.Master).Result()
+		cancel()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("sentinel get master fail: %w", err)
 		}
 		if len(addr) < 2 {
 			return nil, errors.New("cannot get master address")
@@ -274,9 +299,17 @@ func (c *connectionService) createRedisClient(config types.ConnectionConfig) (re
 	if config.Cluster.Enable {
 		defer rdb.Close()
 
-		// connect to cluster
-		var slots []redis.ClusterSlot
-		if slots, err = rdb.ClusterSlots(c.ctx).Result(); err == nil {
+		// 集群发现必须有超时：seed 不可达或无响应时直接失败，
+		// 避免前端长时间停在"正在打开连接"。
+		discovery := newDiscoveryClient(option)
+		defer discovery.Close()
+		ctx, cancel := context.WithTimeout(c.ctx, clusterDiscoveryTimeout)
+		slots, err := discovery.ClusterSlots(ctx).Result()
+		cancel()
+		if err != nil {
+			return nil, fmt.Errorf("cluster discovery fail: %w", err)
+		}
+		{
 			clusterOptions := &redis.ClusterOptions{
 				//NewClient:             nil,
 				//MaxRedirects:          0,
@@ -317,8 +350,6 @@ func (c *connectionService) createRedisClient(config types.ConnectionConfig) (re
 			clusterOptions.Addrs = addrs
 			clusterClient := redis.NewClusterClient(clusterOptions)
 			return clusterClient, nil
-		} else {
-			return nil, err
 		}
 	}
 
