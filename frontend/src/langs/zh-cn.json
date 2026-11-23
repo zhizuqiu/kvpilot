@@ -498,7 +498,13 @@
     "slots": "槽位",
     "master_node": "主节点",
     "refresh": "刷新",
-    "empty": "暂无拓扑信息"
+    "empty": "暂无拓扑信息",
+    "faulty_offline": "{n} 个离线节点",
+    "faulty_orphan": "{n} 个从节点失去主节点",
+    "migrating": "迁移中",
+    "faulty_slotless": "{n} 个主节点未分配槽位",
+    "migration_partial": "迁移状态可能不完整",
+    "migration_partial_hint": "主节点数量超过合并上限，当前仅展示单个节点的视图"
   },
   "acl": {
     "whoami": "当前连接用户",

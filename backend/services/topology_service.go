@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"tinyrdm/backend/types"
 
@@ -33,6 +34,9 @@ type topologyData struct {
 	Self    string         `json:"self,omitempty"`
 	Version string         `json:"version,omitempty"`
 	Nodes   []topologyNode `json:"nodes"`
+	// Merged 表示拓扑是否由全部分片视图合并而来；
+	// 为 false 时迁移/导入状态可能不完整（分片过多或取数失败）。
+	Merged bool `json:"merged"`
 }
 
 // Topology 返回当前连接的部署拓扑：单机、主从、哨兵或集群。
@@ -67,7 +71,9 @@ func (b *browserService) Topology(name string) (resp types.JSResp) {
 			// ClusterClient 会把命令随机路由到某个节点，因此以用户连接的地址作为「当前节点」
 			data.Self = net.JoinHostPort(conn.Addr, strconv.Itoa(conn.Port))
 		}
-		data.Nodes = b.clusterTopology(ctx, client, data.Self)
+		nodes, merged := b.clusterTopology(ctx, client, data.Self)
+		data.Nodes = nodes
+		data.Merged = merged
 	case conn != nil && conn.Sentinel.Enable:
 		data.Mode = "sentinel"
 		data.Nodes = b.sentinelTopology(conn, info, data.Self)
@@ -285,17 +291,125 @@ func (b *browserService) sentinelTopology(conn *types.Connection, info map[strin
 	return nodes
 }
 
-// clusterTopology 解析 CLUSTER NODES 输出，得到集群各节点与槽位归属。
-func (b *browserService) clusterTopology(ctx context.Context, client redis.UniversalClient, selfAddr string) []topologyNode {
-	text, err := client.Do(ctx, "CLUSTER", "NODES").Text()
-	if err != nil {
-		return nil
+// clusterMergeShardLimit 是允许"逐分片合并"的主分片数上限。
+// 超过后每次都要向几十个节点请求，代价不划算，退回单节点视图并在界面标注。
+const clusterMergeShardLimit = 16
+
+// shouldMergeClusterShards 判断当前分片数是否值得逐分片合并。
+func shouldMergeClusterShards(shardCount int) bool {
+	return shardCount > 0 && shardCount <= clusterMergeShardLimit
+}
+
+// clusterView 是某个节点上报的 CLUSTER NODES 原文。
+type clusterView struct {
+	Addr string
+	Text string
+}
+
+// clusterTopology 返回集群各节点与槽位归属。
+// 默认向每个主分片各取一份 CLUSTER NODES 再合并：迁移/导入标记只存在于
+// 相关节点自身的视图里，单节点随机视图会丢失这些状态。
+// 分片数超过上限时退回单节点视图，并通过第二个返回值告知调用方"未合并"。
+func (b *browserService) clusterTopology(ctx context.Context, client redis.UniversalClient, selfAddr string) ([]topologyNode, bool) {
+	cc, ok := client.(*redis.ClusterClient)
+	if !ok {
+		text, err := client.Do(ctx, "CLUSTER", "NODES").Text()
+		if err != nil {
+			return nil, false
+		}
+		return parseClusterNodes(text, selfAddr), false
 	}
-	return parseClusterNodes(text, selfAddr)
+
+	// 先用 CLUSTER SLOTS 估算分片数量，大集群不做逐分片合并
+	slots, err := cc.ClusterSlots(ctx).Result()
+	if err != nil {
+		return nil, false
+	}
+	if !shouldMergeClusterShards(len(slots)) {
+		text, err := cc.Do(ctx, "CLUSTER", "NODES").Text()
+		if err != nil {
+			return nil, false
+		}
+		return parseClusterNodes(text, selfAddr), false
+	}
+
+	// ForEachShard 并发执行，收集结果必须加锁
+	var mu sync.Mutex
+	views := make([]clusterView, 0, len(slots))
+	_ = cc.ForEachShard(ctx, func(ctx context.Context, shard *redis.Client) error {
+		text, err := shard.Do(ctx, "CLUSTER", "NODES").Text()
+		if err != nil {
+			return nil
+		}
+		mu.Lock()
+		views = append(views, clusterView{Addr: shard.Options().Addr, Text: text})
+		mu.Unlock()
+		return nil
+	})
+	if len(views) == 0 {
+		return nil, false
+	}
+	return mergeClusterViews(views, selfAddr), true
+}
+
+// mergeClusterViews 合并多个节点上报的 CLUSTER NODES 视图：
+// 节点自身视图优先（状态更可信），槽位标记取并集（迁移/导入标记可能只在部分视图里）。
+func mergeClusterViews(views []clusterView, selfAddr string) []topologyNode {
+	type merged struct {
+		base    topologyNode
+		ranges  []string
+		markers []string
+		seen    map[string]bool
+	}
+
+	order := make([]string, 0, len(views)*3)
+	byID := map[string]*merged{}
+
+	for _, view := range views {
+		for _, node := range parseClusterNodesRaw(view.Text, selfAddr) {
+			item, ok := byID[node.ID]
+			if !ok {
+				item = &merged{base: node, seen: map[string]bool{}}
+				byID[node.ID] = item
+				order = append(order, node.ID)
+			}
+			// 节点自己上报的视图优先，避免用其他节点的推测状态覆盖
+			if view.Addr == node.Addr {
+				item.base = node
+			}
+			for _, token := range strings.Fields(node.Slots) {
+				if item.seen[token] {
+					continue
+				}
+				item.seen[token] = true
+				if strings.HasPrefix(token, "[") {
+					item.markers = append(item.markers, token)
+				} else {
+					item.ranges = append(item.ranges, token)
+				}
+			}
+		}
+	}
+
+	nodes := make([]topologyNode, 0, len(order))
+	for _, id := range order {
+		item := byID[id]
+		tokens := append(append([]string{}, item.ranges...), item.markers...)
+		node := item.base
+		node.Slots = strings.Join(tokens, " ")
+		node.SlotStart = firstSlot(node.Slots)
+		nodes = append(nodes, node)
+	}
+	return finalizeClusterNodes(nodes)
 }
 
 // parseClusterNodes 把 CLUSTER NODES 的文本结果转成拓扑节点，并排成稳定顺序。
 func parseClusterNodes(text, selfAddr string) []topologyNode {
+	return finalizeClusterNodes(parseClusterNodesRaw(text, selfAddr))
+}
+
+// parseClusterNodesRaw 只做解析，不做 master ID 转换与排序，供多视图合并后统一收尾。
+func parseClusterNodesRaw(text, selfAddr string) []topologyNode {
 	nodes := []topologyNode{}
 	for _, line := range strings.Split(text, "\n") {
 		line = strings.TrimSpace(line)
@@ -343,6 +457,11 @@ func parseClusterNodes(text, selfAddr string) []topologyNode {
 		nodes = append(nodes, node)
 	}
 
+	return nodes
+}
+
+// finalizeClusterNodes 把 master ID 转成地址，并排成稳定顺序。
+func finalizeClusterNodes(nodes []topologyNode) []topologyNode {
 	// CLUSTER NODES 里的 master 字段是节点 ID，转成地址更直观
 	idToAddr := map[string]string{}
 	for _, n := range nodes {
@@ -356,7 +475,11 @@ func parseClusterNodes(text, selfAddr string) []topologyNode {
 		}
 	}
 
-	// 固定顺序：主节点按首槽位升序，从节点跟随其主节点之后再按地址排序。
+	// 固定顺序：先健康节点（主节点按首槽位升序，从节点跟随其主节点），
+	// 故障节点（fail/noaddr/无槽位主节点）统一置尾，避免占用健康节点的阅读位置。
+	faulty := func(n topologyNode) bool {
+		return n.State == "down" || (n.Role == "master" && strings.TrimSpace(n.Slots) == "")
+	}
 	slotOf := map[string]int{}
 	for _, n := range nodes {
 		if n.Role == "master" {
@@ -365,6 +488,12 @@ func parseClusterNodes(text, selfAddr string) []topologyNode {
 	}
 	sort.SliceStable(nodes, func(i, j int) bool {
 		a, b := nodes[i], nodes[j]
+		if faulty(a) != faulty(b) {
+			return !faulty(a)
+		}
+		if faulty(a) {
+			return a.Addr < b.Addr
+		}
 		if (a.Role == "master") != (b.Role == "master") {
 			return a.Role == "master"
 		}

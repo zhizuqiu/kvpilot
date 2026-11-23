@@ -223,6 +223,36 @@ func TestParseClusterNodesSkipsMalformedLine(t *testing.T) {
 	}
 }
 
+// 验证故障节点（fail/noaddr/无槽位主节点）统一排到末尾，
+// 避免宕机节点因为没有槽位被排到健康主节点中间，干扰主节点顺序阅读。
+func TestParseClusterNodesSortsFaultyLast(t *testing.T) {
+	text := "aaa 192.168.1.118:16371@26371 master - 0 1 2 connected 5461-10922\n" +
+		"bbb 192.168.1.118:16372@26372 master,fail - 0 1 3 disconnected 10923-16383\n" +
+		"ccc 192.168.1.118:16370@26370 myself,master - 0 1 1 connected 0-5460\n" +
+		"ddd 192.168.1.118:16373@26373 slave ccc 0 1 4 connected\n"
+
+	nodes := parseClusterNodes(text, "192.168.1.118:16370")
+
+	got := make([]string, 0, len(nodes))
+	for _, n := range nodes {
+		got = append(got, n.Addr)
+	}
+	want := []string{
+		"192.168.1.118:16370", // 健康主节点，按槽位升序
+		"192.168.1.118:16371",
+		"192.168.1.118:16373", // 健康从节点
+		"192.168.1.118:16372", // 故障主节点置尾
+	}
+	if len(got) != len(want) {
+		t.Fatalf("节点数 = %d, want %d: %v", len(got), len(want), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("排序结果 = %v, want %v", got, want)
+		}
+	}
+}
+
 // 验证槽位串的首槽位提取，包括单槽位与空串。
 func TestFirstSlot(t *testing.T) {
 	cases := []struct {
@@ -304,5 +334,88 @@ func TestHasNode(t *testing.T) {
 	}
 	if hasNode(nodes, "192.168.1.118:16391") {
 		t.Fatal("不存在的地址应返回 false")
+	}
+}
+
+// 验证多视图合并：迁移标记只在其中一个节点的视图里时，合并后仍保留，
+// 且槽位区间不会因为重复上报而重复出现。
+func TestMergeClusterViewsUnionsMarkers(t *testing.T) {
+	fromA := "aaa 192.168.1.118:16370@26370 myself,master - 0 1 1 connected 0-2729 [100->-bbb]\n" +
+		"bbb 192.168.1.118:16371@26371 master - 0 1 2 connected 2730-5460\n"
+	fromB := "aaa 192.168.1.118:16370@26370 master - 0 1 1 connected 0-2729\n" +
+		"bbb 192.168.1.118:16371@26371 myself,master - 0 1 2 connected 2730-5460\n"
+
+	nodes := mergeClusterViews([]clusterView{
+		{Addr: "192.168.1.118:16370", Text: fromA},
+		{Addr: "192.168.1.118:16371", Text: fromB},
+	}, "192.168.1.118:16370")
+
+	if len(nodes) != 2 {
+		t.Fatalf("节点数 = %d, want 2", len(nodes))
+	}
+	if nodes[0].Addr != "192.168.1.118:16370" || nodes[1].Addr != "192.168.1.118:16371" {
+		t.Fatalf("排序结果不正确: %+v", nodes)
+	}
+	if nodes[0].Slots != "0-2729 [100->-bbb]" {
+		t.Fatalf("槽位与标记未正确合并: %q", nodes[0].Slots)
+	}
+	if strings.Count(nodes[0].Slots, "0-2729") != 1 {
+		t.Fatalf("槽位区间重复: %q", nodes[0].Slots)
+	}
+	if nodes[0].SlotStart != 0 || nodes[1].SlotStart != 2730 {
+		t.Fatalf("首槽位计算不正确: %d %d", nodes[0].SlotStart, nodes[1].SlotStart)
+	}
+	if !nodes[0].Self {
+		t.Fatal("自身节点标记丢失")
+	}
+}
+
+// 验证合并时以节点自身的视图为准：其他节点的陈旧视图不能把在线节点标成离线。
+func TestMergeClusterViewsPrefersSelfView(t *testing.T) {
+	selfView := "aaa 192.168.1.118:16370@26370 myself,master - 0 1 1 connected 0-2729\n"
+	staleView := "aaa 192.168.1.118:16370@26370 master,fail - 0 1 1 disconnected 0-2729\n"
+
+	nodes := mergeClusterViews([]clusterView{
+		{Addr: "192.168.1.118:16371", Text: staleView},
+		{Addr: "192.168.1.118:16370", Text: selfView},
+	}, "192.168.1.118:16370")
+
+	if len(nodes) != 1 {
+		t.Fatalf("节点数 = %d, want 1", len(nodes))
+	}
+	if nodes[0].State != "online" {
+		t.Fatalf("应优先采用自身视图的 online 状态, got %q", nodes[0].State)
+	}
+}
+
+// 验证同一标记在多个视图里重复上报时只保留一份。
+func TestMergeClusterViewsDeduplicatesMarkers(t *testing.T) {
+	text := "aaa 192.168.1.118:16370@26370 myself,master - 0 1 1 connected 0-100 [5->-bbb]\n"
+	nodes := mergeClusterViews([]clusterView{
+		{Addr: "192.168.1.118:16370", Text: text},
+		{Addr: "192.168.1.118:16371", Text: text},
+	}, "192.168.1.118:16370")
+
+	if len(nodes) != 1 {
+		t.Fatalf("节点数 = %d, want 1", len(nodes))
+	}
+	if strings.Count(nodes[0].Slots, "[5->-bbb]") != 1 {
+		t.Fatalf("标记应去重: %q", nodes[0].Slots)
+	}
+}
+
+// 验证合并阈值：分片过多时退回单节点视图，避免每 5 秒向几十个节点发起请求。
+func TestShouldMergeClusterShards(t *testing.T) {
+	cases := map[int]bool{
+		0:                          false,
+		1:                          true,
+		clusterMergeShardLimit:     true,
+		clusterMergeShardLimit + 1: false,
+		30:                         false,
+	}
+	for count, want := range cases {
+		if got := shouldMergeClusterShards(count); got != want {
+			t.Fatalf("shouldMergeClusterShards(%d) = %v, want %v", count, got, want)
+		}
 	}
 }

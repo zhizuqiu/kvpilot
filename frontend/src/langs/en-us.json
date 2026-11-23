@@ -498,7 +498,13 @@
     "slots": "slots",
     "master_node": "master",
     "refresh": "Refresh",
-    "empty": "No topology information"
+    "empty": "No topology information",
+    "faulty_offline": "{n} offline node(s)",
+    "faulty_orphan": "{n} replica(s) lost their master",
+    "migrating": "Migrating",
+    "faulty_slotless": "{n} master(s) without slots",
+    "migration_partial": "Migration state may be incomplete",
+    "migration_partial_hint": "Master count exceeds the merge limit; showing a single node view"
   },
   "acl": {
     "whoami": "Connected as",
