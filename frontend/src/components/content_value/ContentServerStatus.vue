@@ -30,6 +30,7 @@ import { useI18n } from 'vue-i18n'
 import useConnectionStore from 'stores/connections.js'
 import ContentDeployTopology from '@/components/content_value/ContentDeployTopology.vue'
 import { toHumanReadable } from '@/utils/date.js'
+import { SaveSnapshot } from 'wailsjs/go/services/browserService.js'
 
 const props = defineProps({
     server: String,
@@ -517,6 +518,33 @@ const byteChartOption = computed(() => {
     }
 })
 
+const savingSnapshot = ref(false)
+const saveSnapshot = () => {
+    if (savingSnapshot.value) return
+    $dialog.warning(i18n.t('status.snapshot_confirm'), async () => {
+        savingSnapshot.value = true
+        try {
+            const { success, data, msg } = await SaveSnapshot(props.server)
+            if (!success) {
+                $message.error(msg || i18n.t('status.snapshot_fail'))
+                return
+            }
+            const saved = data?.saved || 0
+            const failed = data?.failed || 0
+            if (failed > 0) {
+                const first = (data?.nodes || []).find((node) => node.status !== 'ok')
+                $message.warning(
+                    i18n.t('status.snapshot_partial', { ok: saved, total: saved + failed, msg: first?.msg || '' })
+                )
+            } else {
+                $message.success(i18n.t('status.snapshot_done', { n: saved }))
+            }
+        } finally {
+            savingSnapshot.value = false
+        }
+    })
+}
+
 const clientInfo = reactive({
     loading: false,
     content: [],
@@ -632,6 +660,10 @@ const clientTableColumns = computed(() => {
                 </n-space>
             </template>
             <template #header-extra>
+                <n-space :size="8" align="center">
+                <n-button :loading="savingSnapshot" size="small" secondary @click="saveSnapshot">
+                    {{ $t('status.snapshot') }}
+                </n-button>
                 <n-popover keep-alive-on-hover placement="bottom-end" trigger="hover">
                     <template #trigger>
                         <n-button
@@ -660,6 +692,7 @@ const clientTableColumns = computed(() => {
                         :loading="pageState.autoLoading"
                         @toggle="onToggleRefresh" />
                 </n-popover>
+                </n-space>
             </template>
             <n-grid style="min-width: 500px" x-gap="5">
                 <n-gi :span="6">

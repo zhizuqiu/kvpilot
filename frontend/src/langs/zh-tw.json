@@ -164,7 +164,8 @@
       "acl": "ACL 管理",
       "config": "配置管理",
       "session": "會話",
-      "analysis": "分析"
+      "analysis": "分析",
+      "health": "巡檢"
     }
   },
   "ribbon": {
@@ -449,7 +450,12 @@
       "idle": "空閒時長(秒)",
       "db": "資料庫"
     },
-    "deploy_topology": "部署拓撲"
+    "deploy_topology": "部署拓撲",
+    "snapshot": "儲存 RDB",
+    "snapshot_confirm": "將對主節點執行 BGSAVE，服務端會寫入 RDB 檔案。繼續嗎？",
+    "snapshot_done": "已在 {n} 個節點完成儲存",
+    "snapshot_partial": "已儲存 {ok}/{total} 個節點：{msg}",
+    "snapshot_fail": "儲存 RDB 失敗"
   },
   "slog": {
     "title": "慢日誌",
@@ -458,7 +464,11 @@
     "exec_time": "執行時間",
     "client": "客戶端",
     "cmd": "命令",
-    "cost_time": "耗時"
+    "cost_time": "耗時",
+    "clean": "清空慢日誌",
+    "clean_confirm": "確定清空所有節點的慢日誌嗎？此操作無法復原。",
+    "cleaned": "已清空 {n} 個節點的慢日誌",
+    "clean_fail": "清空慢日誌失敗"
   },
   "monitor": {
     "title": "監控命令",
@@ -707,5 +717,75 @@
     "exported": "已匯出 {n} 條",
     "export_fail": "匯出失敗",
     "load_fail": "鍵空間統計失敗"
+  },
+  "health": {
+    "title": "巡檢",
+    "run": "執行巡檢",
+    "unavailable": "{n} 個節點未回應",
+    "elapsed": "耗時 {s}s",
+    "filter_issues": "僅異常項",
+    "filter_error": "僅錯誤",
+    "filter_all": "全部結果",
+    "col_severity": "級別",
+    "col_rule": "規則",
+    "col_detail": "詳情",
+    "col_node": "節點",
+    "col_action": "操作",
+    "jump": "查看",
+    "export": "匯出 CSV",
+    "exported": "已匯出 {n} 條",
+    "export_fail": "匯出失敗",
+    "load_fail": "巡檢失敗",
+    "empty": "目前篩選下沒有結果",
+    "counts": {
+      "error": "錯誤 {n}",
+      "warn": "告警 {n}",
+      "ok": "通過 {n}"
+    },
+    "severity": {
+      "error": "錯誤",
+      "warn": "告警",
+      "ok": "通過"
+    },
+    "rule": {
+      "fragmentation": "記憶體碎片率",
+      "maxmemory": "記憶體上限",
+      "policy": "淘汰策略",
+      "evicted": "已淘汰鍵",
+      "persistence": "持久化狀態",
+      "replication": "複製鏈路",
+      "blocked": "阻塞用戶端",
+      "slowlog": "慢日誌",
+      "auth": "認證設定",
+      "persistence_config": "持久化設定",
+      "cluster": "叢集狀態"
+    },
+    "suggest": {
+      "fragmentation": "關注記憶體成長與碎片來源，必要時重啟或調整配置",
+      "maxmemory": "提高 maxmemory 或清理冷資料，避免觸及上限",
+      "policy": "noeviction 下寫滿會報錯，考慮設定淘汰策略",
+      "evicted": "存在鍵被淘汰，檢查容量與 TTL 策略",
+      "persistence": "檢查 RDB / AOF 落盤失敗原因",
+      "replication": "檢查主從網路與複製延遲",
+      "blocked": "關注阻塞指令與用戶端併發",
+      "slowlog": "慢日誌被關閉，建議設定合理閾值",
+      "auth": "未設定密碼，建議啟用 requirepass 與 protected-mode",
+      "persistence_config": "RDB 與 AOF 均未開啟，重啟會遺失資料",
+      "cluster": "叢集狀態異常，檢查節點與槽位覆蓋"
+    },
+    "detail": {
+      "fragmentation": "碎片率 {ratio}",
+      "maxmemory": "{used} / {max}（{percent}%）",
+      "maxmemory_unset": "未設定上限，目前使用 {used}",
+      "policy": "淘汰策略為 {policy}",
+      "evicted": "已淘汰 {count} 個鍵",
+      "persistence": "RDB {rdb}，AOF {aof}",
+      "replication": "角色 {role}，鏈路 {link}，延遲 {lag}s，從節點 {slaves}",
+      "blocked": "{count} 個阻塞用戶端",
+      "slowlog": "slowlog-log-slower-than 為 {threshold}",
+      "auth": "protected-mode {protected}，密碼 {password}",
+      "persistence_config": "save {save}，appendonly {appendonly}",
+      "cluster": "叢集狀態 {state}"
+    }
   }
 }

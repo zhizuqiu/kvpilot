@@ -369,6 +369,18 @@ export function ExportCSV(path, header, rows) {
     return post('/browser/export-csv', { path, header, rows })
 }
 
+export function CleanSlowLogs(server) {
+    return post('/browser/clean-slow-logs', { server })
+}
+
+export function SaveSnapshot(server) {
+    return post('/browser/save-snapshot', { server })
+}
+
+export function CheckHealth(server) {
+    return post('/browser/check-health', { server })
+}
+
 export function GetCmdHistory() {
     return post('/browser/get-cmd-history')
 }

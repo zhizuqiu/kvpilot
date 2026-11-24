@@ -8,6 +8,7 @@ import dayjs from 'dayjs'
 import useBrowserStore from 'stores/browser.js'
 import { timeout } from '@/utils/promise.js'
 import AutoRefreshForm from '@/components/common/AutoRefreshForm.vue'
+import { CleanSlowLogs } from 'wailsjs/go/services/browserService.js'
 
 const themeVars = useThemeVars()
 
@@ -170,6 +171,25 @@ const onToggleRefresh = (on) => {
 const onListLimitChanged = (limit) => {
     loadSlowLog()
 }
+
+const clearing = ref(false)
+const cleanSlowLog = () => {
+    if (clearing.value) return
+    $dialog.warning(i18n.t('slog.clean_confirm'), async () => {
+        clearing.value = true
+        try {
+            const { success, data, msg } = await CleanSlowLogs(props.server)
+            if (!success) {
+                $message.error(msg || i18n.t('slog.clean_fail'))
+                return
+            }
+            $message.success(i18n.t('slog.cleaned', { n: data?.reset || 0 }))
+            loadSlowLog()
+        } finally {
+            clearing.value = false
+        }
+    })
+}
 </script>
 
 <template>
@@ -207,6 +227,11 @@ const onListLimitChanged = (limit) => {
                         :loading="data.loading"
                         @toggle="onToggleRefresh" />
                 </n-popover>
+            </n-form-item>
+            <n-form-item label="&nbsp;">
+                <n-button :loading="clearing" size="small" secondary @click="cleanSlowLog">
+                    {{ $t('slog.clean') }}
+                </n-button>
             </n-form-item>
         </n-form>
         <n-data-table

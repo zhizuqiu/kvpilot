@@ -25,6 +25,8 @@ import SessionIcon from '@/components/icons/Session.vue'
 import ContentSession from '@/components/content_value/ContentSession.vue'
 import AnalysisIcon from '@/components/icons/Analysis.vue'
 import ContentAnalysis from '@/components/content_value/ContentAnalysis.vue'
+import HealthIcon from '@/components/icons/Health.vue'
+import ContentHealth from '@/components/content_value/ContentHealth.vue'
 
 const themeVars = useThemeVars()
 
@@ -169,6 +171,24 @@ watch(
                 </template>
                 <content-analysis
                     :pause="selectedSubTab !== BrowserTabType.Analysis.toString()"
+                    :server="props.server" />
+            </n-tab-pane>
+
+            <!-- health pane -->
+            <n-tab-pane :name="BrowserTabType.Health.toString()" display-directive="show:lazy">
+                <template #tab>
+                    <n-space :size="5" :wrap-item="false" align="center" inline justify="center">
+                        <n-icon size="16">
+                            <health-icon
+                                :inverse="selectedSubTab === BrowserTabType.Health.toString()"
+                                :stroke-color="themeVars.tabColor"
+                                stroke-width="4" />
+                        </n-icon>
+                        <span>{{ $t('interface.sub_tab.health') }}</span>
+                    </n-space>
+                </template>
+                <content-health
+                    :pause="selectedSubTab !== BrowserTabType.Health.toString()"
                     :server="props.server" />
             </n-tab-pane>
 

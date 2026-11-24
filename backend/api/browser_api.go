@@ -650,6 +650,39 @@ func registerBrowserRoutes(rg *gin.RouterGroup) {
 		c.JSON(http.StatusOK, services.Browser().ExportCSV(req.Path, req.Header, req.Rows))
 	})
 
+	g.POST("/clean-slow-logs", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().CleanSlowLogs(req.Server))
+	})
+
+	g.POST("/save-snapshot", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().SaveSnapshot(req.Server))
+	})
+
+	g.POST("/check-health", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().CheckHealth(req.Server))
+	})
+
 	g.POST("/get-cmd-history", func(c *gin.Context) {
 		var req struct {
 			PageNo   int `json:"pageNo"`

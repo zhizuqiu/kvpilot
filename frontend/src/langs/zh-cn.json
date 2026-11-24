@@ -164,7 +164,8 @@
       "acl": "ACL 管理",
       "config": "配置管理",
       "session": "会话",
-      "analysis": "分析"
+      "analysis": "分析",
+      "health": "巡检"
     }
   },
   "ribbon": {
@@ -449,7 +450,12 @@
       "idle": "空闲时长(秒)",
       "db": "数据库"
     },
-    "deploy_topology": "部署拓扑"
+    "deploy_topology": "部署拓扑",
+    "snapshot": "保存 RDB",
+    "snapshot_confirm": "将对主节点执行 BGSAVE，服务端会写入 RDB 文件。继续吗？",
+    "snapshot_done": "已在 {n} 个节点完成保存",
+    "snapshot_partial": "已保存 {ok}/{total} 个节点：{msg}",
+    "snapshot_fail": "保存 RDB 失败"
   },
   "slog": {
     "title": "慢日志",
@@ -458,7 +464,11 @@
     "exec_time": "执行时间",
     "client": "客户端",
     "cmd": "命令",
-    "cost_time": "耗时"
+    "cost_time": "耗时",
+    "clean": "清空慢日志",
+    "clean_confirm": "确定清空所有节点的慢日志吗？该操作不可恢复。",
+    "cleaned": "已清空 {n} 个节点的慢日志",
+    "clean_fail": "清空慢日志失败"
   },
   "monitor": {
     "title": "监控命令",
@@ -707,5 +717,75 @@
     "exported": "已导出 {n} 条",
     "export_fail": "导出失败",
     "load_fail": "键空间统计失败"
+  },
+  "health": {
+    "title": "巡检",
+    "run": "运行巡检",
+    "unavailable": "{n} 个节点未响应",
+    "elapsed": "耗时 {s}s",
+    "filter_issues": "仅异常项",
+    "filter_error": "仅错误",
+    "filter_all": "全部结果",
+    "col_severity": "级别",
+    "col_rule": "规则",
+    "col_detail": "详情",
+    "col_node": "节点",
+    "col_action": "操作",
+    "jump": "查看",
+    "export": "导出 CSV",
+    "exported": "已导出 {n} 条",
+    "export_fail": "导出失败",
+    "load_fail": "巡检失败",
+    "empty": "当前筛选下没有结果",
+    "counts": {
+      "error": "错误 {n}",
+      "warn": "告警 {n}",
+      "ok": "通过 {n}"
+    },
+    "severity": {
+      "error": "错误",
+      "warn": "告警",
+      "ok": "通过"
+    },
+    "rule": {
+      "fragmentation": "内存碎片率",
+      "maxmemory": "内存上限",
+      "policy": "淘汰策略",
+      "evicted": "已淘汰键",
+      "persistence": "持久化状态",
+      "replication": "复制链路",
+      "blocked": "阻塞客户端",
+      "slowlog": "慢日志",
+      "auth": "认证配置",
+      "persistence_config": "持久化配置",
+      "cluster": "集群状态"
+    },
+    "suggest": {
+      "fragmentation": "关注内存增长与碎片来源，必要时重启或调整分配器",
+      "maxmemory": "提高 maxmemory 或清理冷数据，避免触及上限",
+      "policy": "noeviction 下写满会报错，考虑设置淘汰策略",
+      "evicted": "存在键被淘汰，检查容量与 TTL 策略",
+      "persistence": "检查 RDB / AOF 落盘失败原因",
+      "replication": "检查主从网络与复制延迟",
+      "blocked": "关注阻塞命令与客户端并发",
+      "slowlog": "慢日志被关闭，建议设置合理阈值",
+      "auth": "未设置密码，建议启用 requirepass 与 protected-mode",
+      "persistence_config": "RDB 与 AOF 均未开启，重启会丢数据",
+      "cluster": "集群状态异常，检查节点与槽位覆盖"
+    },
+    "detail": {
+      "fragmentation": "碎片率 {ratio}",
+      "maxmemory": "{used} / {max}（{percent}%）",
+      "maxmemory_unset": "未设置上限，当前使用 {used}",
+      "policy": "淘汰策略为 {policy}",
+      "evicted": "已淘汰 {count} 个键",
+      "persistence": "RDB {rdb}，AOF {aof}",
+      "replication": "角色 {role}，链路 {link}，延迟 {lag}s，从节点 {slaves}",
+      "blocked": "{count} 个阻塞客户端",
+      "slowlog": "slowlog-log-slower-than 为 {threshold}",
+      "auth": "protected-mode {protected}，密码 {password}",
+      "persistence_config": "save {save}，appendonly {appendonly}",
+      "cluster": "集群状态 {state}"
+    }
   }
 }

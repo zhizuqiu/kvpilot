@@ -164,7 +164,8 @@
       "acl": "ACL",
       "config": "Configuration",
       "session": "Sessions",
-      "analysis": "Analysis"
+      "analysis": "Analysis",
+      "health": "Health"
     }
   },
   "ribbon": {
@@ -449,7 +450,12 @@
       "idle": "Idle (sec)",
       "db": "Database"
     },
-    "deploy_topology": "Deployment Topology"
+    "deploy_topology": "Deployment Topology",
+    "snapshot": "Save RDB",
+    "snapshot_confirm": "Run BGSAVE on the primary nodes? RDB files will be written on the server.",
+    "snapshot_done": "RDB saved on {n} node(s)",
+    "snapshot_partial": "Saved on {ok}/{total} node(s): {msg}",
+    "snapshot_fail": "Failed to save RDB"
   },
   "slog": {
     "title": "Slow Log",
@@ -458,7 +464,11 @@
     "exec_time": "Time",
     "client": "Client",
     "cmd": "Command",
-    "cost_time": "Cost"
+    "cost_time": "Cost",
+    "clean": "Clear slow log",
+    "clean_confirm": "Clear slow logs on all nodes? This cannot be undone.",
+    "cleaned": "Slow logs cleared on {n} node(s)",
+    "clean_fail": "Failed to clear slow logs"
   },
   "monitor": {
     "title": "Monitor Commands",
@@ -707,5 +717,75 @@
     "exported": "Exported {n} rows",
     "export_fail": "Export failed",
     "load_fail": "Failed to collect keyspace stats"
+  },
+  "health": {
+    "title": "Health check",
+    "run": "Run check",
+    "unavailable": "{n} node(s) unreachable",
+    "elapsed": "{s}s",
+    "filter_issues": "Problems only",
+    "filter_error": "Errors only",
+    "filter_all": "All results",
+    "col_severity": "Severity",
+    "col_rule": "Rule",
+    "col_detail": "Detail",
+    "col_node": "Node",
+    "col_action": "Actions",
+    "jump": "Open",
+    "export": "Export CSV",
+    "exported": "Exported {n} rows",
+    "export_fail": "Export failed",
+    "load_fail": "Health check failed",
+    "empty": "No results for the current filter",
+    "counts": {
+      "error": "{n} errors",
+      "warn": "{n} warnings",
+      "ok": "{n} passed"
+    },
+    "severity": {
+      "error": "Error",
+      "warn": "Warning",
+      "ok": "Passed"
+    },
+    "rule": {
+      "fragmentation": "Memory fragmentation",
+      "maxmemory": "Memory limit",
+      "policy": "Eviction policy",
+      "evicted": "Evicted keys",
+      "persistence": "Persistence status",
+      "replication": "Replication",
+      "blocked": "Blocked clients",
+      "slowlog": "Slow log",
+      "auth": "Authentication",
+      "persistence_config": "Persistence config",
+      "cluster": "Cluster state"
+    },
+    "suggest": {
+      "fragmentation": "Watch memory growth and fragmentation; restart or tune the allocator when needed",
+      "maxmemory": "Raise maxmemory or evict cold data before reaching the limit",
+      "policy": "Writes fail at the limit with noeviction; consider an eviction policy",
+      "evicted": "Keys are being evicted; review capacity and TTL policies",
+      "persistence": "Check why RDB or AOF writes failed",
+      "replication": "Check the replication link and lag between nodes",
+      "blocked": "Review blocking commands and client concurrency",
+      "slowlog": "Slow log is disabled; set a reasonable threshold",
+      "auth": "No password is set; enable requirepass and protected-mode",
+      "persistence_config": "Neither RDB nor AOF is enabled; data is lost on restart",
+      "cluster": "Cluster state is abnormal; check nodes and slot coverage"
+    },
+    "detail": {
+      "fragmentation": "fragmentation ratio {ratio}",
+      "maxmemory": "{used} / {max} ({percent}%)",
+      "maxmemory_unset": "no limit set, using {used}",
+      "policy": "maxmemory-policy is {policy}",
+      "evicted": "{count} keys evicted",
+      "persistence": "RDB {rdb}, AOF {aof}",
+      "replication": "role {role}, link {link}, lag {lag}s, replicas {slaves}",
+      "blocked": "{count} blocked clients",
+      "slowlog": "slowlog-log-slower-than is {threshold}",
+      "auth": "protected-mode {protected}, password {password}",
+      "persistence_config": "save {save}, appendonly {appendonly}",
+      "cluster": "cluster_state is {state}"
+    }
   }
 }
