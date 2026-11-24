@@ -21,6 +21,8 @@ import ContentConfig from '@/components/content_value/ContentConfig.vue'
 import Subscribe from '@/components/icons/Subscribe.vue'
 import Acl from '@/components/icons/Acl.vue'
 import ConfigTabIcon from '@/components/icons/ConfigTab.vue'
+import SessionIcon from '@/components/icons/Session.vue'
+import ContentSession from '@/components/content_value/ContentSession.vue'
 
 const themeVars = useThemeVars()
 
@@ -129,6 +131,24 @@ watch(
                 </template>
                 <content-server-status
                     :pause="selectedSubTab !== BrowserTabType.Status.toString()"
+                    :server="props.server" />
+            </n-tab-pane>
+
+            <!-- session pane -->
+            <n-tab-pane :name="BrowserTabType.Session.toString()" display-directive="show:lazy">
+                <template #tab>
+                    <n-space :size="5" :wrap-item="false" align="center" inline justify="center">
+                        <n-icon size="16">
+                            <session-icon
+                                :inverse="selectedSubTab === BrowserTabType.Session.toString()"
+                                :stroke-color="themeVars.tabColor"
+                                stroke-width="4" />
+                        </n-icon>
+                        <span>{{ $t('interface.sub_tab.session') }}</span>
+                    </n-space>
+                </template>
+                <content-session
+                    :pause="selectedSubTab !== BrowserTabType.Session.toString()"
                     :server="props.server" />
             </n-tab-pane>
 

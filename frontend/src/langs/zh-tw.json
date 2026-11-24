@@ -162,7 +162,8 @@
       "cmd_monitor": "監控命令",
       "pub_message": "發佈/訂閱",
       "acl": "ACL 管理",
-      "config": "配置管理"
+      "config": "配置管理",
+      "session": "會話"
     }
   },
   "ribbon": {
@@ -619,5 +620,31 @@
     "consistency_sensitive": "敏感",
     "consistency_immutable": "不可變",
     "unavailable_hint": "部分節點不可見：{n} 個節點未回應"
+  },
+  "session": {
+    "total": "共 {n} 個會話",
+    "idle_count": "空閒 ≥60s：{n} 個",
+    "idle_only": "僅空閒 ≥60s",
+    "search": "搜尋位址、名稱、指令",
+    "unavailable": "{n} 個節點未回應",
+    "refresh": "重新整理",
+    "col_node": "節點",
+    "col_addr": "位址",
+    "col_name": "名稱",
+    "col_user": "使用者",
+    "col_age": "時長",
+    "col_idle": "空閒",
+    "col_flags": "旗標",
+    "col_cmd": "最後指令",
+    "col_actions": "操作",
+    "protected": "受保護",
+    "protected_hint": "主從/哨兵鏈路不可關閉",
+    "kill": "關閉",
+    "kill_confirm": "確定關閉會話 {addr} 嗎？最後指令 {cmd}，已空閒 {idle}。",
+    "killed": "已關閉會話 {addr}",
+    "kill_fail": "關閉會話失敗",
+    "empty": "目前沒有用戶端會話",
+    "sources": "來源 Top {n}",
+    "db_all": "全部 DB"
   }
 }

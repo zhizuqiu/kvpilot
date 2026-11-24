@@ -337,6 +337,14 @@ export function GetClientList(server, db) {
     return post('/browser/get-client-list', { server, db })
 }
 
+export function ListSessions(server) {
+    return post('/browser/list-sessions', { server })
+}
+
+export function KillSession(server, node, id, addr) {
+    return post('/browser/kill-session', { server, node, id, addr })
+}
+
 export function GetCmdHistory() {
     return post('/browser/get-cmd-history')
 }

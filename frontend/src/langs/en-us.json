@@ -162,7 +162,8 @@
       "cmd_monitor": "Monitor Commands",
       "pub_message": "Pub/Sub",
       "acl": "ACL",
-      "config": "Configuration"
+      "config": "Configuration",
+      "session": "Sessions"
     }
   },
   "ribbon": {
@@ -619,5 +620,31 @@
     "consistency_sensitive": "Sensitive",
     "consistency_immutable": "Immutable",
     "unavailable_hint": "Partial view: {n} node(s) unreachable"
+  },
+  "session": {
+    "total": "{n} sessions",
+    "idle_count": "{n} idle ≥ 60s",
+    "idle_only": "Idle ≥ 60s only",
+    "search": "Search address, name, command",
+    "unavailable": "{n} node(s) unreachable",
+    "refresh": "Refresh",
+    "col_node": "Node",
+    "col_addr": "Address",
+    "col_name": "Name",
+    "col_user": "User",
+    "col_age": "Age",
+    "col_idle": "Idle",
+    "col_flags": "Flags",
+    "col_cmd": "Last command",
+    "col_actions": "Actions",
+    "protected": "Protected",
+    "protected_hint": "Replication and sentinel links cannot be closed",
+    "kill": "Close",
+    "kill_confirm": "Close session {addr}? Its last command is {cmd} and it has been idle for {idle}.",
+    "killed": "Session {addr} closed",
+    "kill_fail": "Failed to close session",
+    "empty": "No client sessions",
+    "sources": "Top sources ({n})",
+    "db_all": "All DB"
   }
 }

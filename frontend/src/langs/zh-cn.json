@@ -162,7 +162,8 @@
       "cmd_monitor": "监控命令",
       "pub_message": "发布/订阅",
       "acl": "ACL 管理",
-      "config": "配置管理"
+      "config": "配置管理",
+      "session": "会话"
     }
   },
   "ribbon": {
@@ -619,5 +620,31 @@
     "consistency_sensitive": "敏感",
     "consistency_immutable": "不可变",
     "unavailable_hint": "部分节点不可见：{n} 个节点未响应"
+  },
+  "session": {
+    "total": "共 {n} 个会话",
+    "idle_count": "空闲 ≥60s：{n} 个",
+    "idle_only": "仅空闲 ≥60s",
+    "search": "搜索地址、名称、命令",
+    "unavailable": "{n} 个节点未响应",
+    "refresh": "刷新",
+    "col_node": "节点",
+    "col_addr": "地址",
+    "col_name": "名称",
+    "col_user": "用户",
+    "col_age": "时长",
+    "col_idle": "空闲",
+    "col_flags": "标志",
+    "col_cmd": "最后命令",
+    "col_actions": "操作",
+    "protected": "受保护",
+    "protected_hint": "主从/哨兵链路不可关闭",
+    "kill": "关闭",
+    "kill_confirm": "确定关闭会话 {addr} 吗？最后命令 {cmd}，已空闲 {idle}。",
+    "killed": "已关闭会话 {addr}",
+    "kill_fail": "关闭会话失败",
+    "empty": "当前没有客户端会话",
+    "sources": "来源 Top {n}",
+    "db_all": "全部 DB"
   }
 }

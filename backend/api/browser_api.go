@@ -552,6 +552,31 @@ func registerBrowserRoutes(rg *gin.RouterGroup) {
 		c.JSON(http.StatusOK, services.Browser().GetClientList(req.Server))
 	})
 
+	g.POST("/list-sessions", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().ListSessions(req.Server))
+	})
+
+	g.POST("/kill-session", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+			Node   string `json:"node"`
+			ID     int64  `json:"id"`
+			Addr   string `json:"addr"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().KillSession(req.Server, req.Node, req.ID, req.Addr))
+	})
+
 	g.POST("/get-cmd-history", func(c *gin.Context) {
 		var req struct {
 			PageNo   int `json:"pageNo"`

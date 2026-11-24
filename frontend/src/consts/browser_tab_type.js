@@ -4,6 +4,7 @@
  */
 export const BrowserTabType = {
     Status: 'status',
+    Session: 'session',
     KeyDetail: 'key_detail',
     Cli: 'cli',
     SlowLog: 'slow_log',
