@@ -604,6 +604,19 @@
       "performance": "性能",
       "logging": "日志",
       "other": "其它"
-    }
+    },
+    "edit": "编辑",
+    "save": "保存",
+    "cancel": "取消",
+    "saved": "已写入 {ok}/{total} 个节点",
+    "memory_only": "其中 {n} 个节点没有配置文件，修改仅内存生效，重启后恢复",
+    "partial": "{n} 个节点写入失败：{msg}",
+    "save_fail": "配置写入失败",
+    "actions": "操作",
+    "consistency_all": "全部状态",
+    "consistency_consistent": "一致",
+    "consistency_inconsistent": "不一致",
+    "consistency_sensitive": "敏感",
+    "consistency_immutable": "不可变"
   }
 }

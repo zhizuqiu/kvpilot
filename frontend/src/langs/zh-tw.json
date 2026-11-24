@@ -604,6 +604,19 @@
       "performance": "效能",
       "logging": "日誌",
       "other": "其它"
-    }
+    },
+    "edit": "編輯",
+    "save": "儲存",
+    "cancel": "取消",
+    "saved": "已寫入 {ok}/{total} 個節點",
+    "memory_only": "其中 {n} 個節點沒有設定檔，修改僅記憶體生效，重啟後還原",
+    "partial": "{n} 個節點寫入失敗：{msg}",
+    "save_fail": "設定寫入失敗",
+    "actions": "操作",
+    "consistency_all": "全部狀態",
+    "consistency_consistent": "一致",
+    "consistency_inconsistent": "不一致",
+    "consistency_sensitive": "敏感",
+    "consistency_immutable": "不可變"
   }
 }

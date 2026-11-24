@@ -25,12 +25,30 @@ func TestIntegrationConfigOverview(t *testing.T) {
 		t.Fatal("节点列表不应为空")
 	}
 
-	wantMerged := os.Getenv("KVPILOT_TEST_REDIS_CLUSTER") == "1"
-	if data.Merged != wantMerged {
-		t.Fatalf("merged = %v, want %v", data.Merged, wantMerged)
+	// 单机与集群都应是完整视图；只有集群分片过多时才会退化为单节点视图
+	if !data.Merged {
+		t.Fatal("当前规模下 merged 应为 true")
 	}
-	if wantMerged && len(data.Nodes) < 2 {
-		t.Fatalf("集群应覆盖多个节点, got %d", len(data.Nodes))
+	// 集群下每个节点各有自己的端口，port 必然不一致，用于防回归
+	if os.Getenv("KVPILOT_TEST_REDIS_CLUSTER") == "1" {
+		if len(data.Nodes) < 2 {
+			t.Fatalf("集群应覆盖多个节点, got %d", len(data.Nodes))
+		}
+		var portParam *configParam
+		for i := range data.Params {
+			if data.Params[i].Key == "port" {
+				portParam = &data.Params[i]
+			}
+		}
+		if portParam == nil {
+			t.Fatal("缺少 port 参数")
+		}
+		if portParam.Consistent {
+			t.Fatalf("集群各节点端口不同，port 不应标记为一致: %+v", portParam)
+		}
+		if len(portParam.Values) != len(data.Nodes) {
+			t.Fatalf("port 应带各节点取值: got %d, nodes %d", len(portParam.Values), len(data.Nodes))
+		}
 	}
 
 	var foundPass, foundMaxmemory bool

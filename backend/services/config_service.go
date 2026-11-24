@@ -245,16 +245,71 @@ type configTarget struct {
 	close  func()
 }
 
+// configTopologyAddrs 从拓扑数据里取出数据节点地址（主节点与从节点），去重排序。
+func configTopologyAddrs(data topologyData) []string {
+	seen := map[string]bool{}
+	addrs := make([]string, 0, len(data.Nodes))
+	for _, node := range data.Nodes {
+		if node.Role != "master" && node.Role != "replica" {
+			continue
+		}
+		if node.Addr == "" || seen[node.Addr] {
+			continue
+		}
+		seen[node.Addr] = true
+		addrs = append(addrs, node.Addr)
+	}
+	sort.Strings(addrs)
+	return addrs
+}
+
 // configTargets 返回需要操作的节点列表。
-// 集群下包含所有主从节点，因为 CONFIG 不会随复制传播。
-func (b *browserService) configTargets(ctx context.Context, client redis.UniversalClient) ([]configTarget, bool) {
+// CONFIG 不会随复制传播，因此主从/哨兵也要覆盖从节点，集群则覆盖全部节点。
+func (b *browserService) configTargets(ctx context.Context, client redis.UniversalClient, name string) ([]configTarget, bool) {
 	cc, ok := client.(*redis.ClusterClient)
 	if !ok {
-		addr := ""
+		baseAddr := ""
+		var baseOpts *redis.Options
 		if c, ok := client.(*redis.Client); ok {
-			addr = c.Options().Addr
+			baseOpts = c.Options()
+			baseAddr = baseOpts.Addr
 		}
-		return []configTarget{{Addr: addr, Client: client}}, false
+
+		// 借助拓扑信息补齐从节点；拿不到拓扑（或只有自身）时退化为单节点
+		addrs := []string{}
+		if name != "" {
+			if resp := b.Topology(name); resp.Success {
+				if data, ok := resp.Data.(topologyData); ok {
+					addrs = configTopologyAddrs(data)
+				}
+			}
+		}
+		if len(addrs) <= 1 || baseOpts == nil {
+			return []configTarget{{Addr: baseAddr, Client: client}}, true
+		}
+
+		targets := make([]configTarget, 0, len(addrs))
+		for _, addr := range addrs {
+			if addr == baseAddr {
+				targets = append(targets, configTarget{Addr: addr, Client: client})
+				continue
+			}
+			opt := &redis.Options{
+				Addr:         addr,
+				Username:     baseOpts.Username,
+				Password:     baseOpts.Password,
+				DialTimeout:  2 * time.Second,
+				ReadTimeout:  2 * time.Second,
+				WriteTimeout: 2 * time.Second,
+				MaxRetries:   1,
+				Protocol:     baseOpts.Protocol,
+				TLSConfig:    baseOpts.TLSConfig,
+				Dialer:       baseOpts.Dialer,
+			}
+			c := redis.NewClient(opt)
+			targets = append(targets, configTarget{Addr: addr, Client: c, close: func() { _ = c.Close() }})
+		}
+		return targets, true
 	}
 
 	text, err := cc.Do(ctx, "CLUSTER", "NODES").Text()
@@ -301,7 +356,7 @@ func (b *browserService) ConfigOverview(name string) (resp types.JSResp) {
 	}
 	ctx := item.ctx
 
-	targets, merged := b.configTargets(ctx, item.client)
+	targets, merged := b.configTargets(ctx, item.client, name)
 	if len(targets) == 0 {
 		resp.Msg = "no reachable node"
 		return
@@ -376,7 +431,7 @@ func (b *browserService) ConfigSet(name, key, value string) (resp types.JSResp) 
 	}
 	ctx := item.ctx
 
-	targets, _ := b.configTargets(ctx, item.client)
+	targets, _ := b.configTargets(ctx, item.client, name)
 	if len(targets) == 0 {
 		resp.Msg = "no reachable node"
 		return

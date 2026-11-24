@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { h } from 'vue'
-import { NConfigProvider, NMessageProvider } from 'naive-ui'
+import { NConfigProvider, NMessageProvider, NSelect } from 'naive-ui'
 import { createI18n } from 'vue-i18n'
 import zhCn from '@/langs/zh-cn.json'
 
-const api = vi.hoisted(() => ({ ConfigOverview: vi.fn() }))
+const api = vi.hoisted(() => ({ ConfigOverview: vi.fn(), ConfigSet: vi.fn() }))
 vi.mock('wailsjs/go/services/browserService.js', () => api)
 
 import ContentConfig from '@/components/content_value/ContentConfig.vue'
@@ -74,6 +74,20 @@ const mountConfig = async () => {
 beforeEach(() => {
     vi.clearAllMocks()
     api.ConfigOverview.mockResolvedValue(overview)
+    api.ConfigSet.mockResolvedValue({
+        success: true,
+        data: {
+            applied: 3,
+            failed: 0,
+            memoryOnly: 3,
+            nodes: 3,
+            results: [
+                { addr: '10.0.0.1:6379', set: true, rewrite: 'memory-only' },
+                { addr: '10.0.0.2:6379', set: true, rewrite: 'memory-only' },
+                { addr: '10.0.0.3:6379', set: true, rewrite: 'memory-only' },
+            ],
+        },
+    })
 })
 
 describe('ContentConfig', () => {
@@ -124,6 +138,23 @@ describe('ContentConfig', () => {
         wrapper.unmount()
     })
 
+    it('节点一致性下拉可筛选不一致参数', async () => {
+        const wrapper = await mountConfig()
+
+        // 第一个下拉是分类，第二个是节点一致性
+        const selects = wrapper.findAllComponents(NSelect)
+        expect(selects.length).toBeGreaterThanOrEqual(2)
+
+        selects[1].vm.$emit('update:value', 'inconsistent')
+        await flushPromises()
+
+        const rows = wrapper.findAll('.config-row')
+        expect(rows).toHaveLength(2) // 表头 + timeout
+        expect(rows[1].text()).toContain('timeout')
+
+        wrapper.unmount()
+    })
+
     it('加载失败时提示错误而不是空白列表', async () => {
         api.ConfigOverview.mockResolvedValue({ success: false, msg: '连接已断开' })
         const wrapper = await mountConfig()
@@ -131,6 +162,72 @@ describe('ContentConfig', () => {
         // useMessage 在真实 provider 下渲染，这里断言列表为空并显示空态
         expect(wrapper.findAll('.config-row')).toHaveLength(1) // 仅表头
         expect(wrapper.text()).toContain('没有匹配的参数')
+
+        wrapper.unmount()
+    })
+})
+
+describe('ContentConfig inline editing', () => {
+    const rowOf = (wrapper, key) => wrapper.findAll('.config-row').find((r) => r.text().includes(key))
+
+    it('敏感与不可变参数不提供编辑入口', async () => {
+        const wrapper = await mountConfig()
+
+        expect(rowOf(wrapper, 'requirepass').text()).not.toContain('编辑')
+        expect(rowOf(wrapper, 'maxmemory').text()).toContain('编辑')
+
+        wrapper.unmount()
+    })
+
+    it('点击编辑后出现输入框，保存时调用 ConfigSet 并刷新列表', async () => {
+        const wrapper = await mountConfig()
+        const row = rowOf(wrapper, 'maxmemory')
+
+        await row.find('button').trigger('click')
+        await flushPromises()
+        const input = row.find('input')
+        expect(input.exists()).toBe(true)
+        await input.setValue('128mb')
+
+        const buttons = row.findAll('button')
+        await buttons[buttons.length - 1].trigger('click')
+        await flushPromises()
+
+        expect(api.ConfigSet).toHaveBeenCalledWith('test-server', 'maxmemory', '128mb')
+        expect(api.ConfigOverview).toHaveBeenCalledTimes(2)
+
+        wrapper.unmount()
+    })
+
+    it('无配置文件时提示仅内存生效', async () => {
+        const wrapper = await mountConfig()
+        const row = rowOf(wrapper, 'maxmemory')
+
+        await row.find('button').trigger('click')
+        await flushPromises()
+        const buttons = row.findAll('button')
+        await buttons[buttons.length - 1].trigger('click')
+        await flushPromises()
+
+        expect(window.$message.warning).toHaveBeenCalledWith(
+            expect.stringContaining('仅内存生效')
+        )
+
+        wrapper.unmount()
+    })
+
+    it('写入失败时提示错误', async () => {
+        api.ConfigSet.mockResolvedValue({ success: false, msg: 'NOPERM' })
+        const wrapper = await mountConfig()
+        const row = rowOf(wrapper, 'maxmemory')
+
+        await row.find('button').trigger('click')
+        await flushPromises()
+        const buttons = row.findAll('button')
+        await buttons[buttons.length - 1].trigger('click')
+        await flushPromises()
+
+        expect(window.$message.error).toHaveBeenCalledWith('NOPERM')
 
         wrapper.unmount()
     })

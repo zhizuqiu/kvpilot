@@ -604,6 +604,19 @@
       "performance": "Performance",
       "logging": "Logging",
       "other": "Other"
-    }
+    },
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Applied to {ok}/{total} nodes",
+    "memory_only": "{n} node(s) run without a config file; changes are in memory only and revert on restart",
+    "partial": "{n} node(s) failed: {msg}",
+    "save_fail": "Failed to apply configuration",
+    "actions": "Actions",
+    "consistency_all": "All states",
+    "consistency_consistent": "Consistent",
+    "consistency_inconsistent": "Inconsistent",
+    "consistency_sensitive": "Sensitive",
+    "consistency_immutable": "Immutable"
   }
 }

@@ -165,3 +165,24 @@ func TestConfigSetValidation(t *testing.T) {
 		t.Fatalf("空参数名应被拒绝, got success=%v msg=%q", resp.Success, resp.Msg)
 	}
 }
+
+// 验证从拓扑中提取数据节点：包含主从、排除哨兵、去重并排序。
+func TestConfigTopologyAddrs(t *testing.T) {
+	data := topologyData{Nodes: []topologyNode{
+		{Addr: "10.0.0.2:6379", Role: "replica"},
+		{Addr: "10.0.0.1:6379", Role: "master"},
+		{Addr: "10.0.0.2:6379", Role: "replica"},
+		{Addr: "10.0.0.9:26379", Role: "sentinel"},
+	}}
+
+	addrs := configTopologyAddrs(data)
+	want := []string{"10.0.0.1:6379", "10.0.0.2:6379"}
+	if len(addrs) != len(want) {
+		t.Fatalf("addrs = %v, want %v", addrs, want)
+	}
+	for i := range want {
+		if addrs[i] != want[i] {
+			t.Fatalf("addrs = %v, want %v", addrs, want)
+		}
+	}
+}

@@ -3,7 +3,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NButton, NEmpty, NInput, NSelect, NTag, useThemeVars } from 'naive-ui'
 import Refresh from '@/components/icons/Refresh.vue'
-import { ConfigOverview } from 'wailsjs/go/services/browserService.js'
+import { filterConfigParams } from '@/utils/config.js'
+import { ConfigOverview, ConfigSet } from 'wailsjs/go/services/browserService.js'
 
 const props = defineProps({
     server: String,
@@ -19,6 +20,10 @@ const nodes = ref([])
 const merged = ref(true)
 const keyword = ref('')
 const category = ref('all')
+const consistency = ref('all')
+const editingKey = ref('')
+const editValue = ref('')
+const saving = ref(false)
 
 const categories = computed(() => {
     const counts = new Map()
@@ -34,14 +39,21 @@ const categoryOptions = computed(() => [
     })),
 ])
 
-const filtered = computed(() => {
-    const kw = keyword.value.trim().toLowerCase()
-    return params.value.filter((p) => {
-        if (category.value !== 'all' && p.category !== category.value) return false
-        if (kw === '') return true
-        return p.key.toLowerCase().includes(kw) || String(p.value).toLowerCase().includes(kw)
+const consistencyOptions = computed(() => [
+    { label: i18n.t('config.consistency_all'), value: 'all' },
+    { label: i18n.t('config.consistency_consistent'), value: 'consistent' },
+    { label: i18n.t('config.consistency_inconsistent'), value: 'inconsistent' },
+    { label: i18n.t('config.consistency_sensitive'), value: 'sensitive' },
+    { label: i18n.t('config.consistency_immutable'), value: 'immutable' },
+])
+
+const filtered = computed(() =>
+    filterConfigParams(params.value, {
+        category: category.value,
+        keyword: keyword.value,
+        consistency: consistency.value,
     })
-})
+)
 
 const load = async (silent = false) => {
     if (loading.value) return
@@ -57,6 +69,47 @@ const load = async (silent = false) => {
         }
     } finally {
         loading.value = false
+    }
+}
+
+// 敏感与不可变参数不提供编辑入口
+const editable = (param) => !param.sensitive && !param.immutable
+
+const startEdit = (param) => {
+    editingKey.value = param.key
+    editValue.value = param.value
+}
+
+const cancelEdit = () => {
+    editingKey.value = ''
+    editValue.value = ''
+}
+
+const saveEdit = async (param) => {
+    if (saving.value) return
+    saving.value = true
+    try {
+        const { success, data, msg } = await ConfigSet(props.server, param.key, editValue.value)
+        if (!success) {
+            $message.error(msg || i18n.t('config.save_fail'))
+            return
+        }
+        const applied = data?.applied || 0
+        const total = data?.nodes || 0
+        const failed = data?.failed || 0
+        const memoryOnly = data?.memoryOnly || 0
+        $message.success(i18n.t('config.saved', { ok: applied, total }))
+        if (memoryOnly > 0) {
+            $message.warning(i18n.t('config.memory_only', { n: memoryOnly }))
+        }
+        if (failed > 0) {
+            const first = (data?.results || []).find((r) => !r.set)
+            $message.error(i18n.t('config.partial', { n: failed, msg: first?.msg || '' }))
+        }
+        cancelEdit()
+        await load(true)
+    } finally {
+        saving.value = false
     }
 }
 
@@ -92,6 +145,11 @@ watch(
                 :options="categoryOptions"
                 class="config-category"
                 size="small" />
+            <n-select
+                v-model:value="consistency"
+                :options="consistencyOptions"
+                class="config-consistency-filter"
+                size="small" />
             <n-input
                 v-model:value="keyword"
                 :placeholder="$t('config.search')"
@@ -111,10 +169,16 @@ watch(
                 <span>{{ $t('config.param') }}</span>
                 <span>{{ $t('config.value') }}</span>
                 <span class="config-consistency">{{ $t('config.consistency') }}</span>
+                <span class="config-actions-head">{{ $t('config.actions') }}</span>
             </div>
             <div v-for="param in filtered" :key="param.key" class="config-row">
                 <span class="config-key mono">{{ param.key }}</span>
-                <span class="config-value mono" :title="param.value">{{ param.value }}</span>
+                <n-input
+                    v-if="editingKey === param.key"
+                    v-model:value="editValue"
+                    class="config-edit-input mono"
+                    size="tiny" />
+                <span v-else class="config-value mono" :title="param.value">{{ param.value }}</span>
                 <span class="config-consistency">
                     <n-tag v-if="param.sensitive" size="tiny" :bordered="false" type="info">
                         {{ $t('config.sensitive') }}
@@ -125,7 +189,10 @@ watch(
                     <n-tag v-else-if="!param.consistent" size="tiny" :bordered="false" type="warning">
                         {{ param.nodes }}/{{ nodes.length }}
                     </n-tag>
-                    <span v-else class="hint">{{ $t('config.consistent') }}</span>
+                    <span v-else class="config-ok">
+                        <i class="config-dot"></i>
+                        {{ $t('config.consistent') }}
+                    </span>
                     <n-tooltip v-if="!param.consistent && !param.sensitive" trigger="hover">
                         <template #trigger>
                             <span class="config-diff">{{ $t('config.view_diff') }}</span>
@@ -134,6 +201,21 @@ watch(
                             <div v-for="line in nodeValues(param)" :key="line">{{ line }}</div>
                         </div>
                     </n-tooltip>
+                </span>
+                <span class="config-actions">
+                    <template v-if="editable(param)">
+                        <template v-if="editingKey === param.key">
+                            <n-button size="tiny" secondary :disabled="saving" @click="cancelEdit">
+                                {{ $t('config.cancel') }}
+                            </n-button>
+                            <n-button size="tiny" type="primary" :loading="saving" @click="saveEdit(param)">
+                                {{ $t('config.save') }}
+                            </n-button>
+                        </template>
+                        <n-button v-else size="tiny" secondary @click="startEdit(param)">
+                            {{ $t('config.edit') }}
+                        </n-button>
+                    </template>
                 </span>
             </div>
             <n-empty v-if="filtered.length === 0" :description="$t('config.empty')" class="config-empty" />
@@ -163,6 +245,10 @@ watch(
         width: 180px;
     }
 
+    .config-consistency-filter {
+        width: 150px;
+    }
+
     .config-search {
         width: 240px;
     }
@@ -177,7 +263,7 @@ watch(
 
 .config-row {
     display: grid;
-    grid-template-columns: minmax(180px, 1fr) minmax(200px, 1.2fr) 200px;
+    grid-template-columns: minmax(180px, 1fr) minmax(200px, 1.2fr) 180px 130px;
     align-items: center;
     gap: 12px;
     padding: 6px 12px;
@@ -217,6 +303,10 @@ watch(
         gap: 6px;
     }
 
+    .config-edit-input {
+        width: 100%;
+    }
+
     .config-diff {
         font-size: 12px;
         cursor: help;
@@ -224,9 +314,30 @@ watch(
         text-decoration: underline dotted;
     }
 
-    .hint {
+    .config-ok {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         font-size: 12px;
         color: v-bind('themeVars.textColor3');
+    }
+
+    .config-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: v-bind('themeVars.successColor');
+    }
+
+    .config-actions {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .config-actions-head {
+        text-align: right;
     }
 }
 
