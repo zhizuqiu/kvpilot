@@ -5,6 +5,7 @@
 export const BrowserTabType = {
     Status: 'status',
     Session: 'session',
+    Analysis: 'analysis',
     KeyDetail: 'key_detail',
     Cli: 'cli',
     SlowLog: 'slow_log',

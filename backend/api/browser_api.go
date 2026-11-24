@@ -577,6 +577,79 @@ func registerBrowserRoutes(rg *gin.RouterGroup) {
 		c.JSON(http.StatusOK, services.Browser().KillSession(req.Server, req.Node, req.ID, req.Addr))
 	})
 
+	g.POST("/start-bigkey-scan", func(c *gin.Context) {
+		var req struct {
+			Server      string `json:"server"`
+			SampleSize  int    `json:"sampleSize"`
+			ThresholdMB int    `json:"thresholdMB"`
+			Full        bool   `json:"full"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().StartBigKeyScan(req.Server, req.SampleSize, req.ThresholdMB, req.Full))
+	})
+
+	g.POST("/get-bigkey-scan", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().GetBigKeyScan(req.Server))
+	})
+
+	g.POST("/cancel-bigkey-scan", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().CancelBigKeyScan(req.Server))
+	})
+
+	g.POST("/export-bigkeys", func(c *gin.Context) {
+		var req struct {
+			Path string                `json:"path"`
+			Rows []services.BigKeyItem `json:"rows"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().ExportBigKeys(req.Path, req.Rows))
+	})
+
+	g.POST("/get-keyspace-stats", func(c *gin.Context) {
+		var req struct {
+			Server     string `json:"server"`
+			SampleSize int    `json:"sampleSize"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().GetKeyspaceStats(req.Server, req.SampleSize))
+	})
+
+	g.POST("/export-csv", func(c *gin.Context) {
+		var req struct {
+			Path   string     `json:"path"`
+			Header []string   `json:"header"`
+			Rows   [][]string `json:"rows"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().ExportCSV(req.Path, req.Header, req.Rows))
+	})
+
 	g.POST("/get-cmd-history", func(c *gin.Context) {
 		var req struct {
 			PageNo   int `json:"pageNo"`

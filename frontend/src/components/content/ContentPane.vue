@@ -23,6 +23,8 @@ import Acl from '@/components/icons/Acl.vue'
 import ConfigTabIcon from '@/components/icons/ConfigTab.vue'
 import SessionIcon from '@/components/icons/Session.vue'
 import ContentSession from '@/components/content_value/ContentSession.vue'
+import AnalysisIcon from '@/components/icons/Analysis.vue'
+import ContentAnalysis from '@/components/content_value/ContentAnalysis.vue'
 
 const themeVars = useThemeVars()
 
@@ -149,6 +151,24 @@ watch(
                 </template>
                 <content-session
                     :pause="selectedSubTab !== BrowserTabType.Session.toString()"
+                    :server="props.server" />
+            </n-tab-pane>
+
+            <!-- analysis pane -->
+            <n-tab-pane :name="BrowserTabType.Analysis.toString()" display-directive="show:lazy">
+                <template #tab>
+                    <n-space :size="5" :wrap-item="false" align="center" inline justify="center">
+                        <n-icon size="16">
+                            <analysis-icon
+                                :inverse="selectedSubTab === BrowserTabType.Analysis.toString()"
+                                :stroke-color="themeVars.tabColor"
+                                stroke-width="4" />
+                        </n-icon>
+                        <span>{{ $t('interface.sub_tab.analysis') }}</span>
+                    </n-space>
+                </template>
+                <content-analysis
+                    :pause="selectedSubTab !== BrowserTabType.Analysis.toString()"
                     :server="props.server" />
             </n-tab-pane>
 

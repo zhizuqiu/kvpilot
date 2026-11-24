@@ -270,15 +270,15 @@ func configTopologyAddrs(data topologyData) []string {
 const configNodeDialTimeout = 500 * time.Millisecond
 
 // configNodeOptions 构造单节点配置客户端。
-// 拨号只尝试一次：不可达节点应当快速失败并进入"未响应"列表，
-// 而不是靠重试把整页加载拖到几十秒。
+// 拨号最多两轮：一次瞬时抖动不应把节点标记为未响应，
+// 同时避免默认的 5 轮重试把整页加载拖到几十秒。
 func configNodeOptions(addr string, base *redis.Options) *redis.Options {
 	return &redis.Options{
 		Addr:          addr,
 		Username:      base.Username,
 		Password:      base.Password,
 		DialTimeout:   configNodeDialTimeout,
-		DialerRetries: 1,
+		DialerRetries: 2,
 		ReadTimeout:   2 * time.Second,
 		WriteTimeout:  2 * time.Second,
 		MaxRetries:    1,
@@ -286,6 +286,13 @@ func configNodeOptions(addr string, base *redis.Options) *redis.Options {
 		TLSConfig:     base.TLSConfig,
 		Dialer:        base.Dialer,
 	}
+}
+
+// configNodeOptionsWithDB 在通用选项上指定数据库，扫描类任务按库独立建连。
+func configNodeOptionsWithDB(addr string, base *redis.Options, db int) *redis.Options {
+	opt := configNodeOptions(addr, base)
+	opt.DB = db
+	return opt
 }
 
 // configClusterNodeOptions 与 configNodeOptions 同义，只是集群选项里的凭据字段位置不同。
@@ -336,6 +343,59 @@ func discoverClusterAddrs(ctx context.Context, seeds []string, base *redis.Clust
 		defer client.Close()
 		return client.Do(ctx, "CLUSTER", "NODES").Text()
 	})
+}
+
+// filterMasterTargets 只保留主节点；副本不参与扫描，避免同一份数据被重复统计。
+// 未匹配到任何主节点时原样返回，保证拓扑异常时任务仍可执行。
+func filterMasterTargets(targets []configTarget, masters map[string]bool) []configTarget {
+	if len(masters) == 0 || len(targets) == 0 {
+		return targets
+	}
+	matched := 0
+	for _, target := range targets {
+		if masters[target.Addr] {
+			matched++
+		}
+	}
+	if matched == 0 {
+		return targets
+	}
+
+	kept := make([]configTarget, 0, matched)
+	for _, target := range targets {
+		if masters[target.Addr] {
+			kept = append(kept, target)
+			continue
+		}
+		if target.close != nil {
+			target.close()
+		}
+	}
+	return kept
+}
+
+// configMasterTargets 返回主节点列表，供大 key 与键空间统计等扫描类任务使用。
+func (b *browserService) configMasterTargets(ctx context.Context, client redis.UniversalClient, name string) []configTarget {
+	targets, _ := b.configTargets(ctx, client, name)
+	if len(targets) <= 1 {
+		return targets
+	}
+
+	resp := b.Topology(name)
+	if !resp.Success {
+		return targets
+	}
+	topology, ok := resp.Data.(topologyData)
+	if !ok {
+		return targets
+	}
+	masters := map[string]bool{}
+	for _, node := range topology.Nodes {
+		if node.Role == "master" && node.Addr != "" {
+			masters[node.Addr] = true
+		}
+	}
+	return filterMasterTargets(targets, masters)
 }
 
 // configTargets 返回需要操作的节点列表。

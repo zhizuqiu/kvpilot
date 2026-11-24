@@ -61,6 +61,9 @@ type browserService struct {
 	connMap    map[string]*connectionItem
 	cmdHistory []cmdHistoryItem
 	mutex      sync.Mutex
+
+	bigKeyMutex sync.Mutex
+	bigKeyTasks map[string]*bigKeyScanTask
 }
 
 var browser *browserService

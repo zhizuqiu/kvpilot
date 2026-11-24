@@ -252,7 +252,7 @@ func TestConfigTopologyAddrs(t *testing.T) {
 	}
 }
 
-// 验证单节点客户端会快速失败：拨号只尝试一次且超时受控，
+// 验证单节点客户端会快速失败：拨号次数与超时受控，
 // 否则一个不可达节点就能把整页配置加载拖到几十秒。
 func TestConfigNodeOptionsFastFail(t *testing.T) {
 	opt := configNodeOptions("10.0.0.2:6379", &redis.Options{
@@ -264,8 +264,8 @@ func TestConfigNodeOptionsFastFail(t *testing.T) {
 	if opt.DialTimeout != configNodeDialTimeout {
 		t.Fatalf("DialTimeout = %v, want %v", opt.DialTimeout, configNodeDialTimeout)
 	}
-	if opt.DialerRetries != 1 {
-		t.Fatalf("DialerRetries = %d, 不可达节点不应重复拨号", opt.DialerRetries)
+	if opt.DialerRetries != 2 {
+		t.Fatalf("DialerRetries = %d, 不可达节点不应长时间重试", opt.DialerRetries)
 	}
 	if opt.Addr != "10.0.0.2:6379" || opt.Username != "u" || opt.Password != "p" || opt.Protocol != 2 {
 		t.Fatalf("应继承连接凭据与协议: %+v", opt)
@@ -337,5 +337,36 @@ func TestClusterAddrsFromSeedsDeduplicates(t *testing.T) {
 		[]string{"10.0.0.1:6379", "10.0.0.1:6379", "10.0.0.1:6379"}, read)
 	if calls != 1 {
 		t.Fatalf("重复种子访问次数 = %d, want 1", calls)
+	}
+}
+
+// 验证扫描类任务只保留主节点，并关闭被剔除节点的连接。
+func TestFilterMasterTargets(t *testing.T) {
+	closed := map[string]int{}
+	makeTarget := func(addr string) configTarget {
+		return configTarget{Addr: addr, close: func() { closed[addr]++ }}
+	}
+	targets := []configTarget{
+		makeTarget("10.0.0.1:6379"),
+		makeTarget("10.0.0.2:6379"),
+		makeTarget("10.0.0.3:6379"),
+	}
+	masters := map[string]bool{"10.0.0.1:6379": true, "10.0.0.3:6379": true}
+
+	kept := filterMasterTargets(targets, masters)
+	if len(kept) != 2 || kept[0].Addr != "10.0.0.1:6379" || kept[1].Addr != "10.0.0.3:6379" {
+		t.Fatalf("kept = %+v", kept)
+	}
+	if closed["10.0.0.2:6379"] != 1 {
+		t.Fatalf("被剔除节点应关闭连接: %+v", closed)
+	}
+	if closed["10.0.0.1:6379"] != 0 || closed["10.0.0.3:6379"] != 0 {
+		t.Fatalf("保留节点不应被关闭: %+v", closed)
+	}
+
+	// 没有任何地址匹配时保持原样，避免拓扑异常导致任务无法执行
+	same := filterMasterTargets(targets, map[string]bool{"10.9.9.9:6379": true})
+	if len(same) != 3 {
+		t.Fatalf("无匹配时应原样返回, got %d", len(same))
 	}
 }

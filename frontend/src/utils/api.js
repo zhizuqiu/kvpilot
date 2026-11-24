@@ -345,6 +345,30 @@ export function KillSession(server, node, id, addr) {
     return post('/browser/kill-session', { server, node, id, addr })
 }
 
+export function StartBigKeyScan(server, sampleSize, thresholdMB, full) {
+    return post('/browser/start-bigkey-scan', { server, sampleSize, thresholdMB, full })
+}
+
+export function GetBigKeyScan(server) {
+    return post('/browser/get-bigkey-scan', { server })
+}
+
+export function CancelBigKeyScan(server) {
+    return post('/browser/cancel-bigkey-scan', { server })
+}
+
+export function ExportBigKeys(path, rows) {
+    return post('/browser/export-bigkeys', { path, rows })
+}
+
+export function GetKeyspaceStats(server, sampleSize) {
+    return post('/browser/get-keyspace-stats', { server, sampleSize })
+}
+
+export function ExportCSV(path, header, rows) {
+    return post('/browser/export-csv', { path, header, rows })
+}
+
 export function GetCmdHistory() {
     return post('/browser/get-cmd-history')
 }
