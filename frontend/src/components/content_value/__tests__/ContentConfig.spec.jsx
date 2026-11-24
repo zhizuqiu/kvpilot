@@ -71,6 +71,23 @@ const mountConfig = async () => {
     return wrapper
 }
 
+const param = (overrides) => ({
+    key: 'k',
+    value: 'v',
+    type: 'string',
+    consistent: true,
+    nodes: 2,
+    sensitive: false,
+    immutable: false,
+    category: 'other',
+    ...overrides,
+})
+
+const overviewOf = (params, extra = {}) => ({
+    success: true,
+    data: { nodes: ['n1:6379', 'n2:6379'], merged: true, params, ...extra },
+})
+
 beforeEach(() => {
     vi.clearAllMocks()
     api.ConfigOverview.mockResolvedValue(overview)
@@ -228,6 +245,121 @@ describe('ContentConfig inline editing', () => {
         await flushPromises()
 
         expect(window.$message.error).toHaveBeenCalledWith('NOPERM')
+
+        wrapper.unmount()
+    })
+})
+
+describe('ContentConfig filters and edge cases', () => {
+    it('分类与一致性筛选组合生效', async () => {
+        api.ConfigOverview.mockResolvedValue(
+            overviewOf([
+                param({ key: 'maxmemory', category: 'memory', consistent: true }),
+                param({ key: 'timeout', category: 'network', consistent: false }),
+            ])
+        )
+        const wrapper = await mountConfig()
+        const selects = wrapper.findAllComponents(NSelect)
+
+        selects[0].vm.$emit('update:value', 'memory')
+        selects[1].vm.$emit('update:value', 'inconsistent')
+        await flushPromises()
+
+        // 只有表头，没有数据行
+        expect(wrapper.findAll('.config-row')).toHaveLength(1)
+        expect(wrapper.text()).toContain('没有匹配的参数')
+
+        wrapper.unmount()
+    })
+
+    it('不可变参数不提供编辑入口', async () => {
+        api.ConfigOverview.mockResolvedValue(
+            overviewOf([
+                param({ key: 'databases', immutable: true, category: 'other' }),
+                param({ key: 'maxmemory', category: 'memory' }),
+            ])
+        )
+        const wrapper = await mountConfig()
+
+        const immutableRow = wrapper.findAll('.config-row').find((r) => r.text().includes('databases'))
+        expect(immutableRow.text()).toContain('不可变')
+        expect(immutableRow.text()).not.toContain('编辑')
+
+        const editableRow = wrapper.findAll('.config-row').find((r) => r.text().includes('maxmemory'))
+        expect(editableRow.text()).toContain('编辑')
+
+        wrapper.unmount()
+    })
+
+    it('取消编辑后恢复展示且不写入', async () => {
+        const wrapper = await mountConfig()
+        const row = wrapper.findAll('.config-row').find((r) => r.text().includes('maxmemory'))
+
+        await row.find('button').trigger('click')
+        await flushPromises()
+
+        // 编辑态：第一个按钮是取消
+        await row.findAll('button')[0].trigger('click')
+        await flushPromises()
+
+        expect(api.ConfigSet).not.toHaveBeenCalled()
+        const restored = wrapper.findAll('.config-row').find((r) => r.text().includes('maxmemory'))
+        expect(restored.find('input').exists()).toBe(false)
+
+        wrapper.unmount()
+    })
+
+    it('部分节点失败时提示失败原因', async () => {
+        api.ConfigSet.mockResolvedValue({
+            success: true,
+            data: {
+                applied: 1,
+                failed: 1,
+                memoryOnly: 0,
+                nodes: 2,
+                results: [
+                    { addr: 'n1:6379', set: true, rewrite: 'persisted' },
+                    { addr: 'n2:6379', set: false, rewrite: 'failed', msg: 'NOPERM' },
+                ],
+            },
+        })
+        const wrapper = await mountConfig()
+        const row = wrapper.findAll('.config-row').find((r) => r.text().includes('maxmemory'))
+
+        await row.find('button').trigger('click')
+        await flushPromises()
+        const buttons = row.findAll('button')
+        await buttons[buttons.length - 1].trigger('click')
+        await flushPromises()
+
+        expect(window.$message.error).toHaveBeenCalledWith(expect.stringContaining('NOPERM'))
+
+        wrapper.unmount()
+    })
+
+    it('视图不完整时给出提示', async () => {
+        api.ConfigOverview.mockResolvedValue(overviewOf([param({ key: 'maxmemory' })], { merged: false }))
+        const wrapper = await mountConfig()
+
+        expect(wrapper.text()).toContain('单节点视图')
+
+        wrapper.unmount()
+    })
+
+    it('分类下拉包含所有实际出现的分类', async () => {
+        api.ConfigOverview.mockResolvedValue(
+            overviewOf([
+                param({ key: 'maxmemory', category: 'memory' }),
+                param({ key: 'requirepass', category: 'security', sensitive: true }),
+            ])
+        )
+        const wrapper = await mountConfig()
+
+        const options = wrapper.findAllComponents(NSelect)[0].props('options')
+        const values = options.map((o) => o.value)
+        expect(values).toContain('memory')
+        expect(values).toContain('security')
+        expect(values).toContain('all')
 
         wrapper.unmount()
     })
