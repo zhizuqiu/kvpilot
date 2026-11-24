@@ -4,36 +4,49 @@
 
 ## Windows 代码签名（SignPath Foundation）
 
-**状态**：已于 2026-11-23 提交申请，等待审核（预计 1–3 周）。
+**状态**：2026-11-23 申请被拒。
 
-**背景**：Windows 产物目前未签名，用户首次运行会看到 SmartScreen 提示，需要
-「更多信息 → 仍要运行」。项目没有商业代码签名证书，因此申请 SignPath Foundation
-的免费开源签名服务。
+**拒绝原因（原文要点）**：Foundation 面向已有一定公共信任度的项目，评估依据是社区采用度
+（star、fork、贡献者）、外部文章与独立讨论（Reddit / Stack Overflow / YouTube 等）、
+机构背书，以及持续活跃度的证据；当前项目这些信号不足。官方说明这不代表对项目质量或
+潜力的判断，欢迎项目获得更广泛认知后重新申请。
 
-**审核期间可能被追问**
+**重新申请前的自查清单**
 
-- KVPilot 与 Tiny RDM 的关系：是延续分支，但新增了 ACL 管理、部署拓扑、
-  Web 模式加固与自动发布，不是纯 fork
-- 产物来源：全部由 GitHub Actions 构建，无本地构建的签名产物
-- 商业计划：无付费版，GPL-3.0
+- [ ] GitHub star 与 fork 达到一定规模（数百 star 量级更稳妥）
+- [ ] 存在外部独立提及：技术文章、Reddit / Hacker News / V2EX 讨论、视频演示等
+- [ ] 有外部贡献者（非维护者本人的 PR 或 issue）
+- [ ] 有持续发布节奏（多个版本、时间跨度足够）
+- [ ] 英文文档与落地页完善
 
-**通过后的落地步骤**
+**提升可见度的待办**
 
-1. 接受 SignPath.io 组织邀请（Foundation 计划）
-2. 创建 Project，建议 slug `kvpilot`
-3. 创建 Signing Policy，建议 slug `release-signing`
-4. 配置仓库 secrets：`SIGNPATH_API_TOKEN`、`SIGNPATH_ORGANIZATION_ID`
-5. 在 `.github/workflows/release-windows.yaml` 中接入
-   `signpath/github-action-submit-signing-request`，替换当前未签名产物的上传
-6. 验证签名结果：`signtool verify /pa KVPilot.exe`，并确认 Release 附件为签名版本
-7. 在 Release 说明与 README 安装章节补充「Windows 版本已通过 SignPath Foundation 签名」
+- [ ] 发布公告：Reddit（r/redis、r/selfhosted）、Hacker News Show HN、V2EX、掘金/知乎
+- [ ] 向 awesome 列表提 PR：awesome-redis、awesome-selfhosted、awesome-developer-tools
+- [ ] 写一篇英文技术文章（延续分支的取舍、ACL 与拓扑设计），发布到 dev.to / Medium
+- [ ] 补充英文使用场景与截图，保持仓库 About 关键词
+- [ ] 建立 GitHub Pages 落地页，展示安装方式与 Docker 拉取量
+- [ ] 标注 good first issue，吸引外部贡献者
 
-**未通过时的备选**
+**通过签名后的落地步骤**
 
-- Certum Open Source Code Signing（约 €30/年，需提交开源证明）
-- 继续未签名发布，在 Release 说明中说明如何绕过 SmartScreen
+1. 接受 SignPath.io 组织邀请
+2. 创建 Project（`kvpilot`）与 Signing Policy（`release-signing`）
+3. 配置 secrets：`SIGNPATH_API_TOKEN`、`SIGNPATH_ORGANIZATION_ID`
+4. 在 `release-windows.yaml` 接入 `signpath/github-action-submit-signing-request`
+5. 校验签名（`signtool verify /pa`）并替换 Release 附件
+6. Release 说明与 README 注明已签名
+
+**当前可选替代方案**
+
+| 方案 | 成本 | 说明 |
+| --- | --- | --- |
+| 保持未签名 | 0 | README 已说明 SmartScreen 绕过方式 |
+| Certum Open Source Code Signing | 约数十欧元/年 | 需提供开源项目证明，价格与政策以官网为准 |
+| SignPath 付费订阅 | 按官网计费 | 可立即使用，不受 Foundation 可见度要求限制 |
+| Azure Trusted Signing | 约每月 $10 | 需企业资质与经营年限证明，个人通常不适用 |
 
 **相关文件**
 
-- 申请材料：不在仓库内（含个人联系方式），保存在本机临时目录
+- 申请材料：不在仓库内（含个人联系方式）
 - 签名开关：`release-windows.yaml` 中的 `WIN_CERT_AVAILABLE` 条件
