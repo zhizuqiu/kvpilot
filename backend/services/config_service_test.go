@@ -1,8 +1,12 @@
 package services
 
 import (
+	"context"
+	"errors"
 	"strings"
 	"testing"
+
+	"github.com/redis/go-redis/v9"
 )
 
 // 验证 CONFIG GET 的两种返回形态都能规整成 key -> value。
@@ -166,6 +170,67 @@ func TestConfigSetValidation(t *testing.T) {
 	}
 }
 
+// 验证读取失败的节点会出现在未响应列表里，而不是被静默丢弃。
+func TestBuildConfigDataMarksUnavailable(t *testing.T) {
+	views := map[string]map[string]string{
+		"10.0.0.1:6379": {"maxmemory": "0"},
+	}
+	targets := []configTarget{
+		{Addr: "10.0.0.1:6379"},
+		{Addr: "10.0.0.2:6379"},
+	}
+
+	data := buildConfigData(views, targets, true)
+	if len(data.Nodes) != 1 || data.Nodes[0] != "10.0.0.1:6379" {
+		t.Fatalf("Nodes = %v, 应只包含读取成功的节点", data.Nodes)
+	}
+	if len(data.Unavailable) != 1 || data.Unavailable[0] != "10.0.0.2:6379" {
+		t.Fatalf("Unavailable = %v, 应保留读取失败的节点", data.Unavailable)
+	}
+	if data.Merged {
+		t.Fatal("存在未响应节点时不应标记为完整视图")
+	}
+}
+
+// 验证全部节点可读时仍为完整视图，且未响应列表为空。
+func TestBuildConfigDataAllReadable(t *testing.T) {
+	views := map[string]map[string]string{
+		"10.0.0.1:6379": {"maxmemory": "0"},
+		"10.0.0.2:6379": {"maxmemory": "0"},
+	}
+	targets := []configTarget{
+		{Addr: "10.0.0.2:6379"},
+		{Addr: "10.0.0.1:6379"},
+	}
+
+	data := buildConfigData(views, targets, true)
+	if len(data.Unavailable) != 0 {
+		t.Fatalf("Unavailable = %v, want 空", data.Unavailable)
+	}
+	if !data.Merged {
+		t.Fatal("全部可读时应保持完整视图")
+	}
+	if len(data.Nodes) != 2 || data.Nodes[0] != "10.0.0.1:6379" {
+		t.Fatalf("Nodes = %v, 应按地址排序", data.Nodes)
+	}
+}
+
+// 验证分片超限导致的降级标记不会因为节点全部可读而被覆盖。
+func TestBuildConfigDataKeepsIncompleteFlag(t *testing.T) {
+	views := map[string]map[string]string{
+		"10.0.0.1:6379": {"maxmemory": "0"},
+	}
+	targets := []configTarget{{Addr: "10.0.0.1:6379"}}
+
+	data := buildConfigData(views, targets, false)
+	if data.Merged {
+		t.Fatal("拓扑本身不完整时应保持 merged=false")
+	}
+	if len(data.Unavailable) != 0 {
+		t.Fatalf("Unavailable = %v, want 空", data.Unavailable)
+	}
+}
+
 // 验证从拓扑中提取数据节点：包含主从、排除哨兵、去重并排序。
 func TestConfigTopologyAddrs(t *testing.T) {
 	data := topologyData{Nodes: []topologyNode{
@@ -184,5 +249,93 @@ func TestConfigTopologyAddrs(t *testing.T) {
 		if addrs[i] != want[i] {
 			t.Fatalf("addrs = %v, want %v", addrs, want)
 		}
+	}
+}
+
+// 验证单节点客户端会快速失败：拨号只尝试一次且超时受控，
+// 否则一个不可达节点就能把整页配置加载拖到几十秒。
+func TestConfigNodeOptionsFastFail(t *testing.T) {
+	opt := configNodeOptions("10.0.0.2:6379", &redis.Options{
+		Username: "u",
+		Password: "p",
+		Protocol: 2,
+	})
+
+	if opt.DialTimeout != configNodeDialTimeout {
+		t.Fatalf("DialTimeout = %v, want %v", opt.DialTimeout, configNodeDialTimeout)
+	}
+	if opt.DialerRetries != 1 {
+		t.Fatalf("DialerRetries = %d, 不可达节点不应重复拨号", opt.DialerRetries)
+	}
+	if opt.Addr != "10.0.0.2:6379" || opt.Username != "u" || opt.Password != "p" || opt.Protocol != 2 {
+		t.Fatalf("应继承连接凭据与协议: %+v", opt)
+	}
+}
+
+// 验证种子节点读取失败时会继续尝试下一个，并返回解析出的全部地址。
+func TestClusterAddrsFromSeedsFallsBack(t *testing.T) {
+	text := "id1 10.0.0.1:6379@16379 myself,master - 0 0 1 connected 0-5460\n" +
+		"id2 10.0.0.2:6379@16379 master - 0 0 2 connected 5461-10922\n"
+	var calls []string
+	read := func(ctx context.Context, addr string) (string, error) {
+		calls = append(calls, addr)
+		if addr == "10.0.0.9:6379" {
+			return "", errors.New("dial tcp: no route to host")
+		}
+		return text, nil
+	}
+
+	addrs, ok := clusterAddrsFromSeeds(context.Background(),
+		[]string{"10.0.0.9:6379", "10.0.0.1:6379", "10.0.0.2:6379"}, read)
+	if !ok {
+		t.Fatal("应能从一个可达种子拿到节点列表")
+	}
+	if len(addrs) != 2 || addrs[0] != "10.0.0.1:6379" || addrs[1] != "10.0.0.2:6379" {
+		t.Fatalf("addrs = %v", addrs)
+	}
+	// 拿到结果后不应继续访问后续种子
+	if len(calls) != 2 {
+		t.Fatalf("种子访问次数 = %d, want 2 (%v)", len(calls), calls)
+	}
+}
+
+// 验证所有种子都不可读时返回失败，由调用方给出"无可用节点"。
+func TestClusterAddrsFromSeedsAllFail(t *testing.T) {
+	read := func(ctx context.Context, addr string) (string, error) {
+		return "", errors.New("connection refused")
+	}
+	addrs, ok := clusterAddrsFromSeeds(context.Background(), []string{"10.0.0.1:6379"}, read)
+	if ok || addrs != nil {
+		t.Fatalf("全部失败时应返回 false, got ok=%v addrs=%v", ok, addrs)
+	}
+}
+
+// 验证返回空节点列表的种子视为不可用，会继续尝试下一个种子。
+func TestClusterAddrsFromSeedsSkipsEmptyList(t *testing.T) {
+	text := "id1 10.0.0.1:6379@16379 myself,master - 0 0 1 connected 0-5460\n"
+	read := func(ctx context.Context, addr string) (string, error) {
+		if addr == "10.0.0.1:6379" {
+			return "", nil
+		}
+		return text, nil
+	}
+	addrs, ok := clusterAddrsFromSeeds(context.Background(),
+		[]string{"10.0.0.1:6379", "10.0.0.2:6379"}, read)
+	if !ok || len(addrs) != 1 || addrs[0] != "10.0.0.1:6379" {
+		t.Fatalf("应跳过空列表的种子, got ok=%v addrs=%v", ok, addrs)
+	}
+}
+
+// 验证重复的种子只访问一次，避免同一节点被反复拨号。
+func TestClusterAddrsFromSeedsDeduplicates(t *testing.T) {
+	var calls int
+	read := func(ctx context.Context, addr string) (string, error) {
+		calls++
+		return "", errors.New("connection refused")
+	}
+	clusterAddrsFromSeeds(context.Background(),
+		[]string{"10.0.0.1:6379", "10.0.0.1:6379", "10.0.0.1:6379"}, read)
+	if calls != 1 {
+		t.Fatalf("重复种子访问次数 = %d, want 1", calls)
 	}
 }

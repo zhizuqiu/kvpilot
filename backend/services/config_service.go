@@ -30,7 +30,10 @@ type configParam struct {
 type configData struct {
 	Params []configParam `json:"params"`
 	Nodes  []string      `json:"nodes"`
-	Merged bool          `json:"merged"`
+	// Unavailable 是本次读取失败的节点地址：这些节点的值没有参与比较，
+	// 前端需要明确提示，否则页面会把"没读到"显示成"一致"。
+	Unavailable []string `json:"unavailable,omitempty"`
+	Merged      bool     `json:"merged"`
 }
 
 // configNodeResult 记录某个节点上的写入结果。
@@ -263,6 +266,78 @@ func configTopologyAddrs(data topologyData) []string {
 	return addrs
 }
 
+// configNodeDialTimeout 限制单节点拨号耗时：不可达节点不能拖慢整页加载。
+const configNodeDialTimeout = 500 * time.Millisecond
+
+// configNodeOptions 构造单节点配置客户端。
+// 拨号只尝试一次：不可达节点应当快速失败并进入"未响应"列表，
+// 而不是靠重试把整页加载拖到几十秒。
+func configNodeOptions(addr string, base *redis.Options) *redis.Options {
+	return &redis.Options{
+		Addr:          addr,
+		Username:      base.Username,
+		Password:      base.Password,
+		DialTimeout:   configNodeDialTimeout,
+		DialerRetries: 1,
+		ReadTimeout:   2 * time.Second,
+		WriteTimeout:  2 * time.Second,
+		MaxRetries:    1,
+		Protocol:      base.Protocol,
+		TLSConfig:     base.TLSConfig,
+		Dialer:        base.Dialer,
+	}
+}
+
+// configClusterNodeOptions 与 configNodeOptions 同义，只是集群选项里的凭据字段位置不同。
+func configClusterNodeOptions(addr string, base *redis.ClusterOptions) *redis.Options {
+	return configNodeOptions(addr, &redis.Options{
+		Username:  base.Username,
+		Password:  base.Password,
+		Protocol:  base.Protocol,
+		TLSConfig: base.TLSConfig,
+		Dialer:    base.Dialer,
+	})
+}
+
+// clusterSeedReader 读取某个节点返回的 CLUSTER NODES 原文。
+type clusterSeedReader func(ctx context.Context, addr string) (string, error)
+
+// clusterAddrsFromSeeds 依次尝试种子节点，第一个能给出节点列表的即为结果。
+// 不依赖集群客户端：它会把命令路由到失联节点，等满 ExecTimeout 才返回。
+func clusterAddrsFromSeeds(ctx context.Context, seeds []string, read clusterSeedReader) ([]string, bool) {
+	tried := map[string]bool{}
+	for _, seed := range seeds {
+		if seed == "" || tried[seed] {
+			continue
+		}
+		tried[seed] = true
+
+		text, err := read(ctx, seed)
+		if err != nil {
+			continue
+		}
+		nodes := parseClusterNodes(text, "")
+		if len(nodes) == 0 {
+			continue
+		}
+		addrs := make([]string, 0, len(nodes))
+		for _, node := range nodes {
+			addrs = append(addrs, node.Addr)
+		}
+		return addrs, true
+	}
+	return nil, false
+}
+
+// discoverClusterAddrs 用短超时客户端读取集群节点地址。
+func discoverClusterAddrs(ctx context.Context, seeds []string, base *redis.ClusterOptions) ([]string, bool) {
+	return clusterAddrsFromSeeds(ctx, seeds, func(ctx context.Context, addr string) (string, error) {
+		client := redis.NewClient(configClusterNodeOptions(addr, base))
+		defer client.Close()
+		return client.Do(ctx, "CLUSTER", "NODES").Text()
+	})
+}
+
 // configTargets 返回需要操作的节点列表。
 // CONFIG 不会随复制传播，因此主从/哨兵也要覆盖从节点，集群则覆盖全部节点。
 func (b *browserService) configTargets(ctx context.Context, client redis.UniversalClient, name string) ([]configTarget, bool) {
@@ -294,54 +369,22 @@ func (b *browserService) configTargets(ctx context.Context, client redis.Univers
 				targets = append(targets, configTarget{Addr: addr, Client: client})
 				continue
 			}
-			opt := &redis.Options{
-				Addr:         addr,
-				Username:     baseOpts.Username,
-				Password:     baseOpts.Password,
-				DialTimeout:  2 * time.Second,
-				ReadTimeout:  2 * time.Second,
-				WriteTimeout: 2 * time.Second,
-				MaxRetries:   1,
-				Protocol:     baseOpts.Protocol,
-				TLSConfig:    baseOpts.TLSConfig,
-				Dialer:       baseOpts.Dialer,
-			}
-			c := redis.NewClient(opt)
+			c := redis.NewClient(configNodeOptions(addr, baseOpts))
 			targets = append(targets, configTarget{Addr: addr, Client: c, close: func() { _ = c.Close() }})
 		}
 		return targets, true
 	}
 
-	text, err := cc.Do(ctx, "CLUSTER", "NODES").Text()
-	if err != nil {
-		return nil, false
-	}
-	nodes := parseClusterNodes(text, "")
-	addrs := make([]string, 0, len(nodes))
-	for _, n := range nodes {
-		addrs = append(addrs, n.Addr)
-	}
-	if len(addrs) == 0 {
+	base := cc.Options()
+	// 不用基础集群客户端取节点列表：命令可能被路由到失联节点并阻塞到读超时
+	addrs, ok := discoverClusterAddrs(ctx, base.Addrs, base)
+	if !ok || len(addrs) == 0 {
 		return nil, false
 	}
 
-	base := cc.Options()
 	targets := make([]configTarget, 0, len(addrs))
 	for _, addr := range addrs {
-		opt := &redis.Options{
-			Addr:         addr,
-			Username:     base.Username,
-			Password:     base.Password,
-			DB:           0,
-			DialTimeout:  2 * time.Second,
-			ReadTimeout:  2 * time.Second,
-			WriteTimeout: 2 * time.Second,
-			MaxRetries:   1,
-			Protocol:     base.Protocol,
-			TLSConfig:    base.TLSConfig,
-			Dialer:       base.Dialer,
-		}
-		c := redis.NewClient(opt)
+		c := redis.NewClient(configClusterNodeOptions(addr, base))
 		targets = append(targets, configTarget{Addr: addr, Client: c, close: func() { _ = c.Close() }})
 	}
 	return targets, true
@@ -393,19 +436,34 @@ func (b *browserService) ConfigOverview(name string) (resp types.JSResp) {
 		return
 	}
 
+	resp.Success = true
+	resp.Data = buildConfigData(views, targets, merged)
+	return
+}
+
+// buildConfigData 汇总各节点视图；读取失败的节点保留在 Unavailable 中，
+// 并把视图标记为不完整，避免"没读到"被显示成"一致"。
+func buildConfigData(views map[string]map[string]string, targets []configTarget, merged bool) configData {
 	addrs := make([]string, 0, len(views))
 	for addr := range views {
 		addrs = append(addrs, addr)
 	}
 	sort.Strings(addrs)
 
-	resp.Success = true
-	resp.Data = configData{
-		Params: mergeConfigValues(views),
-		Nodes:  addrs,
-		Merged: merged,
+	unavailable := make([]string, 0)
+	for _, target := range targets {
+		if _, ok := views[target.Addr]; !ok {
+			unavailable = append(unavailable, target.Addr)
+		}
 	}
-	return
+	sort.Strings(unavailable)
+
+	return configData{
+		Params:      mergeConfigValues(views),
+		Nodes:       addrs,
+		Unavailable: unavailable,
+		Merged:      merged && len(unavailable) == 0,
+	}
 }
 
 // ConfigSet 修改单个参数：写入所有节点，成功后自动尝试 CONFIG REWRITE。

@@ -617,6 +617,7 @@
     "consistency_consistent": "Consistent",
     "consistency_inconsistent": "Inconsistent",
     "consistency_sensitive": "Sensitive",
-    "consistency_immutable": "Immutable"
+    "consistency_immutable": "Immutable",
+    "unavailable_hint": "Partial view: {n} node(s) unreachable"
   }
 }

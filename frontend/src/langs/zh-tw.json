@@ -617,6 +617,7 @@
     "consistency_consistent": "一致",
     "consistency_inconsistent": "不一致",
     "consistency_sensitive": "敏感",
-    "consistency_immutable": "不可變"
+    "consistency_immutable": "不可變",
+    "unavailable_hint": "部分節點不可見：{n} 個節點未回應"
   }
 }

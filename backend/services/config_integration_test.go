@@ -29,6 +29,10 @@ func TestIntegrationConfigOverview(t *testing.T) {
 	if !data.Merged {
 		t.Fatal("当前规模下 merged 应为 true")
 	}
+	// 健康环境下不应出现未响应节点，否则说明读取路径丢了节点
+	if len(data.Unavailable) != 0 {
+		t.Fatalf("全部节点可读时 unavailable 应为空: %v", data.Unavailable)
+	}
 	// 集群下每个节点各有自己的端口，port 必然不一致，用于防回归
 	if os.Getenv("KVPILOT_TEST_REDIS_CLUSTER") == "1" {
 		if len(data.Nodes) < 2 {

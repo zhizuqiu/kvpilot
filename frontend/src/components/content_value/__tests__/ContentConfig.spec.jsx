@@ -363,4 +363,21 @@ describe('ContentConfig filters and edge cases', () => {
 
         wrapper.unmount()
     })
+
+    it('节点读取失败时提示未响应的节点数量', async () => {
+        api.ConfigOverview.mockResolvedValue(
+            overviewOf([param({ key: 'maxmemory', category: 'memory' })], {
+                nodes: ['10.0.0.1:6379'],
+                merged: false,
+                unavailable: ['10.0.0.2:6379'],
+            })
+        )
+        const wrapper = await mountConfig()
+
+        // 未响应节点不能被静默吞掉：数量提示与可达节点数要同时出现
+        expect(wrapper.text()).toContain('共 1 个节点')
+        expect(wrapper.text()).toContain('1 个节点未响应')
+
+        wrapper.unmount()
+    })
 })

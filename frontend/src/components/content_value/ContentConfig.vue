@@ -17,6 +17,7 @@ const themeVars = useThemeVars()
 const loading = ref(false)
 const params = ref([])
 const nodes = ref([])
+const unavailable = ref([])
 const merged = ref(true)
 const keyword = ref('')
 const category = ref('all')
@@ -63,6 +64,7 @@ const load = async (silent = false) => {
         if (success) {
             params.value = data?.params || []
             nodes.value = data?.nodes || []
+            unavailable.value = data?.unavailable || []
             merged.value = data?.merged !== false
         } else if (!silent && msg) {
             $message.warning(msg)
@@ -136,7 +138,17 @@ watch(
     <div class="config-pane flex-box-v">
         <div class="config-header flex-box-h">
             <span class="config-nodes">{{ $t('config.nodes', { n: nodes.length }) }}</span>
-            <n-tag v-if="!merged" size="small" type="warning" :bordered="false">
+            <n-tooltip v-if="unavailable.length" trigger="hover">
+                <template #trigger>
+                    <n-tag size="small" type="warning" :bordered="false">
+                        {{ $t('config.unavailable_hint', { n: unavailable.length }) }}
+                    </n-tag>
+                </template>
+                <div class="config-diff-list">
+                    <div v-for="addr in unavailable" :key="addr">{{ addr }}</div>
+                </div>
+            </n-tooltip>
+            <n-tag v-else-if="!merged" size="small" type="warning" :bordered="false">
                 {{ $t('config.merged_hint') }}
             </n-tag>
             <div class="flex-item-expand"></div>
