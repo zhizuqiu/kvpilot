@@ -851,8 +851,34 @@
       "target_memory": "ターゲットの空きメモリが不足している可能性があります",
       "large_key": "大きなキー {key}（{size}）がソースノードをブロックする可能性があります",
       "many_keys": "{count} キーあります。オフピーク時の実行を推奨します",
-      "permission_denied": "CLUSTER/MIGRATE 権限がありません: {msg}"
+      "permission_denied": "CLUSTER/MIGRATE 権限がありません: {msg}",
+      "overshoot_skipped": "許容範囲を超えずに移行できるスロットがない差異があります。しきい値か上限を調整してください"
     },
-    "slot_hint": "単一のスロット番号（0-16383）を入力してください（件数ではありません）"
+    "slot_hint": "単一のスロット番号（0-16383）を入力してください（件数ではありません）",
+    "rebalance": "再均衡移行",
+    "max_slots": "最大スロット数",
+    "plan": "計画を作成",
+    "clear_plan": "計画を消去",
+    "plan_empty": "スロットはすでに均衡しています",
+    "plan_summary": "ノードあたり {target} スロット、{s} スロットを移動",
+    "plan_slots": "スロット数",
+    "plan_keys": "推定キー数",
+    "start_plan": "再均衡を開始",
+    "confirm_plan": "計画に従って {n} スロットを移動しますか？移動中は一時的に利用できない場合があります。",
+    "start_plan_fail": "再均衡を開始できませんでした",
+    "plan_fail": "計画の作成に失敗しました",
+    "batch_progress": "{done}/{total} スロット完了",
+    "current_slot": "現在のスロット {slot}",
+    "cancel_after_slot": "キャンセルは現在のスロット完了後に有効になります",
+    "single_migration": "単一スロット移行",
+    "strategy": "均衡方法",
+    "strategy_slots": "スロット数で均衡",
+    "strategy_keys": "キー数で均衡",
+    "plan_summary_keys": "ノードあたり約 {target} キー、{s} スロットを移動",
+    "overview": "概要",
+    "tolerance": "許容範囲 (%)",
+    "clear_result": "結果を消去",
+    "migration_panel": "スロット移行",
+    "migration_panel_hint": "ソースとターゲットのマスターを選び、スロットとそのキーを移動します。移動済みのキーは元に戻せません"
   }
 }

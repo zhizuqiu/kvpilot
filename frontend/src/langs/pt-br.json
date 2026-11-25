@@ -851,8 +851,34 @@
       "target_memory": "O destino pode não ter memória livre suficiente",
       "large_key": "A chave grande {key} ({size}) pode bloquear o nó de origem",
       "many_keys": "{count} chaves; execute em horário de baixa carga",
-      "permission_denied": "Permissão CLUSTER/MIGRATE ausente: {msg}"
+      "permission_denied": "Permissão CLUSTER/MIGRATE ausente: {msg}",
+      "overshoot_skipped": "Algumas diferenças não podem ser fechadas sem exceder a tolerância; ajuste o limite"
     },
-    "slot_hint": "Informe um número de slot (0-16383), não uma quantidade"
+    "slot_hint": "Informe um número de slot (0-16383), não uma quantidade",
+    "rebalance": "Migração de rebalanceamento",
+    "max_slots": "Slots máximos",
+    "plan": "Gerar plano",
+    "clear_plan": "Limpar plano",
+    "plan_empty": "Os slots já estão equilibrados",
+    "plan_summary": "Meta de {target} slots por nó, {s} slots a mover",
+    "plan_slots": "Slots",
+    "plan_keys": "Chaves estimadas",
+    "start_plan": "Iniciar rebalanceamento",
+    "confirm_plan": "Mover {n} slots conforme o plano? Eles podem ficar indisponíveis por instantes.",
+    "start_plan_fail": "Falha ao iniciar o rebalanceamento",
+    "plan_fail": "Falha ao gerar o plano",
+    "batch_progress": "{done}/{total} slots concluídos",
+    "current_slot": "slot atual {slot}",
+    "cancel_after_slot": "O cancelamento vale após o término do slot atual",
+    "single_migration": "Migração de um slot",
+    "strategy": "Estratégia",
+    "strategy_slots": "Por número de slots",
+    "strategy_keys": "Por número de chaves",
+    "plan_summary_keys": "Cerca de {target} chaves por nó, {s} slots a mover",
+    "overview": "Visão geral",
+    "tolerance": "Tolerância (%)",
+    "clear_result": "Limpar resultado",
+    "migration_panel": "Migração de slots",
+    "migration_panel_hint": "Escolha um mestre de origem e destino e mova o slot com suas chaves. As chaves movidas não podem ser revertidas."
   }
 }

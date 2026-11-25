@@ -409,6 +409,14 @@ export function CancelSlotMigration(server) {
     return post('/browser/cancel-slot-migration', { server })
 }
 
+export function SlotRebalancePlan(server, strategy, maxSlots, tolerancePercent) {
+    return post('/browser/slot-rebalance-plan', { server, strategy, maxSlots, tolerancePercent })
+}
+
+export function StartSlotRebalance(server, moves, options) {
+    return post('/browser/start-slot-rebalance', { server, moves, options })
+}
+
 export function GetCmdHistory() {
     return post('/browser/get-cmd-history')
 }

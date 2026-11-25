@@ -851,8 +851,34 @@
       "target_memory": "Hedefte yeterli boş bellek olmayabilir",
       "large_key": "Büyük anahtar {key} ({size}) kaynak düğümü bloke edebilir",
       "many_keys": "{count} anahtar; yoğun olmayan saatlerde çalıştırın",
-      "permission_denied": "CLUSTER/MIGRATE izni yok: {msg}"
+      "permission_denied": "CLUSTER/MIGRATE izni yok: {msg}",
+      "overshoot_skipped": "Bazı farklar tolerans aşılmadan kapatılamaz; sınırı veya eşiği ayarlayın"
     },
-    "slot_hint": "Tek bir slot numarası girin (0-16383), adet değil"
+    "slot_hint": "Tek bir slot numarası girin (0-16383), adet değil",
+    "rebalance": "Dengeleme taşıması",
+    "max_slots": "En fazla slot",
+    "plan": "Plan oluştur",
+    "clear_plan": "Planı temizle",
+    "plan_empty": "Slotlar zaten dengeli",
+    "plan_summary": "Düğüm başına hedef {target} slot, {s} slot taşınacak",
+    "plan_slots": "Slotlar",
+    "plan_keys": "Yaklaşık anahtar",
+    "start_plan": "Dengelemeyi başlat",
+    "confirm_plan": "Plana göre {n} slot taşınsın mı? Kısa süre kullanılamayabilirler.",
+    "start_plan_fail": "Dengeleme başlatılamadı",
+    "plan_fail": "Plan oluşturulamadı",
+    "batch_progress": "{done}/{total} slot tamamlandı",
+    "current_slot": "geçerli slot {slot}",
+    "cancel_after_slot": "İptal, geçerli slot tamamlandıktan sonra geçerli olur",
+    "single_migration": "Tek slot taşıma",
+    "strategy": "Dengeleme yöntemi",
+    "strategy_slots": "Slot sayısına göre",
+    "strategy_keys": "Anahtar sayısına göre",
+    "plan_summary_keys": "Düğüm başına yaklaşık {target} anahtar, {s} slot taşınacak",
+    "overview": "Genel bakış",
+    "tolerance": "Tolerans (%)",
+    "clear_result": "Sonucu temizle",
+    "migration_panel": "Slot taşıma",
+    "migration_panel_hint": "Bir kaynak ve hedef ana düğüm seçip slotu ve anahtarlarını taşıyın. Taşınan anahtarlar geri alınamaz."
   }
 }

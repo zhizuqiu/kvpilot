@@ -767,6 +767,33 @@ func registerBrowserRoutes(rg *gin.RouterGroup) {
 		c.JSON(http.StatusOK, services.Browser().CancelSlotMigration(req.Server))
 	})
 
+	g.POST("/slot-rebalance-plan", func(c *gin.Context) {
+		var req struct {
+			Server           string `json:"server"`
+			Strategy         string `json:"strategy"`
+			MaxSlots         int    `json:"maxSlots"`
+			TolerancePercent int    `json:"tolerancePercent"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().SlotRebalancePlan(req.Server, req.Strategy, req.MaxSlots, req.TolerancePercent))
+	})
+
+	g.POST("/start-slot-rebalance", func(c *gin.Context) {
+		var req struct {
+			Server  string                        `json:"server"`
+			Moves   []services.SlotMove           `json:"moves"`
+			Options services.SlotMigrationOptions `json:"options"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().StartSlotRebalance(req.Server, req.Moves, req.Options))
+	})
+
 	g.POST("/get-cmd-history", func(c *gin.Context) {
 		var req struct {
 			PageNo   int `json:"pageNo"`

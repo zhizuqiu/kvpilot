@@ -13,6 +13,8 @@ import {
     ResumeSlotMigration,
     SlotOverview,
     StartSlotMigration,
+    SlotRebalancePlan,
+    StartSlotRebalance,
 } from 'wailsjs/go/services/browserService.js'
 
 const props = defineProps({
@@ -29,6 +31,9 @@ const DEFAULT_OPTIONS = {
     batchBytesMB: 1,
     migrateTimeoutMs: 5000,
     batchIntervalMs: 10,
+    maxSlots: 100,
+    strategy: 'slots',
+    tolerancePercent: 10,
 }
 
 const loadSavedOptions = () => {
@@ -54,7 +59,9 @@ const form = reactive({ sourceId: '', targetId: '', slot: 0 })
 const preview = reactive({ loading: false, error: '', data: null })
 const params = reactive(loadSavedOptions())
 const advancedOpen = ref(false)
+const section = ref('single')
 const topologyToken = ref(0)
+const plan = reactive({ loading: false, data: null })
 
 const task = reactive({
     state: 'idle',
@@ -68,6 +75,10 @@ const task = reactive({
     elapsedMs: 0,
     error: '',
     recovery: [],
+    batch: false,
+    totalSlots: 0,
+    doneSlots: 0,
+    currentSlot: 0,
 })
 
 let timer = null
@@ -79,11 +90,16 @@ const masterOptions = computed(() =>
 const sourceMaster = computed(() => overview.masters.find((master) => master.id === form.sourceId))
 const targetMaster = computed(() => overview.masters.find((master) => master.id === form.targetId))
 
+const slotRangeList = (master) => {
+    if (!master || !master.slotRanges) return []
+    return master.slotRanges.map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
+}
+
 const slotRangesText = (master) => {
-    if (!master || !master.slotRanges || master.slotRanges.length === 0) return '-'
-    return master.slotRanges
-        .map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
-        .join(', ')
+    const list = slotRangeList(master)
+    if (list.length === 0) return '-'
+    if (list.length <= 6) return list.join(', ')
+    return `${list.slice(0, 6).join(', ')} +${list.length - 6}`
 }
 
 const taskActive = computed(() => task.state === 'running' || task.state === 'paused')
@@ -133,6 +149,10 @@ const applyTask = (data) => {
     task.elapsedMs = data.elapsedMs || 0
     task.error = data.error || ''
     task.recovery = data.recovery || []
+    task.batch = data.batch === true
+    task.totalSlots = data.totalSlots || 0
+    task.doneSlots = data.doneSlots || 0
+    task.currentSlot = data.currentSlot || 0
 }
 
 const loadOverview = async () => {
@@ -189,8 +209,98 @@ const poll = async () => {
     if (data?.state === 'running') {
         timer = setTimeout(poll, 700)
     } else if (data?.state === 'completed') {
+        plan.data = null
         refreshAll()
     }
+}
+
+const loadPlan = async () => {
+    plan.loading = true
+    plan.data = null
+    try {
+        const { success, data, msg } = await SlotRebalancePlan(
+            props.server,
+            params.strategy,
+            params.maxSlots,
+            params.tolerancePercent
+        )
+        if (!success) {
+            $message.warning(msg || i18n.t('slot.plan_fail'))
+            return
+        }
+        plan.data = data
+    } finally {
+        plan.loading = false
+    }
+}
+
+const clearPlan = () => {
+    plan.data = null
+}
+
+const startRebalance = () => {
+    if (!plan.data?.moves?.length || taskActive.value) return
+    $dialog.warning(i18n.t('slot.confirm_plan', { n: plan.data.totalSlots }), async () => {
+        const options = {
+            batchKeys: params.batchKeys,
+            batchBytes: Math.round(params.batchBytesMB * 1024 * 1024),
+            migrateTimeoutMs: params.migrateTimeoutMs,
+            batchIntervalMs: params.batchIntervalMs,
+        }
+        const { success, data, msg } = await StartSlotRebalance(props.server, plan.data.moves, options)
+        if (!success) {
+            $message.error(msg || i18n.t('slot.start_plan_fail'))
+            return
+        }
+        applyTask(data)
+        clearTimer()
+        timer = setTimeout(poll, 700)
+    })
+}
+
+const strategyOptions = computed(() => [
+    { label: i18n.t('slot.strategy_slots'), value: 'slots' },
+    { label: i18n.t('slot.strategy_keys'), value: 'keys' },
+])
+
+const planColumns = computed(() => [
+    {
+        title: () => i18n.t('slot.source'),
+        key: 'source',
+        minWidth: 170,
+        render: (move) => move.source.addr,
+    },
+    {
+        title: () => i18n.t('slot.target'),
+        key: 'target',
+        minWidth: 170,
+        render: (move) => move.target.addr,
+    },
+    {
+        title: () => i18n.t('slot.plan_slots'),
+        key: 'slots',
+        width: 100,
+        align: 'right',
+        render: (move) => move.slots.length,
+    },
+    {
+        title: () => i18n.t('slot.plan_keys'),
+        key: 'approxKeys',
+        width: 120,
+        align: 'right',
+        render: (move) => move.approxKeys,
+    },
+])
+
+const clearResult = () => {
+    task.state = 'idle'
+    task.step = ''
+    task.error = ''
+    task.recovery = []
+    task.batch = false
+    task.totalSlots = 0
+    task.doneSlots = 0
+    task.currentSlot = 0
 }
 
 const runPreview = async () => {
@@ -285,8 +395,10 @@ const columns = computed(() => [
     {
         title: () => i18n.t('slot.col_ranges'),
         key: 'ranges',
-        minWidth: 150,
-        render: (master) => slotRangesText(master),
+        minWidth: 180,
+        ellipsis: { tooltip: true },
+        render: (master) =>
+            h('span', { title: slotRangeList(master).join(', ') }, slotRangesText(master)),
     },
     {
         title: () => i18n.t('slot.col_slots'),
@@ -413,8 +525,14 @@ watch(
                     striped />
             </div>
 
+            <div class="slot-migration-panel">
+                <div class="slot-panel-header">
+                    <span class="slot-panel-title">{{ $t('slot.migration_panel') }}</span>
+                    <span class="slot-panel-hint">{{ $t('slot.migration_panel_hint') }}</span>
+                </div>
+                <n-tabs v-model:value="section" size="small" type="line">
+                    <n-tab-pane :tab="$t('slot.single_migration')" display-directive="show" name="single">
             <div class="slot-migrate">
-                <div class="slot-migrate-title">{{ $t('slot.preview') }}</div>
                 <div class="slot-form flex-box-h">
                     <span class="slot-label">{{ $t('slot.source') }}</span>
                     <n-select
@@ -495,6 +613,83 @@ watch(
                     </div>
                 </div>
             </div>
+                    </n-tab-pane>
+                    <n-tab-pane :tab="$t('slot.rebalance')" display-directive="show" name="rebalance">
+            <div class="slot-migrate">
+                <div class="slot-form flex-box-h">
+                    <span class="slot-label">{{ $t('slot.strategy') }}</span>
+                    <n-select
+                        v-model:value="params.strategy"
+                        :disabled="taskActive"
+                        :options="strategyOptions"
+                        class="slot-strategy"
+                        size="small" />
+                    <span class="slot-label">{{ $t('slot.max_slots') }}</span>
+                    <n-input-number
+                        v-model:value="params.maxSlots"
+                        :disabled="taskActive"
+                        :max="1000"
+                        :min="1"
+                        class="slot-number"
+                        size="small" />
+                    <span class="slot-label">{{ $t('slot.tolerance') }}</span>
+                    <n-input-number
+                        v-model:value="params.tolerancePercent"
+                        :disabled="taskActive"
+                        :max="50"
+                        :min="1"
+                        :step="1"
+                        class="slot-number"
+                        size="small" />
+                    <n-button size="small" secondary :disabled="taskActive" :loading="plan.loading" @click="loadPlan">
+                        {{ $t('slot.plan') }}
+                    </n-button>
+                    <n-button v-if="plan.data" size="small" quaternary :disabled="taskActive" @click="clearPlan">
+                        {{ $t('slot.clear_plan') }}
+                    </n-button>
+                </div>
+
+                <template v-if="plan.data">
+                    <div class="slot-metrics">
+                        {{
+                            plan.data.strategy === 'keys'
+                                ? $t('slot.plan_summary_keys', { target: plan.data.balanceTarget, s: plan.data.totalSlots })
+                                : $t('slot.plan_summary', { target: plan.data.balanceTarget, s: plan.data.totalSlots })
+                        }}
+                    </div>
+                    <div v-if="plan.data.warnings?.length" class="slot-warnings">
+                        <n-tag
+                            v-for="(warning, index) in plan.data.warnings"
+                            :key="index"
+                            size="small"
+                            :bordered="false"
+                            :type="warningType(warning)">
+                            {{ warningText(warning) }}
+                        </n-tag>
+                    </div>
+                    <n-data-table
+                        v-if="plan.data.moves.length"
+                        :columns="planColumns"
+                        :data="plan.data.moves"
+                        :max-height="220"
+                        :pagination="false"
+                        class="slot-plan-table"
+                        size="small"
+                        striped />
+                    <div v-else class="slot-no-warnings">{{ $t('slot.plan_empty') }}</div>
+                    <div class="slot-actions">
+                        <n-button
+                            type="primary"
+                            size="small"
+                            :disabled="!plan.data.moves.length || taskActive"
+                            @click="startRebalance">
+                            {{ $t('slot.start_plan') }}
+                        </n-button>
+                    </div>
+                </template>
+            </div>
+                    </n-tab-pane>
+                </n-tabs>
 
             <div v-if="task.state !== 'idle'" class="slot-task">
                 <div class="slot-task-header flex-box-h">
@@ -509,6 +704,9 @@ watch(
                     <span v-if="task.elapsedMs" class="slot-task-elapsed">
                         {{ $t('slot.elapsed', { s: (task.elapsedMs / 1000).toFixed(1) }) }}
                     </span>
+                    <n-button size="tiny" quaternary @click="clearResult">
+                        {{ $t('slot.clear_result') }}
+                    </n-button>
                 </div>
 
                 <n-progress
@@ -517,6 +715,10 @@ watch(
                     :status="task.state === 'failed' ? 'error' : task.state === 'completed' ? 'success' : 'default'"
                     :show-indicator="false" />
                 <div class="slot-task-progress">
+                    <template v-if="task.batch">
+                        {{ $t('slot.batch_progress', { done: task.doneSlots, total: task.totalSlots }) }}
+                        · {{ $t('slot.current_slot', { slot: task.currentSlot }) }} ·
+                    </template>
                     {{ $t('slot.moved', { moved: task.movedKeys, total: task.totalKeys }) }}
                     <template v-if="task.movedBytes"> · {{ formatBytes(task.movedBytes, 1) }}</template>
                 </div>
@@ -534,10 +736,13 @@ watch(
                         v-if="taskActive"
                         size="small"
                         secondary
-                        :disabled="task.movedKeys > 0"
+                        :disabled="!task.batch && task.movedKeys > 0"
                         @click="cancel">
                         {{ $t('config.cancel') }}
                     </n-button>
+                    <span v-if="task.batch && task.state === 'running'" class="slot-batch-hint">
+                        {{ $t('slot.cancel_after_slot') }}
+                    </span>
                     <span v-if="task.state === 'completed'" class="slot-completed">
                         {{ $t('slot.completed_hint') }}
                     </span>
@@ -547,6 +752,7 @@ watch(
                     <div class="slot-label">{{ $t('slot.recovery') }}</div>
                     <pre v-for="line in task.recovery" :key="line">{{ line }}</pre>
                 </div>
+            </div>
             </div>
         </template>
     </div>
@@ -592,12 +798,43 @@ watch(
     }
 }
 
-.slot-migrate,
-.slot-task {
+.slot-migration-panel {
     margin-top: 12px;
-    padding: 10px;
+    padding: 12px;
     border: 1px solid v-bind('themeVars.borderColor');
     border-radius: 6px;
+}
+
+.slot-panel-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 8px;
+
+    .slot-panel-title {
+        font-weight: 600;
+    }
+
+    .slot-panel-hint {
+        font-size: 12px;
+        color: v-bind('themeVars.textColor3');
+    }
+}
+
+.slot-migrate {
+    margin-top: 8px;
+}
+
+.slot-migration-panel .slot-task {
+    margin-top: 12px;
+    padding-top: 12px;
+    border: none;
+    border-top: 1px dashed v-bind('themeVars.borderColor');
+    border-radius: 0;
+}
+
+.slot-task {
+    padding: 10px;
 }
 
 .slot-migrate-title {
@@ -628,6 +865,10 @@ watch(
 
 .slot-select {
     width: 200px;
+}
+
+.slot-strategy {
+    width: 160px;
 }
 
 .slot-number {
@@ -675,6 +916,15 @@ watch(
     align-items: center;
     gap: 8px;
     margin-bottom: 8px;
+}
+
+.slot-plan-table {
+    margin-top: 8px;
+}
+
+.slot-batch-hint {
+    font-size: 11px;
+    color: v-bind('themeVars.textColor3');
 }
 
 .slot-task-slot,

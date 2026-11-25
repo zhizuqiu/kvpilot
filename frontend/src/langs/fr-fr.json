@@ -851,8 +851,34 @@
       "target_memory": "Mémoire libre de la cible peut-être insuffisante",
       "large_key": "La grosse clé {key} ({size}) peut bloquer le nœud source",
       "many_keys": "{count} clés ; exécutez hors des heures de pointe",
-      "permission_denied": "Permission CLUSTER/MIGRATE manquante : {msg}"
+      "permission_denied": "Permission CLUSTER/MIGRATE manquante : {msg}",
+      "overshoot_skipped": "Certains écarts ne peuvent pas être comblés sans dépasser la tolérance ; ajustez la limite"
     },
-    "slot_hint": "Saisissez un numéro de slot (0-16383), pas un nombre de slots"
+    "slot_hint": "Saisissez un numéro de slot (0-16383), pas un nombre de slots",
+    "rebalance": "Migration de rééquilibrage",
+    "max_slots": "Slots maximum",
+    "plan": "Créer un plan",
+    "clear_plan": "Effacer le plan",
+    "plan_empty": "Les slots sont déjà équilibrés",
+    "plan_summary": "Cible {target} slots par nœud, {s} slots à déplacer",
+    "plan_slots": "Slots",
+    "plan_keys": "Clés estimées",
+    "start_plan": "Lancer le rééquilibrage",
+    "confirm_plan": "Déplacer {n} slots selon le plan ? Ils peuvent être brièvement indisponibles.",
+    "start_plan_fail": "Échec du démarrage du rééquilibrage",
+    "plan_fail": "Échec de la création du plan",
+    "batch_progress": "{done}/{total} slots terminés",
+    "current_slot": "slot actuel {slot}",
+    "cancel_after_slot": "L'annulation prend effet après la fin du slot en cours",
+    "single_migration": "Migration d'un slot",
+    "strategy": "Stratégie",
+    "strategy_slots": "Par nombre de slots",
+    "strategy_keys": "Par nombre de clés",
+    "plan_summary_keys": "Environ {target} clés par nœud, {s} slots à déplacer",
+    "overview": "Vue d'ensemble",
+    "tolerance": "Tolérance (%)",
+    "clear_result": "Effacer le résultat",
+    "migration_panel": "Migration de slots",
+    "migration_panel_hint": "Choisissez un maître source et cible, puis déplacez le slot et ses clés. Les clés déplacées ne peuvent pas être restaurées."
   }
 }

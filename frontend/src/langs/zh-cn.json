@@ -851,8 +851,34 @@
       "target_memory": "目标节点可用内存可能不足",
       "large_key": "存在大 key {key}（{size}），可能阻塞源节点",
       "many_keys": "共 {count} 个键，建议低峰执行",
-      "permission_denied": "缺少 CLUSTER/MIGRATE 权限：{msg}"
+      "permission_denied": "缺少 CLUSTER/MIGRATE 权限：{msg}",
+      "overshoot_skipped": "部分差距无法在不超出阈值的情况下通过整槽迁移消除，可调整阈值或迁移上限"
     },
-    "slot_hint": "填写单个槽位编号（0-16383），不是迁移数量"
+    "slot_hint": "填写单个槽位编号（0-16383），不是迁移数量",
+    "rebalance": "均衡迁移",
+    "max_slots": "最多迁移槽位",
+    "plan": "生成均衡计划",
+    "clear_plan": "清除计划",
+    "plan_empty": "当前槽位已均衡",
+    "plan_summary": "目标每节点 {target} 个槽位，计划迁移 {s} 个",
+    "plan_slots": "槽位数",
+    "plan_keys": "估算键数",
+    "start_plan": "开始均衡",
+    "confirm_plan": "按计划迁移 {n} 个槽位吗？迁移期间槽位可能短暂不可用。",
+    "start_plan_fail": "启动均衡失败",
+    "plan_fail": "生成计划失败",
+    "batch_progress": "已完成 {done}/{total} 个槽位",
+    "current_slot": "当前槽位 {slot}",
+    "cancel_after_slot": "取消将在当前槽位完成后生效",
+    "single_migration": "单槽迁移",
+    "strategy": "均衡方式",
+    "strategy_slots": "按槽位数量",
+    "strategy_keys": "按键数量",
+    "plan_summary_keys": "目标每节点约 {target} 个键，计划迁移 {s} 个槽位",
+    "overview": "概览",
+    "tolerance": "均衡阈值 (%)",
+    "clear_result": "清除结果",
+    "migration_panel": "槽位迁移",
+    "migration_panel_hint": "选择源节点与目标节点，把槽位及其数据迁移到目标节点；已搬迁的键无法回滚"
   }
 }

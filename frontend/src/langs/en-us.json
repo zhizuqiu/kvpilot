@@ -851,8 +851,34 @@
       "target_memory": "Target may not have enough free memory",
       "large_key": "Large key {key} ({size}) may block the source node",
       "many_keys": "{count} keys; run during off-peak hours",
-      "permission_denied": "CLUSTER/MIGRATE permission missing: {msg}"
+      "permission_denied": "CLUSTER/MIGRATE permission missing: {msg}",
+      "overshoot_skipped": "Some gaps cannot be closed without exceeding the tolerance; adjust the limit or accept the difference"
     },
-    "slot_hint": "Enter one slot number (0-16383), not a count"
+    "slot_hint": "Enter one slot number (0-16383), not a count",
+    "rebalance": "Rebalance migration",
+    "max_slots": "Max slots",
+    "plan": "Build plan",
+    "clear_plan": "Clear plan",
+    "plan_empty": "Slots are already balanced",
+    "plan_summary": "Target {target} slots per node, {s} slots to move",
+    "plan_slots": "Slots",
+    "plan_keys": "Approx. keys",
+    "start_plan": "Start rebalance",
+    "confirm_plan": "Move {n} slots according to the plan? Slots may be briefly unavailable.",
+    "start_plan_fail": "Failed to start rebalance",
+    "plan_fail": "Failed to build plan",
+    "batch_progress": "{done}/{total} slots done",
+    "current_slot": "current slot {slot}",
+    "cancel_after_slot": "Cancel takes effect after the current slot finishes",
+    "single_migration": "Single-slot migration",
+    "strategy": "Balance strategy",
+    "strategy_slots": "By slot count",
+    "strategy_keys": "By key count",
+    "plan_summary_keys": "Target about {target} keys per node, {s} slots to move",
+    "overview": "Overview",
+    "tolerance": "Tolerance (%)",
+    "clear_result": "Clear result",
+    "migration_panel": "Slot migration",
+    "migration_panel_hint": "Choose a source and target master, then move the slot and its keys. Migrated keys cannot be rolled back."
   }
 }

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
+import { NSelect } from 'naive-ui'
 import zhCn from '@/langs/zh-cn.json'
 
 const api = vi.hoisted(() => ({
@@ -8,6 +9,8 @@ const api = vi.hoisted(() => ({
     PreviewSlotMigration: vi.fn(),
     StartSlotMigration: vi.fn(),
     GetSlotMigration: vi.fn(),
+    SlotRebalancePlan: vi.fn(),
+    StartSlotRebalance: vi.fn(),
     PauseSlotMigration: vi.fn(),
     ResumeSlotMigration: vi.fn(),
     CancelSlotMigration: vi.fn(),
@@ -197,6 +200,104 @@ describe('ContentSlots', () => {
         } finally {
             vi.useRealTimers()
         }
+    })
+
+    it('生成均衡计划并展示迁移项', async () => {
+        api.SlotRebalancePlan.mockResolvedValue({
+            success: true,
+            data: {
+                balanceTarget: 5461,
+                totalSlots: 2,
+                moves: [
+                    {
+                        source: { id: 'master-a', addr: '10.0.0.1:6379' },
+                        target: { id: 'master-b', addr: '10.0.0.2:6379' },
+                        slots: [1, 2],
+                        approxKeys: 10,
+                    },
+                ],
+            },
+        })
+        const wrapper = await mountSlots()
+
+        await findButton(wrapper, '生成均衡计划').trigger('click')
+        await flushPromises()
+
+        expect(api.SlotRebalancePlan).toHaveBeenCalledWith('test-server', 'slots', 100, 10)
+        expect(wrapper.text()).toContain('计划迁移 2 个')
+        expect(wrapper.text()).toContain('10.0.0.2:6379')
+        expect(findButton(wrapper, '开始均衡').attributes('disabled')).toBeUndefined()
+
+        wrapper.unmount()
+    })
+
+    it('切换为按键数量均衡时按新策略生成计划', async () => {
+        api.SlotRebalancePlan.mockResolvedValue({
+            success: true,
+            data: {
+                strategy: 'keys',
+                balanceTarget: 800,
+                totalSlots: 1,
+                moves: [
+                    {
+                        source: { id: 'master-a', addr: '10.0.0.1:6379' },
+                        target: { id: 'master-b', addr: '10.0.0.2:6379' },
+                        slots: [10],
+                        approxKeys: 600,
+                    },
+                ],
+            },
+        })
+        const wrapper = await mountSlots()
+
+        const selects = wrapper.findAllComponents(NSelect)
+        selects[2].vm.$emit('update:value', 'keys')
+        await flushPromises()
+        await findButton(wrapper, '生成均衡计划').trigger('click')
+        await flushPromises()
+
+        expect(api.SlotRebalancePlan).toHaveBeenCalledWith('test-server', 'keys', 100, 10)
+        expect(wrapper.text()).toContain('目标每节点约 800 个键')
+
+        wrapper.unmount()
+    })
+
+    it('开始均衡按计划调用接口并展示批量进度', async () => {
+        api.SlotRebalancePlan.mockResolvedValue({
+            success: true,
+            data: {
+                balanceTarget: 5461,
+                totalSlots: 2,
+                moves: [
+                    {
+                        source: { id: 'master-a', addr: '10.0.0.1:6379' },
+                        target: { id: 'master-b', addr: '10.0.0.2:6379' },
+                        slots: [1, 2],
+                        approxKeys: 10,
+                    },
+                ],
+            },
+        })
+        api.StartSlotRebalance.mockResolvedValue({
+            success: true,
+            data: taskData({ state: 'running', batch: true, totalSlots: 2, doneSlots: 0, currentSlot: 1 }),
+        })
+        const wrapper = await mountSlots()
+
+        await findButton(wrapper, '生成均衡计划').trigger('click')
+        await flushPromises()
+        await findButton(wrapper, '开始均衡').trigger('click')
+        await flushPromises()
+
+        expect(api.StartSlotRebalance).toHaveBeenCalledWith(
+            'test-server',
+            expect.arrayContaining([expect.objectContaining({ approxKeys: 10 })]),
+            expect.objectContaining({ batchKeys: 100 })
+        )
+        expect(wrapper.text()).toContain('已完成 0/2 个槽位')
+        expect(wrapper.text()).toContain('当前槽位 1')
+
+        wrapper.unmount()
     })
 
     it('运行中可以暂停', async () => {

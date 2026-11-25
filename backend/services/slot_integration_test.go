@@ -180,3 +180,48 @@ func TestIntegrationSlotMigrationCancel(t *testing.T) {
 		}
 	}
 }
+
+// 验证批量均衡：按计划迁移若干槽位，完成数一致且分布更均衡。
+func TestIntegrationSlotRebalance(t *testing.T) {
+	svc, name := newEndpointService(t)
+
+	before := svc.SlotOverview(name).Data.(slotOverviewData)
+	if len(before.Masters) < 2 {
+		t.Skip("至少需要两个主节点")
+	}
+
+	planResp := svc.SlotRebalancePlan(name, "slots", 6, 0)
+	if !planResp.Success {
+		t.Fatalf("SlotRebalancePlan 失败: %s", planResp.Msg)
+	}
+	plan := planResp.Data.(slotRebalancePlan)
+	if plan.TotalSlots == 0 {
+		t.Skip("集群槽位已均衡")
+	}
+	if plan.TotalSlots > 6 {
+		t.Fatalf("计划槽位数 = %d, 超过上限 6", plan.TotalSlots)
+	}
+
+	start := svc.StartSlotRebalance(name, plan.Moves, slotMigrationOptions{
+		BatchKeys: 20, BatchBytes: 1 << 20, MigrateTimeoutMs: 5000, BatchIntervalMs: 0,
+	})
+	if !start.Success {
+		t.Fatalf("StartSlotRebalance 失败: %s", start.Msg)
+	}
+
+	progress := waitSlotMigration(t, svc, name, 120*time.Second)
+	if progress.State != "completed" {
+		t.Fatalf("均衡状态 = %s, error=%s", progress.State, progress.Error)
+	}
+	if progress.Batch != true || progress.TotalSlots != plan.TotalSlots {
+		t.Fatalf("批量进度异常: %+v", progress)
+	}
+	if progress.DoneSlots != plan.TotalSlots {
+		t.Fatalf("完成槽位 = %d, want %d", progress.DoneSlots, plan.TotalSlots)
+	}
+
+	after := svc.SlotOverview(name).Data.(slotOverviewData)
+	if len(after.Masters) != len(before.Masters) {
+		t.Fatalf("主节点数量变化: %d -> %d", len(before.Masters), len(after.Masters))
+	}
+}

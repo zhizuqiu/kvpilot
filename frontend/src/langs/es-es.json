@@ -851,8 +851,34 @@
       "target_memory": "Puede que el destino no tenga memoria libre suficiente",
       "large_key": "La clave grande {key} ({size}) puede bloquear el nodo de origen",
       "many_keys": "{count} claves; ejecute en horario de baja carga",
-      "permission_denied": "Falta permiso CLUSTER/MIGRATE: {msg}"
+      "permission_denied": "Falta permiso CLUSTER/MIGRATE: {msg}",
+      "overshoot_skipped": "Algunas diferencias no se pueden cerrar sin superar la tolerancia; ajusta el límite"
     },
-    "slot_hint": "Introduce un número de slot (0-16383), no una cantidad"
+    "slot_hint": "Introduce un número de slot (0-16383), no una cantidad",
+    "rebalance": "Migración de reequilibrio",
+    "max_slots": "Slots máximos",
+    "plan": "Generar plan",
+    "clear_plan": "Borrar plan",
+    "plan_empty": "Los slots ya están equilibrados",
+    "plan_summary": "Objetivo {target} slots por nodo, {s} slots a mover",
+    "plan_slots": "Slots",
+    "plan_keys": "Claves estimadas",
+    "start_plan": "Iniciar reequilibrio",
+    "confirm_plan": "¿Mover {n} slots según el plan? Pueden quedar brevemente no disponibles.",
+    "start_plan_fail": "Error al iniciar el reequilibrio",
+    "plan_fail": "Error al generar el plan",
+    "batch_progress": "{done}/{total} slots completados",
+    "current_slot": "slot actual {slot}",
+    "cancel_after_slot": "La cancelación se aplica al terminar el slot actual",
+    "single_migration": "Migración de un slot",
+    "strategy": "Estrategia",
+    "strategy_slots": "Por número de slots",
+    "strategy_keys": "Por número de claves",
+    "plan_summary_keys": "Unos {target} claves por nodo, {s} slots a mover",
+    "overview": "Resumen",
+    "tolerance": "Tolerancia (%)",
+    "clear_result": "Borrar resultado",
+    "migration_panel": "Migración de slots",
+    "migration_panel_hint": "Elige un maestro de origen y destino y mueve el slot con sus claves. Las claves movidas no se pueden revertir."
   }
 }

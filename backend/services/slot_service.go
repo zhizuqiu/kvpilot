@@ -119,42 +119,53 @@ type slotLogEntry struct {
 
 // slotProgress 是迁移任务的当前状态。
 type slotProgress struct {
-	State      string               `json:"state"` // idle/running/paused/completed/failed/canceled
-	Step       string               `json:"step"`
-	Slot       int                  `json:"slot"`
-	Source     slotNodeRef          `json:"source"`
-	Target     slotNodeRef          `json:"target"`
-	TotalKeys  int64                `json:"totalKeys"`
-	MovedKeys  int64                `json:"movedKeys"`
-	MovedBytes int64                `json:"movedBytes"`
-	ElapsedMS  int64                `json:"elapsedMs"`
-	Error      string               `json:"error,omitempty"`
-	Log        []slotLogEntry       `json:"log"`
-	Recovery   []string             `json:"recovery,omitempty"`
-	Options    slotMigrationOptions `json:"options"`
+	State       string               `json:"state"` // idle/running/paused/completed/failed/canceled
+	Step        string               `json:"step"`
+	Slot        int                  `json:"slot"`
+	Source      slotNodeRef          `json:"source"`
+	Target      slotNodeRef          `json:"target"`
+	TotalKeys   int64                `json:"totalKeys"`
+	MovedKeys   int64                `json:"movedKeys"`
+	MovedBytes  int64                `json:"movedBytes"`
+	ElapsedMS   int64                `json:"elapsedMs"`
+	Error       string               `json:"error,omitempty"`
+	Log         []slotLogEntry       `json:"log"`
+	Recovery    []string             `json:"recovery,omitempty"`
+	Options     slotMigrationOptions `json:"options"`
+	Batch       bool                 `json:"batch,omitempty"`
+	TotalSlots  int                  `json:"totalSlots,omitempty"`
+	DoneSlots   int                  `json:"doneSlots,omitempty"`
+	CurrentSlot int                  `json:"currentSlot,omitempty"`
 }
 
 type slotMigrationTask struct {
-	mutex      sync.Mutex
-	ctx        context.Context
-	cancel     context.CancelFunc
-	state      string
-	step       string
-	slot       int
-	source     slotNodeRef
-	target     slotNodeRef
-	resume     bool
-	totalKeys  int64
-	movedKeys  int64
-	movedBytes int64
-	started    time.Time
-	finishedAt time.Time
-	errMsg     string
-	log        []slotLogEntry
-	recovery   []string
-	pauseAsked bool
-	resumeChan chan struct{}
-	options    slotMigrationOptions
+	mutex       sync.Mutex
+	ctx         context.Context
+	cancel      context.CancelFunc
+	state       string
+	step        string
+	slot        int
+	source      slotNodeRef
+	target      slotNodeRef
+	resume      bool
+	totalKeys   int64
+	movedKeys   int64
+	movedBytes  int64
+	started     time.Time
+	finishedAt  time.Time
+	errMsg      string
+	log         []slotLogEntry
+	recovery    []string
+	pauseAsked  bool
+	cancelAsked bool
+	resumeChan  chan struct{}
+	options     slotMigrationOptions
+
+	batch       bool
+	moves       []slotMove
+	totalSlots  int
+	doneSlots   int
+	currentSlot int
 }
 
 // parseSlotText 解析 CLUSTER NODES 的槽位字段，返回区间与迁移标记。
@@ -192,7 +203,28 @@ func parseSlotText(text string) ([]slotRange, []slotMarker) {
 		}
 	}
 	sort.Slice(ranges, func(i, j int) bool { return ranges[i].Start < ranges[j].Start })
-	return ranges, markers
+	return mergeSlotRanges(ranges), markers
+}
+
+// mergeSlotRanges 合并相邻或重叠的区间，避免迁移后出现大量单槽区间。
+func mergeSlotRanges(ranges []slotRange) []slotRange {
+	if len(ranges) <= 1 {
+		return ranges
+	}
+	merged := make([]slotRange, 0, len(ranges))
+	current := ranges[0]
+	for _, next := range ranges[1:] {
+		if next.Start <= current.End+1 {
+			if next.End > current.End {
+				current.End = next.End
+			}
+			continue
+		}
+		merged = append(merged, current)
+		current = next
+	}
+	merged = append(merged, current)
+	return merged
 }
 
 func slotRangeCount(ranges []slotRange) int {
@@ -734,6 +766,14 @@ func (b *browserService) CancelSlotMigration(server string) (resp types.JSResp) 
 		resp.Msg = "migration is not active"
 		return
 	}
+	if task.batch {
+		// 批量任务在槽位边界停止，已完成的槽位不回滚
+		task.cancelAsked = true
+		task.mutex.Unlock()
+		resp.Success = true
+		resp.Data = task.snapshot()
+		return
+	}
 	moved := task.movedKeys
 	task.mutex.Unlock()
 	if moved > 0 {
@@ -764,19 +804,23 @@ func (t *slotMigrationTask) snapshot() slotProgress {
 	logs := append([]slotLogEntry(nil), t.log...)
 	recovery := append([]string(nil), t.recovery...)
 	progress := slotProgress{
-		State:      t.state,
-		Step:       t.step,
-		Slot:       t.slot,
-		Source:     t.source,
-		Target:     t.target,
-		TotalKeys:  t.totalKeys,
-		MovedKeys:  t.movedKeys,
-		MovedBytes: t.movedBytes,
-		ElapsedMS:  elapsed.Milliseconds(),
-		Error:      t.errMsg,
-		Log:        logs,
-		Recovery:   recovery,
-		Options:    t.options,
+		State:       t.state,
+		Step:        t.step,
+		Slot:        t.slot,
+		Source:      t.source,
+		Target:      t.target,
+		TotalKeys:   t.totalKeys,
+		MovedKeys:   t.movedKeys,
+		MovedBytes:  t.movedBytes,
+		ElapsedMS:   elapsed.Milliseconds(),
+		Error:       t.errMsg,
+		Log:         logs,
+		Recovery:    recovery,
+		Options:     t.options,
+		Batch:       t.batch,
+		TotalSlots:  t.totalSlots,
+		DoneSlots:   t.doneSlots,
+		CurrentSlot: t.currentSlot,
 	}
 	return progress
 }
@@ -1082,4 +1126,550 @@ func stringSliceToAny(values []string) []any {
 		result[i] = value
 	}
 	return result
+}
+
+// slotMove 是一批待迁移的槽位：同一源节点与目标节点。
+type slotMove struct {
+	Source     slotNodeRef `json:"source"`
+	Target     slotNodeRef `json:"target"`
+	Slots      []int       `json:"slots"`
+	ApproxKeys int64       `json:"approxKeys"`
+}
+
+// SlotMove 供 API 层接收均衡计划。
+type SlotMove = slotMove
+
+// slotRebalancePlan 是均衡计划。
+type slotRebalancePlan struct {
+	Strategy      string        `json:"strategy"`
+	Tolerance     int           `json:"tolerance"`
+	BalanceTarget int           `json:"balanceTarget"`
+	TotalSlots    int           `json:"totalSlots"`
+	Moves         []slotMove    `json:"moves"`
+	Masters       []slotMaster  `json:"masters"`
+	Warnings      []slotWarning `json:"warnings,omitempty"`
+}
+
+// balanceBounds 返回目标值的容忍区间。
+func balanceBounds(target, tolerancePercent int) (low, high int) {
+	if tolerancePercent < 0 {
+		tolerancePercent = 0
+	}
+	if tolerancePercent > 50 {
+		tolerancePercent = 50
+	}
+	delta := target * tolerancePercent / 100
+	low = target - delta
+	high = target + delta
+	if low < 0 {
+		low = 0
+	}
+	if high < target {
+		high = target
+	}
+	return low, high
+}
+
+// buildSlotCountPlan 按槽位数量生成均衡计划，容忍区间内不再迁移。
+func buildSlotCountPlan(masters []slotMaster, maxSlots, tolerancePercent int) ([]slotMove, int) {
+	if len(masters) < 2 || maxSlots <= 0 {
+		return nil, 0
+	}
+	target := 16384 / len(masters)
+	low, high := balanceBounds(target, tolerancePercent)
+
+	donors := make([]slotMaster, 0, len(masters))
+	receivers := make([]slotMaster, 0, len(masters))
+	for _, master := range masters {
+		switch {
+		case master.SlotCount > high:
+			donors = append(donors, master)
+		case master.SlotCount < low:
+			receivers = append(receivers, master)
+		}
+	}
+	sort.Slice(donors, func(i, j int) bool { return donors[i].SlotCount > donors[j].SlotCount })
+	sort.Slice(receivers, func(i, j int) bool { return receivers[i].SlotCount < receivers[j].SlotCount })
+
+	pool := make(map[string][]int, len(donors))
+	for _, donor := range donors {
+		excess := donor.SlotCount - target
+		skipped := make(map[int]bool, len(donor.Migrating))
+		for _, slot := range donor.Migrating {
+			skipped[slot] = true
+		}
+		slots := make([]int, 0, excess)
+		for i := len(donor.SlotRanges) - 1; i >= 0 && len(slots) < excess; i-- {
+			rangeItem := donor.SlotRanges[i]
+			for slot := rangeItem.End; slot >= rangeItem.Start && len(slots) < excess; slot-- {
+				if skipped[slot] {
+					continue
+				}
+				slots = append(slots, slot)
+			}
+		}
+		pool[donor.ID] = slots
+	}
+
+	moves := make([]slotMove, 0)
+	total := 0
+	const chunk = 100
+	for _, receiver := range receivers {
+		need := target - receiver.SlotCount
+		for need > 0 && total < maxSlots {
+			progressed := false
+			for _, donor := range donors {
+				if need <= 0 || total >= maxSlots {
+					break
+				}
+				slots := pool[donor.ID]
+				if len(slots) == 0 {
+					continue
+				}
+				take := chunk
+				if len(slots) < take {
+					take = len(slots)
+				}
+				if need < take {
+					take = need
+				}
+				if total+take > maxSlots {
+					take = maxSlots - total
+				}
+				if take <= 0 {
+					break
+				}
+				selected := append([]int(nil), slots[:take]...)
+				pool[donor.ID] = slots[take:]
+				approx := int64(0)
+				if donor.SlotCount > 0 {
+					approx = donor.Keys * int64(len(selected)) / int64(donor.SlotCount)
+				}
+				moves = append(moves, slotMove{
+					Source:     slotNodeRef{ID: donor.ID, Addr: donor.Addr},
+					Target:     slotNodeRef{ID: receiver.ID, Addr: receiver.Addr},
+					Slots:      selected,
+					ApproxKeys: approx,
+				})
+				need -= len(selected)
+				total += len(selected)
+				progressed = true
+			}
+			if !progressed {
+				break
+			}
+		}
+	}
+	return moves, total
+}
+
+// buildKeyPlan 按键数量生成均衡计划。
+// 只选择迁移后不会让目标节点超出容忍上限的槽位；没有合适槽位时跳过并返回 skipped。
+func buildKeyPlan(masters []slotMaster, counts map[string]map[int]int64, maxSlots, tolerancePercent int) ([]slotMove, int, int64, bool) {
+	if len(masters) < 2 || maxSlots <= 0 {
+		return nil, 0, 0, false
+	}
+	var totalKeys int64
+	for _, master := range masters {
+		totalKeys += master.Keys
+	}
+	target := int(totalKeys / int64(len(masters)))
+	low, high := balanceBounds(target, tolerancePercent)
+
+	donors := make([]slotMaster, 0, len(masters))
+	receivers := make([]slotMaster, 0, len(masters))
+	for _, master := range masters {
+		switch {
+		case int(master.Keys) > high:
+			donors = append(donors, master)
+		case int(master.Keys) < low:
+			receivers = append(receivers, master)
+		}
+	}
+	sort.Slice(donors, func(i, j int) bool { return donors[i].Keys > donors[j].Keys })
+	sort.Slice(receivers, func(i, j int) bool { return receivers[i].Keys < receivers[j].Keys })
+
+	byID := make(map[string]slotMaster, len(masters))
+	for _, master := range masters {
+		byID[master.ID] = master
+	}
+
+	pool := make(map[string][]int, len(donors))
+	poolKeys := make(map[string]map[int]int64, len(donors))
+	donorRemaining := make(map[string]int64, len(donors))
+	for _, donor := range donors {
+		perSlot := counts[donor.ID]
+		slots := make([]int, 0, len(perSlot))
+		for slot, keys := range perSlot {
+			if keys > 0 {
+				slots = append(slots, slot)
+			}
+		}
+		sort.Slice(slots, func(i, j int) bool { return perSlot[slots[i]] > perSlot[slots[j]] })
+		pool[donor.ID] = slots
+		poolKeys[donor.ID] = perSlot
+		donorRemaining[donor.ID] = donor.Keys
+	}
+
+	moves := make([]slotMove, 0)
+	total := 0
+	var movedKeys int64
+	skipped := false
+	const chunk = 100
+
+	for _, receiver := range receivers {
+		recvKeys := int(receiver.Keys)
+		for recvKeys < target && total < maxSlots {
+			bestDonor := ""
+			bestSlot := -1
+			var bestKeys int64
+			for _, donor := range donors {
+				slots := pool[donor.ID]
+				if len(slots) == 0 {
+					continue
+				}
+				remaining := donorRemaining[donor.ID]
+				if remaining <= int64(target) {
+					continue
+				}
+				// 迁移后接收方不能超过容忍上限；同时 donor 不应被抽到目标以下
+				capacity := high - recvKeys
+				if donorCap := remaining - int64(target); donorCap < int64(capacity) {
+					capacity = int(donorCap)
+				}
+				if capacity <= 0 {
+					continue
+				}
+				perSlot := poolKeys[donor.ID]
+				for _, slot := range slots {
+					keys := perSlot[slot]
+					if keys > 0 && keys <= int64(capacity) && keys > bestKeys {
+						bestDonor = donor.ID
+						bestSlot = slot
+						bestKeys = keys
+						break
+					}
+				}
+			}
+			if bestSlot < 0 {
+				skipped = true
+				break
+			}
+
+			slots := pool[bestDonor]
+			for i, slot := range slots {
+				if slot == bestSlot {
+					pool[bestDonor] = append(slots[:i], slots[i+1:]...)
+					break
+				}
+			}
+			donorRemaining[bestDonor] -= bestKeys
+
+			source := byID[bestDonor]
+			if len(moves) > 0 {
+				last := &moves[len(moves)-1]
+				if last.Source.ID == source.ID && last.Target.ID == receiver.ID && len(last.Slots) < chunk {
+					last.Slots = append(last.Slots, bestSlot)
+					last.ApproxKeys += bestKeys
+					recvKeys += int(bestKeys)
+					movedKeys += bestKeys
+					total++
+					continue
+				}
+			}
+			moves = append(moves, slotMove{
+				Source:     slotNodeRef{ID: source.ID, Addr: source.Addr},
+				Target:     slotNodeRef{ID: receiver.ID, Addr: receiver.Addr},
+				Slots:      []int{bestSlot},
+				ApproxKeys: bestKeys,
+			})
+			recvKeys += int(bestKeys)
+			movedKeys += bestKeys
+			total++
+		}
+	}
+	return moves, total, movedKeys, skipped
+}
+
+// slotKeyCounts 读取候选槽位内的键数量；按节点流水线批量查询。
+func (b *browserService) slotKeyCounts(item *connectionItem, masters []slotMaster) map[string]map[int]int64 {
+	result := make(map[string]map[int]int64, len(masters))
+	for _, master := range masters {
+		client, err := b.slotNodeClient(item, master.Addr)
+		if err != nil {
+			continue
+		}
+		perSlot := map[int]int64{}
+		slots := make([]int, 0, master.SlotCount)
+		for _, slotRange := range master.SlotRanges {
+			for slot := slotRange.End; slot >= slotRange.Start; slot-- {
+				slots = append(slots, slot)
+			}
+		}
+		const batch = 200
+		for i := 0; i < len(slots); i += batch {
+			end := i + batch
+			if end > len(slots) {
+				end = len(slots)
+			}
+			pipe := client.Pipeline()
+			cmds := make([]*redis.Cmd, end-i)
+			for j, slot := range slots[i:end] {
+				cmds[j] = pipe.Do(item.ctx, "CLUSTER", "COUNTKEYSINSLOT", slot)
+			}
+			_, _ = pipe.Exec(item.ctx)
+			for j, slot := range slots[i:end] {
+				if count, err := cmds[j].Int64(); err == nil && count > 0 {
+					perSlot[slot] = count
+				}
+			}
+		}
+		client.Close()
+		result[master.ID] = perSlot
+	}
+	return result
+}
+
+// SlotRebalancePlan 返回一份只读的均衡计划。strategy 支持 slots / keys。
+func (b *browserService) SlotRebalancePlan(server string, strategy string, maxSlots, tolerancePercent int) (resp types.JSResp) {
+	if maxSlots <= 0 {
+		maxSlots = 100
+	}
+	if maxSlots > 1000 {
+		maxSlots = 1000
+	}
+	if strategy != "keys" {
+		strategy = "slots"
+	}
+	if tolerancePercent <= 0 {
+		tolerancePercent = 10
+	}
+	if tolerancePercent > 50 {
+		tolerancePercent = 50
+	}
+	item, err := b.getRedisClient(server, -1)
+	if err != nil {
+		resp.Msg = err.Error()
+		return
+	}
+	overviewResp := b.SlotOverview(server)
+	if !overviewResp.Success {
+		resp.Msg = overviewResp.Msg
+		return
+	}
+	overview := overviewResp.Data.(slotOverviewData)
+	if overview.Mode != "cluster" {
+		resp.Msg = "not a cluster connection"
+		return
+	}
+
+	plan := slotRebalancePlan{
+		Strategy:  strategy,
+		Tolerance: tolerancePercent,
+		Moves:     []slotMove{},
+		Masters:   overview.Masters,
+	}
+	if strategy == "keys" {
+		counts := b.slotKeyCounts(item, overview.Masters)
+		moves, total, _, skipped := buildKeyPlan(overview.Masters, counts, maxSlots, tolerancePercent)
+		var totalKeys int64
+		for _, master := range overview.Masters {
+			totalKeys += master.Keys
+		}
+		plan.BalanceTarget = int(totalKeys / int64(maxInt(len(overview.Masters), 1)))
+		plan.TotalSlots = total
+		plan.Moves = moves
+		if skipped {
+			plan.Warnings = append(plan.Warnings, slotWarning{Code: "overshoot_skipped", Level: "warn"})
+		}
+	} else {
+		moves, total := buildSlotCountPlan(overview.Masters, maxSlots, tolerancePercent)
+		plan.BalanceTarget = 16384 / maxInt(len(overview.Masters), 1)
+		plan.TotalSlots = total
+		plan.Moves = moves
+	}
+	resp.Success = true
+	resp.Data = plan
+	return
+}
+
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// StartSlotRebalance 按计划批量迁移槽位；暂停/取消在槽位之间生效。
+func (b *browserService) StartSlotRebalance(server string, moves []slotMove, options slotMigrationOptions) (resp types.JSResp) {
+	if len(moves) == 0 {
+		resp.Msg = "empty plan"
+		return
+	}
+	item, err := b.getRedisClient(server, -1)
+	if err != nil {
+		resp.Msg = err.Error()
+		return
+	}
+
+	overviewResp := b.SlotOverview(server)
+	if !overviewResp.Success {
+		resp.Msg = overviewResp.Msg
+		return
+	}
+	overview := overviewResp.Data.(slotOverviewData)
+	if overview.State != "ok" {
+		resp.Msg = "cluster state is not ok"
+		return
+	}
+	masters := map[string]slotMaster{}
+	for _, master := range overview.Masters {
+		masters[master.ID] = master
+	}
+
+	total := 0
+	seen := map[int]bool{}
+	for _, move := range moves {
+		source, ok := masters[move.Source.ID]
+		if !ok || nodeOwnsSlot(source.SlotRanges, move.Slots[0]) == false {
+			resp.Msg = "source does not own the slot"
+			return
+		}
+		if _, ok := masters[move.Target.ID]; !ok {
+			resp.Msg = "target is not a master"
+			return
+		}
+		for _, slot := range move.Slots {
+			if seen[slot] {
+				resp.Msg = "duplicated slot in plan"
+				return
+			}
+			seen[slot] = true
+			if !nodeOwnsSlot(source.SlotRanges, slot) {
+				resp.Msg = "source does not own the slot"
+				return
+			}
+			for _, migrating := range source.Migrating {
+				if migrating == slot {
+					resp.Msg = "slot is already migrating"
+					return
+				}
+			}
+		}
+		total += len(move.Slots)
+	}
+	if total > 1000 {
+		resp.Msg = "too many slots in one plan"
+		return
+	}
+
+	b.slotMutex.Lock()
+	if b.slotTasks == nil {
+		b.slotTasks = map[string]*slotMigrationTask{}
+	}
+	if existing, ok := b.slotTasks[server]; ok {
+		existing.mutex.Lock()
+		busy := existing.state == "running" || existing.state == "paused"
+		existing.mutex.Unlock()
+		if busy {
+			b.slotMutex.Unlock()
+			resp.Msg = "migration already running"
+			return
+		}
+	}
+
+	ctx, cancel := context.WithCancel(item.ctx)
+	task := &slotMigrationTask{
+		ctx:        ctx,
+		cancel:     cancel,
+		state:      "running",
+		step:       "preparing",
+		started:    time.Now(),
+		resumeChan: make(chan struct{}, 1),
+		options:    clampSlotOptions(options),
+		log:        make([]slotLogEntry, 0, 32),
+		batch:      true,
+		moves:      moves,
+		totalSlots: total,
+	}
+	b.slotTasks[server] = task
+	b.slotMutex.Unlock()
+
+	go b.runSlotRebalance(item, task)
+	resp.Success = true
+	resp.Data = task.snapshot()
+	return
+}
+
+// runSlotRebalance 逐个槽位执行计划；暂停与取消在槽位边界生效。
+func (b *browserService) runSlotRebalance(item *connectionItem, task *slotMigrationTask) {
+	finished := 0
+	for _, move := range task.moves {
+		for _, slot := range move.Slots {
+			// 槽位边界：处理取消与暂停
+			task.mutex.Lock()
+			cancelAsked := task.cancelAsked
+			pauseAsked := task.pauseAsked
+			task.currentSlot = slot
+			task.mutex.Unlock()
+
+			if cancelAsked {
+				task.setState("canceled", "done")
+				task.mutex.Lock()
+				task.finishedAt = time.Now()
+				task.mutex.Unlock()
+				task.addLog("info", "batch_canceled", map[string]string{"done": strconv.Itoa(finished)})
+				return
+			}
+			if pauseAsked {
+				task.setState("paused", "migrating")
+				select {
+				case <-task.ctx.Done():
+					task.setState("canceled", "done")
+					task.mutex.Lock()
+					task.finishedAt = time.Now()
+					task.mutex.Unlock()
+					return
+				case <-task.resumeChan:
+					task.setState("running", "migrating")
+				}
+			}
+
+			subCtx, subCancel := context.WithCancel(task.ctx)
+			sub := &slotMigrationTask{
+				ctx:        subCtx,
+				cancel:     subCancel,
+				state:      "running",
+				step:       "preparing",
+				slot:       slot,
+				source:     move.Source,
+				target:     move.Target,
+				started:    time.Now(),
+				resumeChan: make(chan struct{}, 1),
+				options:    task.options,
+				log:        make([]slotLogEntry, 0, 8),
+			}
+			b.runSlotMigration(item, sub)
+			progress := sub.snapshot()
+			subCancel()
+
+			task.mutex.Lock()
+			task.movedKeys += progress.MovedKeys
+			task.movedBytes += progress.MovedBytes
+			task.mutex.Unlock()
+
+			if progress.State != "completed" {
+				task.fail(progress.Error, progress.Recovery)
+				task.addLog("error", "batch_failed", map[string]string{"slot": strconv.Itoa(slot)})
+				return
+			}
+			finished++
+			task.mutex.Lock()
+			task.doneSlots = finished
+			task.mutex.Unlock()
+			task.addLog("info", "slot_done", map[string]string{"slot": strconv.Itoa(slot)})
+		}
+	}
+
+	task.complete("done")
 }
