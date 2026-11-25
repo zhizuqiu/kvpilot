@@ -165,7 +165,8 @@
       "config": "Yapılandırma",
       "session": "Oturumlar",
       "analysis": "Analiz",
-      "health": "Sağlık kontrolü"
+      "health": "Sağlık kontrolü",
+      "slot": "Slotlar"
     }
   },
   "ribbon": {
@@ -787,5 +788,71 @@
       "persistence_config": "save {save}, appendonly {appendonly}",
       "cluster": "cluster_state: {state}"
     }
+  },
+  "slot": {
+    "title": "Slot yönetimi",
+    "masters": "{n} ana düğüm",
+    "slots_assigned": "{n} slot atandı",
+    "migrating": "{n} taşınıyor",
+    "not_cluster": "Slot yönetimi yalnızca küme bağlantılarında kullanılabilir",
+    "load_fail": "Küme slotları yüklenemedi",
+    "col_ranges": "Slot aralıkları",
+    "col_slots": "Slotlar",
+    "col_migrating": "Taşınıyor",
+    "select_source": "Kaynak seç",
+    "preview": "Taşımayı önizle",
+    "source": "Kaynak",
+    "target": "Hedef",
+    "slot_number": "Slot numarası",
+    "preview_fail": "Önizleme başarısız",
+    "keys_count": "{n} anahtar",
+    "estimated_size": "Tahmini boyut",
+    "largest_key": "En büyük anahtar",
+    "target_free": "Hedefte boş",
+    "no_warnings": "Uyarı yok",
+    "advanced": "Gelişmiş parametreler",
+    "batch_keys": "Parti başına anahtar",
+    "batch_bytes": "Parti başına MB",
+    "timeout": "MIGRATE zaman aşımı (ms)",
+    "interval": "Parti aralığı (ms)",
+    "start": "Taşımayı başlat",
+    "confirm_start": "{slot} slotu taşınsın mı? Taşıma sırasında kısa süre kullanılamayabilir.",
+    "start_fail": "Taşıma başlatılamadı",
+    "pause": "Duraklat",
+    "resume": "Devam et",
+    "cancel_refused": "Anahtarlar taşındıktan sonra iptal edilemez; duraklat veya devam et kullanın.",
+    "completed_hint": "Taşıma tamamlandı ve küme slotları yenilendi.",
+    "recovery": "Kurtarma komutları",
+    "elapsed": "{s} sn",
+    "moved": "{moved}/{total} anahtar taşındı",
+    "task_state": {
+      "running": "Çalışıyor",
+      "paused": "Duraklatıldı",
+      "completed": "Tamamlandı",
+      "failed": "Başarısız",
+      "canceled": "İptal edildi"
+    },
+    "step": {
+      "preparing": "Ön kontrol",
+      "marking": "Taşıma işaretleri",
+      "migrating": "Anahtarlar taşınıyor",
+      "committing": "Slot atanıyor",
+      "verifying": "Doğrulanıyor",
+      "done": "Tamam"
+    },
+    "warning": {
+      "node_not_found": "Kaynak veya hedef düğüm bulunamadı",
+      "same_node": "Kaynak ve hedef farklı olmalı",
+      "slot_not_owned": "Slot kaynak düğüme ait değil",
+      "existing_migration": "Bu slotta başka bir düğüm çiftiyle taşıma sürüyor",
+      "resume": "Tamamlanmamış taşıma algılandı; başlatmak onu sürdürür",
+      "cluster_state": "Küme durumu ok değil",
+      "target_unreachable": "Hedef düğüme ulaşılamıyor",
+      "target_memory": "Hedefte yeterli boş bellek olmayabilir",
+      "large_key": "Büyük anahtar {key} ({size}) kaynak düğümü bloke edebilir",
+      "many_keys": "{count} anahtar; yoğun olmayan saatlerde çalıştırın",
+      "permission_denied": "CLUSTER/MIGRATE izni yok: {msg}"
+    },
+    "slot_hint": "Tek bir slot numarası girin (0-16383), adet değil"
   }
 }

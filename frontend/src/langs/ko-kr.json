@@ -165,7 +165,8 @@
       "config": "설정",
       "session": "세션",
       "analysis": "분석",
-      "health": "상태 점검"
+      "health": "상태 점검",
+      "slot": "슬롯"
     }
   },
   "ribbon": {
@@ -787,5 +788,71 @@
       "persistence_config": "save {save}, appendonly {appendonly}",
       "cluster": "cluster_state는 {state}"
     }
+  },
+  "slot": {
+    "title": "슬롯 관리",
+    "masters": "{n}개 마스터",
+    "slots_assigned": "{n}개 슬롯 할당됨",
+    "migrating": "{n}개 슬롯 마이그레이션 중",
+    "not_cluster": "슬롯 관리는 클러스터 연결에서만 사용할 수 있습니다",
+    "load_fail": "클러스터 슬롯을 불러오지 못했습니다",
+    "col_ranges": "슬롯 범위",
+    "col_slots": "슬롯 수",
+    "col_migrating": "마이그레이션 중",
+    "select_source": "소스로 선택",
+    "preview": "마이그레이션 미리보기",
+    "source": "소스",
+    "target": "대상",
+    "slot_number": "슬롯 번호",
+    "preview_fail": "미리보기 실패",
+    "keys_count": "{n}개 키",
+    "estimated_size": "예상 크기",
+    "largest_key": "가장 큰 키",
+    "target_free": "대상 여유 메모리",
+    "no_warnings": "경고 없음",
+    "advanced": "고급 매개변수",
+    "batch_keys": "배치당 키 수",
+    "batch_bytes": "배치당 MB",
+    "timeout": "MIGRATE 시간 제한 (ms)",
+    "interval": "배치 간격 (ms)",
+    "start": "마이그레이션 시작",
+    "confirm_start": "슬롯 {slot}을 마이그레이션할까요? 마이그레이션 중 잠시 사용할 수 없을 수 있습니다.",
+    "start_fail": "마이그레이션을 시작하지 못했습니다",
+    "pause": "일시 정지",
+    "resume": "재개",
+    "cancel_refused": "키가 이동된 후에는 취소할 수 없습니다. 일시 정지 또는 재개만 가능합니다.",
+    "completed_hint": "마이그레이션이 완료되어 클러스터 슬롯을 새로 고쳤습니다.",
+    "recovery": "복구 명령",
+    "elapsed": "{s}초",
+    "moved": "{moved}/{total}개 키 이동됨",
+    "task_state": {
+      "running": "실행 중",
+      "paused": "일시 정지",
+      "completed": "완료",
+      "failed": "실패",
+      "canceled": "취소됨"
+    },
+    "step": {
+      "preparing": "사전 점검",
+      "marking": "마이그레이션 표시 설정",
+      "migrating": "키 이동",
+      "committing": "슬롯 바인딩",
+      "verifying": "검증",
+      "done": "완료"
+    },
+    "warning": {
+      "node_not_found": "소스 또는 대상 노드를 찾을 수 없습니다",
+      "same_node": "소스와 대상은 달라야 합니다",
+      "slot_not_owned": "이 슬롯은 소스 노드 소유가 아닙니다",
+      "existing_migration": "이 슬롯에는 다른 노드 쌍의 마이그레이션이 진행 중입니다",
+      "resume": "완료되지 않은 마이그레이션을 감지했습니다. 시작하면 이어서 진행합니다",
+      "cluster_state": "클러스터 상태가 ok가 아닙니다",
+      "target_unreachable": "대상 노드에 연결할 수 없습니다",
+      "target_memory": "대상의 여유 메모리가 부족할 수 있습니다",
+      "large_key": "큰 키 {key}({size})가 소스 노드를 차단할 수 있습니다",
+      "many_keys": "{count}개 키가 있습니다. 한산한 시간대 실행을 권장합니다",
+      "permission_denied": "CLUSTER/MIGRATE 권한이 없습니다: {msg}"
+    },
+    "slot_hint": "단일 슬롯 번호(0-16383)를 입력하세요. 개수가 아닙니다"
   }
 }

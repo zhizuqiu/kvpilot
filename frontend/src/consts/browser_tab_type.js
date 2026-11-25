@@ -7,6 +7,7 @@ export const BrowserTabType = {
     Session: 'session',
     Analysis: 'analysis',
     Health: 'health',
+    Slot: 'slot',
     KeyDetail: 'key_detail',
     Cli: 'cli',
     SlowLog: 'slow_log',

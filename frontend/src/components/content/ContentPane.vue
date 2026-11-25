@@ -27,6 +27,8 @@ import AnalysisIcon from '@/components/icons/Analysis.vue'
 import ContentAnalysis from '@/components/content_value/ContentAnalysis.vue'
 import HealthIcon from '@/components/icons/Health.vue'
 import ContentHealth from '@/components/content_value/ContentHealth.vue'
+import SlotIcon from '@/components/icons/Slot.vue'
+import ContentSlots from '@/components/content_value/ContentSlots.vue'
 
 const themeVars = useThemeVars()
 
@@ -138,6 +140,22 @@ watch(
                     :server="props.server" />
             </n-tab-pane>
 
+            <!-- key detail pane -->
+            <n-tab-pane :name="BrowserTabType.KeyDetail.toString()" display-directive="show:lazy">
+                <template #tab>
+                    <n-space :size="5" :wrap-item="false" align="center" inline justify="center">
+                        <n-icon size="16">
+                            <detail
+                                :inverse="selectedSubTab === BrowserTabType.KeyDetail.toString()"
+                                :stroke-color="themeVars.tabColor"
+                                stroke-width="4" />
+                        </n-icon>
+                        <span>{{ $t('interface.sub_tab.key_detail') }}</span>
+                    </n-space>
+                </template>
+                <content-value-wrapper :blank="isBlankValue" :content="tabContent" />
+            </n-tab-pane>
+
             <!-- session pane -->
             <n-tab-pane :name="BrowserTabType.Session.toString()" display-directive="show:lazy">
                 <template #tab>
@@ -192,20 +210,22 @@ watch(
                     :server="props.server" />
             </n-tab-pane>
 
-            <!-- key detail pane -->
-            <n-tab-pane :name="BrowserTabType.KeyDetail.toString()" display-directive="show:lazy">
+            <!-- slot pane -->
+            <n-tab-pane :name="BrowserTabType.Slot.toString()" display-directive="show:lazy">
                 <template #tab>
                     <n-space :size="5" :wrap-item="false" align="center" inline justify="center">
                         <n-icon size="16">
-                            <detail
-                                :inverse="selectedSubTab === BrowserTabType.KeyDetail.toString()"
+                            <slot-icon
+                                :inverse="selectedSubTab === BrowserTabType.Slot.toString()"
                                 :stroke-color="themeVars.tabColor"
                                 stroke-width="4" />
                         </n-icon>
-                        <span>{{ $t('interface.sub_tab.key_detail') }}</span>
+                        <span>{{ $t('interface.sub_tab.slot') }}</span>
                     </n-space>
                 </template>
-                <content-value-wrapper :blank="isBlankValue" :content="tabContent" />
+                <content-slots
+                    :pause="selectedSubTab !== BrowserTabType.Slot.toString()"
+                    :server="props.server" />
             </n-tab-pane>
 
             <!-- cli pane -->

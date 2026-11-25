@@ -381,6 +381,34 @@ export function CheckHealth(server) {
     return post('/browser/check-health', { server })
 }
 
+export function SlotOverview(server) {
+    return post('/browser/slot-overview', { server })
+}
+
+export function PreviewSlotMigration(server, sourceId, targetId, slot) {
+    return post('/browser/preview-slot-migration', { server, sourceId, targetId, slot })
+}
+
+export function StartSlotMigration(server, sourceId, targetId, slot, options) {
+    return post('/browser/start-slot-migration', { server, sourceId, targetId, slot, options })
+}
+
+export function GetSlotMigration(server) {
+    return post('/browser/get-slot-migration', { server })
+}
+
+export function PauseSlotMigration(server) {
+    return post('/browser/pause-slot-migration', { server })
+}
+
+export function ResumeSlotMigration(server) {
+    return post('/browser/resume-slot-migration', { server })
+}
+
+export function CancelSlotMigration(server) {
+    return post('/browser/cancel-slot-migration', { server })
+}
+
 export function GetCmdHistory() {
     return post('/browser/get-cmd-history')
 }

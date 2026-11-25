@@ -165,7 +165,8 @@
       "config": "Configuration",
       "session": "Sessions",
       "analysis": "Analysis",
-      "health": "Health"
+      "health": "Health",
+      "slot": "Slots"
     }
   },
   "ribbon": {
@@ -787,5 +788,71 @@
       "persistence_config": "save {save}, appendonly {appendonly}",
       "cluster": "cluster_state is {state}"
     }
+  },
+  "slot": {
+    "title": "Slot management",
+    "masters": "{n} masters",
+    "slots_assigned": "{n} slots assigned",
+    "migrating": "{n} migrating",
+    "not_cluster": "Slot management is only available for cluster connections",
+    "load_fail": "Failed to load cluster slots",
+    "col_ranges": "Slot ranges",
+    "col_slots": "Slots",
+    "col_migrating": "Migrating",
+    "select_source": "Use as source",
+    "preview": "Preview migration",
+    "source": "Source",
+    "target": "Target",
+    "slot_number": "Slot number",
+    "preview_fail": "Preview failed",
+    "keys_count": "{n} keys",
+    "estimated_size": "Estimated size",
+    "largest_key": "Largest key",
+    "target_free": "Target free",
+    "no_warnings": "No warnings",
+    "advanced": "Advanced parameters",
+    "batch_keys": "Keys per batch",
+    "batch_bytes": "MB per batch",
+    "timeout": "Migrate timeout (ms)",
+    "interval": "Batch interval (ms)",
+    "start": "Start migration",
+    "confirm_start": "Migrate slot {slot}? The slot may be briefly unavailable during migration.",
+    "start_fail": "Failed to start migration",
+    "pause": "Pause",
+    "resume": "Resume",
+    "cancel_refused": "Cancel is not allowed after keys have moved; pause or resume instead.",
+    "completed_hint": "Migration completed and cluster slots refreshed.",
+    "recovery": "Recovery commands",
+    "elapsed": "{s}s",
+    "moved": "{moved}/{total} keys moved",
+    "task_state": {
+      "running": "Running",
+      "paused": "Paused",
+      "completed": "Completed",
+      "failed": "Failed",
+      "canceled": "Canceled"
+    },
+    "step": {
+      "preparing": "Precheck",
+      "marking": "Setting migration flags",
+      "migrating": "Moving keys",
+      "committing": "Binding slot",
+      "verifying": "Verifying",
+      "done": "Done"
+    },
+    "warning": {
+      "node_not_found": "Source or target node not found",
+      "same_node": "Source and target must differ",
+      "slot_not_owned": "Slot is not owned by the source node",
+      "existing_migration": "Slot already has a migration in progress with another node pair",
+      "resume": "Unfinished migration detected; starting will resume it",
+      "cluster_state": "Cluster state is not ok",
+      "target_unreachable": "Target node is unreachable",
+      "target_memory": "Target may not have enough free memory",
+      "large_key": "Large key {key} ({size}) may block the source node",
+      "many_keys": "{count} keys; run during off-peak hours",
+      "permission_denied": "CLUSTER/MIGRATE permission missing: {msg}"
+    },
+    "slot_hint": "Enter one slot number (0-16383), not a count"
   }
 }

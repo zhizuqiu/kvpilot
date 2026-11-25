@@ -165,7 +165,8 @@
       "config": "Configuración",
       "session": "Sesiones",
       "analysis": "Análisis",
-      "health": "Comprobación de estado"
+      "health": "Comprobación de estado",
+      "slot": "Slots"
     }
   },
   "ribbon": {
@@ -787,5 +788,71 @@
       "persistence_config": "save {save}, appendonly {appendonly}",
       "cluster": "cluster_state es {state}"
     }
+  },
+  "slot": {
+    "title": "Gestión de slots",
+    "masters": "{n} maestros",
+    "slots_assigned": "{n} slots asignados",
+    "migrating": "{n} migrando",
+    "not_cluster": "La gestión de slots solo está disponible para conexiones de clúster",
+    "load_fail": "Error al cargar los slots del clúster",
+    "col_ranges": "Rangos de slots",
+    "col_slots": "Slots",
+    "col_migrating": "Migrando",
+    "select_source": "Usar como origen",
+    "preview": "Previsualizar",
+    "source": "Origen",
+    "target": "Destino",
+    "slot_number": "Número de slot",
+    "preview_fail": "Error en la previsualización",
+    "keys_count": "{n} claves",
+    "estimated_size": "Tamaño estimado",
+    "largest_key": "Clave más grande",
+    "target_free": "Libre en destino",
+    "no_warnings": "Sin advertencias",
+    "advanced": "Parámetros avanzados",
+    "batch_keys": "Claves por lote",
+    "batch_bytes": "MB por lote",
+    "timeout": "Tiempo MIGRATE (ms)",
+    "interval": "Intervalo entre lotes (ms)",
+    "start": "Iniciar migración",
+    "confirm_start": "¿Migrar el slot {slot}? Puede quedar brevemente no disponible durante la migración.",
+    "start_fail": "Error al iniciar la migración",
+    "pause": "Pausar",
+    "resume": "Reanudar",
+    "cancel_refused": "No se puede cancelar tras mover claves; use pausar o reanudar.",
+    "completed_hint": "Migración completada y slots del clúster actualizados.",
+    "recovery": "Comandos de recuperación",
+    "elapsed": "{s} s",
+    "moved": "{moved}/{total} claves movidas",
+    "task_state": {
+      "running": "En curso",
+      "paused": "En pausa",
+      "completed": "Completada",
+      "failed": "Fallida",
+      "canceled": "Cancelada"
+    },
+    "step": {
+      "preparing": "Comprobación",
+      "marking": "Marcando migración",
+      "migrating": "Moviendo claves",
+      "committing": "Asignando slot",
+      "verifying": "Verificando",
+      "done": "Terminado"
+    },
+    "warning": {
+      "node_not_found": "No se encontró el nodo de origen o destino",
+      "same_node": "Origen y destino deben ser distintos",
+      "slot_not_owned": "El slot no pertenece al nodo de origen",
+      "existing_migration": "Ya hay una migración en curso en este slot con otro par de nodos",
+      "resume": "Se detectó una migración inacabada; al iniciar se reanudará",
+      "cluster_state": "El estado del clúster no es ok",
+      "target_unreachable": "Nodo de destino inaccesible",
+      "target_memory": "Puede que el destino no tenga memoria libre suficiente",
+      "large_key": "La clave grande {key} ({size}) puede bloquear el nodo de origen",
+      "many_keys": "{count} claves; ejecute en horario de baja carga",
+      "permission_denied": "Falta permiso CLUSTER/MIGRATE: {msg}"
+    },
+    "slot_hint": "Introduce un número de slot (0-16383), no una cantidad"
   }
 }

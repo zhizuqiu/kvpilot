@@ -165,7 +165,8 @@
       "config": "配置管理",
       "session": "會話",
       "analysis": "分析",
-      "health": "巡檢"
+      "health": "巡檢",
+      "slot": "槽位管理"
     }
   },
   "ribbon": {
@@ -787,5 +788,71 @@
       "persistence_config": "save {save}，appendonly {appendonly}",
       "cluster": "叢集狀態 {state}"
     }
+  },
+  "slot": {
+    "title": "槽位管理",
+    "masters": "{n} 個主節點",
+    "slots_assigned": "已分配 {n} 個槽位",
+    "migrating": "{n} 個槽位遷移中",
+    "not_cluster": "槽位管理僅支援叢集連線",
+    "load_fail": "載入叢集槽位失敗",
+    "col_ranges": "槽位範圍",
+    "col_slots": "槽位數",
+    "col_migrating": "遷移中",
+    "select_source": "選為來源",
+    "preview": "預覽遷移",
+    "source": "來源節點",
+    "target": "目標節點",
+    "slot_number": "槽位號",
+    "preview_fail": "預檢失敗",
+    "keys_count": "{n} 個鍵",
+    "estimated_size": "估算大小",
+    "largest_key": "最大鍵",
+    "target_free": "目標剩餘記憶體",
+    "no_warnings": "沒有告警",
+    "advanced": "進階參數",
+    "batch_keys": "單批鍵數",
+    "batch_bytes": "單批大小 (MB)",
+    "timeout": "MIGRATE 逾時 (ms)",
+    "interval": "批次間隔 (ms)",
+    "start": "開始遷移",
+    "confirm_start": "確定遷移槽位 {slot} 嗎？遷移期間該槽位可能短暫無法使用。",
+    "start_fail": "啟動遷移失敗",
+    "pause": "暫停",
+    "resume": "繼續",
+    "cancel_refused": "已搬鍵後不能取消，只能暫停或繼續。",
+    "completed_hint": "遷移完成，已重新整理叢集槽位。",
+    "recovery": "復原指令",
+    "elapsed": "耗時 {s}s",
+    "moved": "已遷移 {moved}/{total} 個鍵",
+    "task_state": {
+      "running": "遷移中",
+      "paused": "已暫停",
+      "completed": "已完成",
+      "failed": "失敗",
+      "canceled": "已取消"
+    },
+    "step": {
+      "preparing": "預檢",
+      "marking": "設定遷移標記",
+      "migrating": "遷移鍵",
+      "committing": "切換歸屬",
+      "verifying": "驗證",
+      "done": "完成"
+    },
+    "warning": {
+      "node_not_found": "找不到來源或目標節點",
+      "same_node": "來源與目標節點不能相同",
+      "slot_not_owned": "該槽位不屬於來源節點",
+      "existing_migration": "該槽位已有其它節點對之間的遷移進行中",
+      "resume": "偵測到未完成的遷移，開始後將續傳",
+      "cluster_state": "叢集狀態不是 ok",
+      "target_unreachable": "目標節點無法連線",
+      "target_memory": "目標節點可用記憶體可能不足",
+      "large_key": "存在大 key {key}（{size}），可能阻塞來源節點",
+      "many_keys": "共 {count} 個鍵，建議離峰執行",
+      "permission_denied": "缺少 CLUSTER/MIGRATE 權限：{msg}"
+    },
+    "slot_hint": "填寫單一槽位編號（0-16383），不是遷移數量"
   }
 }

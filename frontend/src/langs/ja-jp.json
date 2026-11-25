@@ -165,7 +165,8 @@
       "config": "設定",
       "session": "セッション",
       "analysis": "分析",
-      "health": "ヘルスチェック"
+      "health": "ヘルスチェック",
+      "slot": "スロット"
     }
   },
   "ribbon": {
@@ -787,5 +788,71 @@
       "persistence_config": "save {save}、appendonly {appendonly}",
       "cluster": "cluster_state は {state}"
     }
+  },
+  "slot": {
+    "title": "スロット管理",
+    "masters": "{n} マスター",
+    "slots_assigned": "{n} スロット割り当て済み",
+    "migrating": "{n} スロット移行中",
+    "not_cluster": "スロット管理はクラスター接続でのみ利用できます",
+    "load_fail": "クラスタースロットの読み込みに失敗しました",
+    "col_ranges": "スロット範囲",
+    "col_slots": "スロット数",
+    "col_migrating": "移行中",
+    "select_source": "ソースに指定",
+    "preview": "移行プレビュー",
+    "source": "ソース",
+    "target": "ターゲット",
+    "slot_number": "スロット番号",
+    "preview_fail": "プレビューに失敗しました",
+    "keys_count": "{n} キー",
+    "estimated_size": "推定サイズ",
+    "largest_key": "最大キー",
+    "target_free": "ターゲット空き容量",
+    "no_warnings": "警告はありません",
+    "advanced": "詳細パラメータ",
+    "batch_keys": "バッチあたりのキー数",
+    "batch_bytes": "バッチあたりの MB",
+    "timeout": "MIGRATE タイムアウト (ms)",
+    "interval": "バッチ間隔 (ms)",
+    "start": "移行を開始",
+    "confirm_start": "スロット {slot} を移行しますか？移行中は一時的に利用できない場合があります。",
+    "start_fail": "移行を開始できませんでした",
+    "pause": "一時停止",
+    "resume": "再開",
+    "cancel_refused": "キー移動後はキャンセルできません。一時停止か再開のみ可能です。",
+    "completed_hint": "移行が完了し、クラスタースロットを更新しました。",
+    "recovery": "復旧コマンド",
+    "elapsed": "{s} 秒",
+    "moved": "{moved}/{total} キー移動済み",
+    "task_state": {
+      "running": "実行中",
+      "paused": "一時停止",
+      "completed": "完了",
+      "failed": "失敗",
+      "canceled": "キャンセル済み"
+    },
+    "step": {
+      "preparing": "事前チェック",
+      "marking": "移行フラグ設定",
+      "migrating": "キー移動",
+      "committing": "スロット割り当て",
+      "verifying": "検証",
+      "done": "完了"
+    },
+    "warning": {
+      "node_not_found": "ソースまたはターゲットのノードが見つかりません",
+      "same_node": "ソースとターゲットは別ノードである必要があります",
+      "slot_not_owned": "このスロットはソースノードの所有ではありません",
+      "existing_migration": "このスロットには別のノード間で移行が進行中です",
+      "resume": "未完了の移行を検出しました。開始すると再開します",
+      "cluster_state": "クラスター状態が ok ではありません",
+      "target_unreachable": "ターゲットノードに到達できません",
+      "target_memory": "ターゲットの空きメモリが不足している可能性があります",
+      "large_key": "大きなキー {key}（{size}）がソースノードをブロックする可能性があります",
+      "many_keys": "{count} キーあります。オフピーク時の実行を推奨します",
+      "permission_denied": "CLUSTER/MIGRATE 権限がありません: {msg}"
+    },
+    "slot_hint": "単一のスロット番号（0-16383）を入力してください（件数ではありません）"
   }
 }

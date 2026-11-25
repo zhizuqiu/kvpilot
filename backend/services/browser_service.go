@@ -64,6 +64,9 @@ type browserService struct {
 
 	bigKeyMutex sync.Mutex
 	bigKeyTasks map[string]*bigKeyScanTask
+
+	slotMutex sync.Mutex
+	slotTasks map[string]*slotMigrationTask
 }
 
 var browser *browserService

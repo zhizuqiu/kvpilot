@@ -165,7 +165,8 @@
       "config": "Configuração",
       "session": "Sessões",
       "analysis": "Análise",
-      "health": "Verificação de integridade"
+      "health": "Verificação de integridade",
+      "slot": "Slots"
     }
   },
   "ribbon": {
@@ -787,5 +788,71 @@
       "persistence_config": "save {save}, appendonly {appendonly}",
       "cluster": "cluster_state é {state}"
     }
+  },
+  "slot": {
+    "title": "Gerenciamento de slots",
+    "masters": "{n} mestres",
+    "slots_assigned": "{n} slots atribuídos",
+    "migrating": "{n} migrando",
+    "not_cluster": "O gerenciamento de slots está disponível apenas para conexões de cluster",
+    "load_fail": "Falha ao carregar os slots do cluster",
+    "col_ranges": "Faixas de slots",
+    "col_slots": "Slots",
+    "col_migrating": "Migrando",
+    "select_source": "Usar como origem",
+    "preview": "Pré-visualizar",
+    "source": "Origem",
+    "target": "Destino",
+    "slot_number": "Número do slot",
+    "preview_fail": "Falha na pré-visualização",
+    "keys_count": "{n} chaves",
+    "estimated_size": "Tamanho estimado",
+    "largest_key": "Maior chave",
+    "target_free": "Livre no destino",
+    "no_warnings": "Sem avisos",
+    "advanced": "Parâmetros avançados",
+    "batch_keys": "Chaves por lote",
+    "batch_bytes": "MB por lote",
+    "timeout": "Timeout do MIGRATE (ms)",
+    "interval": "Intervalo entre lotes (ms)",
+    "start": "Iniciar migração",
+    "confirm_start": "Migrar o slot {slot}? Ele pode ficar indisponível por instantes durante a migração.",
+    "start_fail": "Falha ao iniciar a migração",
+    "pause": "Pausar",
+    "resume": "Retomar",
+    "cancel_refused": "Não é possível cancelar após mover chaves; use pausar ou retomar.",
+    "completed_hint": "Migração concluída e slots do cluster atualizados.",
+    "recovery": "Comandos de recuperação",
+    "elapsed": "{s} s",
+    "moved": "{moved}/{total} chaves movidas",
+    "task_state": {
+      "running": "Em execução",
+      "paused": "Pausada",
+      "completed": "Concluída",
+      "failed": "Falhou",
+      "canceled": "Cancelada"
+    },
+    "step": {
+      "preparing": "Verificação",
+      "marking": "Marcando migração",
+      "migrating": "Movendo chaves",
+      "committing": "Vinculando slot",
+      "verifying": "Verificando",
+      "done": "Concluído"
+    },
+    "warning": {
+      "node_not_found": "Nó de origem ou destino não encontrado",
+      "same_node": "Origem e destino devem ser diferentes",
+      "slot_not_owned": "O slot não pertence ao nó de origem",
+      "existing_migration": "Já existe uma migração em andamento neste slot com outro par de nós",
+      "resume": "Migração inacabada detectada; iniciar irá retomá-la",
+      "cluster_state": "O estado do cluster não é ok",
+      "target_unreachable": "Nó de destino inacessível",
+      "target_memory": "O destino pode não ter memória livre suficiente",
+      "large_key": "A chave grande {key} ({size}) pode bloquear o nó de origem",
+      "many_keys": "{count} chaves; execute em horário de baixa carga",
+      "permission_denied": "Permissão CLUSTER/MIGRATE ausente: {msg}"
+    },
+    "slot_hint": "Informe um número de slot (0-16383), não uma quantidade"
   }
 }

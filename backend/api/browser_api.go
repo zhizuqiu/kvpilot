@@ -683,6 +683,90 @@ func registerBrowserRoutes(rg *gin.RouterGroup) {
 		c.JSON(http.StatusOK, services.Browser().CheckHealth(req.Server))
 	})
 
+	g.POST("/slot-overview", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().SlotOverview(req.Server))
+	})
+
+	g.POST("/preview-slot-migration", func(c *gin.Context) {
+		var req struct {
+			Server   string `json:"server"`
+			SourceID string `json:"sourceId"`
+			TargetID string `json:"targetId"`
+			Slot     int    `json:"slot"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().PreviewSlotMigration(req.Server, req.SourceID, req.TargetID, req.Slot))
+	})
+
+	g.POST("/start-slot-migration", func(c *gin.Context) {
+		var req struct {
+			Server   string                        `json:"server"`
+			SourceID string                        `json:"sourceId"`
+			TargetID string                        `json:"targetId"`
+			Slot     int                           `json:"slot"`
+			Options  services.SlotMigrationOptions `json:"options"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().StartSlotMigration(req.Server, req.SourceID, req.TargetID, req.Slot, req.Options))
+	})
+
+	g.POST("/get-slot-migration", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().GetSlotMigration(req.Server))
+	})
+
+	g.POST("/pause-slot-migration", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().PauseSlotMigration(req.Server))
+	})
+
+	g.POST("/resume-slot-migration", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().ResumeSlotMigration(req.Server))
+	})
+
+	g.POST("/cancel-slot-migration", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().CancelSlotMigration(req.Server))
+	})
+
 	g.POST("/get-cmd-history", func(c *gin.Context) {
 		var req struct {
 			PageNo   int `json:"pageNo"`

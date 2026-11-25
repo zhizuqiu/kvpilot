@@ -165,7 +165,8 @@
       "config": "配置管理",
       "session": "会话",
       "analysis": "分析",
-      "health": "巡检"
+      "health": "巡检",
+      "slot": "槽位管理"
     }
   },
   "ribbon": {
@@ -787,5 +788,71 @@
       "persistence_config": "save {save}，appendonly {appendonly}",
       "cluster": "集群状态 {state}"
     }
+  },
+  "slot": {
+    "title": "槽位管理",
+    "masters": "{n} 个主节点",
+    "slots_assigned": "已分配 {n} 个槽位",
+    "migrating": "{n} 个槽位迁移中",
+    "not_cluster": "槽位管理仅支持集群连接",
+    "load_fail": "加载集群槽位失败",
+    "col_ranges": "槽位范围",
+    "col_slots": "槽位数",
+    "col_migrating": "迁移中",
+    "select_source": "选为源",
+    "preview": "预览迁移",
+    "source": "源节点",
+    "target": "目标节点",
+    "slot_number": "槽位号",
+    "preview_fail": "预检失败",
+    "keys_count": "{n} 个键",
+    "estimated_size": "估算大小",
+    "largest_key": "最大键",
+    "target_free": "目标剩余内存",
+    "no_warnings": "没有告警",
+    "advanced": "高级参数",
+    "batch_keys": "单批键数",
+    "batch_bytes": "单批大小 (MB)",
+    "timeout": "MIGRATE 超时 (ms)",
+    "interval": "批次间隔 (ms)",
+    "start": "开始迁移",
+    "confirm_start": "确定迁移槽位 {slot} 吗？迁移期间该槽位可能短暂不可用。",
+    "start_fail": "启动迁移失败",
+    "pause": "暂停",
+    "resume": "继续",
+    "cancel_refused": "已搬键后不能取消，只能暂停或继续。",
+    "completed_hint": "迁移完成，已刷新集群槽位。",
+    "recovery": "恢复命令",
+    "elapsed": "耗时 {s}s",
+    "moved": "已迁移 {moved}/{total} 个键",
+    "task_state": {
+      "running": "迁移中",
+      "paused": "已暂停",
+      "completed": "已完成",
+      "failed": "失败",
+      "canceled": "已取消"
+    },
+    "step": {
+      "preparing": "预检",
+      "marking": "设置迁移标记",
+      "migrating": "迁移键",
+      "committing": "切换归属",
+      "verifying": "校验",
+      "done": "完成"
+    },
+    "warning": {
+      "node_not_found": "找不到源节点或目标节点",
+      "same_node": "源节点与目标节点不能相同",
+      "slot_not_owned": "该槽位不属于源节点",
+      "existing_migration": "该槽位已有其它节点对之间的迁移在进行",
+      "resume": "检测到未完成的迁移，开始后将续传",
+      "cluster_state": "集群状态不是 ok",
+      "target_unreachable": "目标节点不可达",
+      "target_memory": "目标节点可用内存可能不足",
+      "large_key": "存在大 key {key}（{size}），可能阻塞源节点",
+      "many_keys": "共 {count} 个键，建议低峰执行",
+      "permission_denied": "缺少 CLUSTER/MIGRATE 权限：{msg}"
+    },
+    "slot_hint": "填写单个槽位编号（0-16383），不是迁移数量"
   }
 }
