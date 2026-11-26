@@ -8,9 +8,11 @@ import { defineConfig } from 'vite'
 
 const rootPath = new URL('.', import.meta.url).pathname
 const isWeb = process.env.VITE_WEB === 'true'
+const webBasePath = process.env.VITE_BASE_PATH || './'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+    base: isWeb ? webBasePath : '/',
     plugins: [
         vue(),
         // 允许在测试与组件中使用 JSX/TSX

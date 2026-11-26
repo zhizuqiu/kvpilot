@@ -9,6 +9,8 @@ RUN npm ci --ignore-scripts
 COPY frontend/ ./
 ENV NODE_OPTIONS=--max-old-space-size=4096
 ENV VITE_WEB=true
+ARG VITE_BASE_PATH=./
+ENV VITE_BASE_PATH=${VITE_BASE_PATH}
 RUN npm run build
 
 # ============================================================

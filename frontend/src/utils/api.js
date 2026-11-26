@@ -3,7 +3,7 @@
  * All functions match the original Wails-generated function signatures.
  */
 
-const API_BASE = '/api'
+export const API_BASE = `${import.meta.env.BASE_URL}api`
 
 async function post(path, body = {}) {
     const resp = await fetch(`${API_BASE}${path}`, {
@@ -546,7 +546,7 @@ export async function SelectFile(title, ext) {
                 const formData = new FormData()
                 formData.append('file', input.files[0])
                 try {
-                    const resp = await fetch('/api/system/select-file', {
+                    const resp = await fetch(`${API_BASE}/system/select-file`, {
                         method: 'POST',
                         credentials: 'same-origin',
                         body: formData,

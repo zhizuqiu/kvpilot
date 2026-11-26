@@ -18,7 +18,10 @@ resetReadyPromise()
 
 function getWsUrl() {
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
-    return `${proto}//${location.host}/ws`
+    const basePath = import.meta.env.BASE_URL || './'
+    const url = new URL(`${basePath}ws`, location.href)
+    url.protocol = proto
+    return url.toString()
 }
 
 export function connectWebSocket() {

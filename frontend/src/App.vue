@@ -23,6 +23,7 @@ import ImportKeyDialog from '@/components/dialogs/ImportKeyDialog.vue'
 import DecoderDialog from '@/components/dialogs/DecoderDialog.vue'
 import { isWeb } from '@/utils/platform.js'
 import { STORAGE_LANG_KEY, STORAGE_THEME_KEY } from '@/consts/localstorage_key.js'
+import { API_BASE } from '@/utils/api.js'
 
 const prefStore = usePreferencesStore()
 const connectionStore = useConnectionStore()
@@ -39,7 +40,7 @@ const authEnabled = ref(false)
 
 const checkAuth = async () => {
     try {
-        const resp = await fetch('/api/auth/status', { credentials: 'same-origin' })
+        const resp = await fetch(`${API_BASE}/auth/status`, { credentials: 'same-origin' })
         const result = await resp.json()
         if (result.success) {
             authEnabled.value = result.data.enabled
