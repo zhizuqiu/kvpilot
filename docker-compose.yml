@@ -1,7 +1,7 @@
 services:
-  tinyrdm:
-    image: ghcr.io/tiny-craft/tiny-rdm:latest
-    container_name: tinyrdm
+  kvpilot:
+    image: zhizuqiu/kvpilot:latest
+    container_name: kvpilot
     restart: unless-stopped
     ports:
       - "8086:8086"
