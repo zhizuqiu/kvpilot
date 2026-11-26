@@ -915,6 +915,8 @@
     "batch_added_many": "{n} slots adicionados",
     "batch_skipped_many": "{n} slots não migráveis ignorados",
     "batch_parse_fail": "Expressão de slot inválida: {text}",
-    "batch_slots_placeholder": "0-6, 8, 10-12"
+    "batch_slots_placeholder": "0-6, 8, 10-12",
+    "dist_range": "Faixa de cor {lo}–{hi} chaves (P2–P98)",
+    "dist_range_equal": "Todos os slots têm {n} chaves"
   }
 }

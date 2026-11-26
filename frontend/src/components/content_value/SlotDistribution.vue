@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { NButton, NDropdown, NIcon, NRadioButton, NRadioGroup, NTag, useThemeVars } from 'naive-ui'
 import Refresh from '@/components/icons/Refresh.vue'
 import { computeSlotLayout, slotAtPoint, slotsInRect, SLOT_COUNT } from '@/utils/slot_layout.js'
+import { buildSlotScale, scaleRatio } from '@/utils/slot_color.js'
 import { GetSlotDistribution, ScanSlotDistribution } from 'wailsjs/go/services/browserService.js'
 
 const MAP_HEIGHT = 300
@@ -46,14 +47,8 @@ let drawFrame = null
 let pollTimer = null
 let resizeObserver = null
 
-const maxSlotCount = computed(() => {
-    let max = 0
-    for (let i = 0; i < SLOT_COUNT; i++) {
-        const value = data.slots[i] || 0
-        if (value > max) max = value
-    }
-    return max
-})
+// 用非零槽位的 P2~P98 作为色阶范围，均匀集群也能看出细微差异。
+const slotScale = computed(() => buildSlotScale(data.slots))
 
 const scannedTime = computed(() => {
     if (!data.scannedAt) return ''
@@ -181,8 +176,7 @@ const draw = () => {
     const empty = themeVars.value.textColor3 || '#999999'
     const labelColor = themeVars.value.textColor3 || '#999999'
     const lineColor = isDarkBody() ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)'
-    const max = maxSlotCount.value
-    const logMax = Math.log1p(max)
+    const currentScale = slotScale.value
     const emptyAlpha = isDarkBody() ? 0.1 : 0.07
     const cell = layout.cell
 
@@ -203,12 +197,7 @@ const draw = () => {
             if (count === 0) {
                 alpha = emptyAlpha
             } else {
-                const ratio = max > 0
-                    ? scale.value === 'log'
-                        ? Math.log1p(count) / logMax
-                        : count / max
-                    : 0
-                alpha = 0.15 + 0.85 * ratio
+                alpha = 0.08 + 0.92 * scaleRatio(count, currentScale, scale.value)
             }
             ctx.globalAlpha = alpha
             ctx.fillStyle = count > 0 ? primary : empty
@@ -517,7 +506,14 @@ onUnmounted(() => {
             </n-button>
         </div>
 
-        <div class="slot-dist-hint-line">{{ $t('slot.dist_hint', { key: modifierKey }) }}</div>
+        <div class="slot-dist-hint-line">
+            {{ $t('slot.dist_hint', { key: modifierKey }) }}
+            <template v-if="slotScale.hi > 0">
+                · {{ slotScale.uniform
+                    ? $t('slot.dist_range_equal', { n: slotScale.lo })
+                    : $t('slot.dist_range', { lo: slotScale.lo, hi: slotScale.hi }) }}
+            </template>
+        </div>
 
         <div v-if="!data.scannedAt" class="slot-dist-placeholder">
             {{ data.scanning ? $t('slot.dist_scanning') : $t('slot.dist_empty') }}

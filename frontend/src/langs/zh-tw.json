@@ -915,6 +915,8 @@
     "batch_added_many": "已加入 {n} 個槽位",
     "batch_skipped_many": "已跳過 {n} 個不可遷移的槽位",
     "batch_parse_fail": "無法解析槽位號：{text}",
-    "batch_slots_placeholder": "0-6, 8, 10-12"
+    "batch_slots_placeholder": "0-6, 8, 10-12",
+    "dist_range": "顏色範圍 {lo}–{hi} 鍵（P2–P98）",
+    "dist_range_equal": "所有槽位均為 {n} 鍵"
   }
 }

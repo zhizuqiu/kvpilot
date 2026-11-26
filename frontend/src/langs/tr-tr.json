@@ -915,6 +915,8 @@
     "batch_added_many": "{n} slot eklendi",
     "batch_skipped_many": "Taşınamayan {n} slot atlandı",
     "batch_parse_fail": "Slot ifadesi geçersiz: {text}",
-    "batch_slots_placeholder": "0-6, 8, 10-12"
+    "batch_slots_placeholder": "0-6, 8, 10-12",
+    "dist_range": "Renk aralığı {lo}–{hi} anahtar (P2–P98)",
+    "dist_range_equal": "Tüm slotlarda {n} anahtar var"
   }
 }

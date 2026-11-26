@@ -915,6 +915,8 @@
     "batch_added_many": "{n} 件のスロットを追加しました",
     "batch_skipped_many": "移行できない {n} 件をスキップしました",
     "batch_parse_fail": "スロット指定を解析できません：{text}",
-    "batch_slots_placeholder": "0-6, 8, 10-12"
+    "batch_slots_placeholder": "0-6, 8, 10-12",
+    "dist_range": "色範囲 {lo}–{hi} キー（P2–P98）",
+    "dist_range_equal": "すべてのスロットが {n} キー"
   }
 }

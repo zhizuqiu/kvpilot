@@ -58,6 +58,7 @@ describe('SlotDistribution', () => {
 
         expect(api.GetSlotDistribution).toHaveBeenCalledWith('test-server')
         expect(wrapper.text()).toContain('上次扫描')
+        expect(wrapper.text()).toContain('颜色范围 5–10 键')
         expect(wrapper.find('.slot-dist-canvas').exists()).toBe(true)
 
         wrapper.unmount()

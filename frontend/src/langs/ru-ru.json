@@ -915,6 +915,8 @@
     "batch_added_many": "Добавлено слотов: {n}",
     "batch_skipped_many": "Пропущено непереносимых слотов: {n}",
     "batch_parse_fail": "Не удалось разобрать слот: {text}",
-    "batch_slots_placeholder": "0-6, 8, 10-12"
+    "batch_slots_placeholder": "0-6, 8, 10-12",
+    "dist_range": "Диапазон цвета {lo}–{hi} ключей (P2–P98)",
+    "dist_range_equal": "Во всех слотах по {n} ключей"
   }
 }
