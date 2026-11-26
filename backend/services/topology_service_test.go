@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/redis/go-redis/v9"
 )
 
 // 验证 INFO replication 中 slaveN 行的键值解析，这是主从拓扑还原的基础。
@@ -417,5 +419,23 @@ func TestShouldMergeClusterShards(t *testing.T) {
 		if got := shouldMergeClusterShards(count); got != want {
 			t.Fatalf("shouldMergeClusterShards(%d) = %v, want %v", count, got, want)
 		}
+	}
+}
+
+// 验证分片数量按不同主节点统计，而不是按槽位区间条数：
+// 槽位碎片化时同一主节点可能返回多条区间，不能因此退化为单节点视图。
+func TestCountClusterShards(t *testing.T) {
+	node := func(addr string) redis.ClusterNode {
+		return redis.ClusterNode{Addr: addr}
+	}
+	slots := []redis.ClusterSlot{
+		{Start: 0, End: 100, Nodes: []redis.ClusterNode{node("a:1")}},
+		{Start: 101, End: 200, Nodes: []redis.ClusterNode{node("a:1")}},
+		{Start: 201, End: 300, Nodes: []redis.ClusterNode{node("b:1")}},
+		{Start: 301, End: 400, Nodes: []redis.ClusterNode{node("b:1")}},
+		{Start: 401, End: 500, Nodes: []redis.ClusterNode{node("c:1")}},
+	}
+	if got := countClusterShards(slots); got != 3 {
+		t.Fatalf("分片数 = %d, want 3", got)
 	}
 }

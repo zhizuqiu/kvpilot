@@ -320,12 +320,13 @@ func (b *browserService) clusterTopology(ctx context.Context, client redis.Unive
 		return parseClusterNodes(text, selfAddr), false
 	}
 
-	// 先用 CLUSTER SLOTS 估算分片数量，大集群不做逐分片合并
+	// 先用 CLUSTER SLOTS 统计主节点数量，大集群不做逐分片合并。
+	// 注意不能直接用区间条数：槽位碎片化时同一个主节点会返回多条区间。
 	slots, err := cc.ClusterSlots(ctx).Result()
 	if err != nil {
 		return nil, false
 	}
-	if !shouldMergeClusterShards(len(slots)) {
+	if !shouldMergeClusterShards(countClusterShards(slots)) {
 		text, err := cc.Do(ctx, "CLUSTER", "NODES").Text()
 		if err != nil {
 			return nil, false
@@ -350,6 +351,17 @@ func (b *browserService) clusterTopology(ctx context.Context, client redis.Unive
 		return nil, false
 	}
 	return mergeClusterViews(views, selfAddr), true
+}
+
+// countClusterShards 统计槽位映射中涉及的不同主节点数量。
+func countClusterShards(slots []redis.ClusterSlot) int {
+	masters := map[string]bool{}
+	for _, slot := range slots {
+		for _, node := range slot.Nodes {
+			masters[node.Addr] = true
+		}
+	}
+	return len(masters)
 }
 
 // mergeClusterViews 合并多个节点上报的 CLUSTER NODES 视图：
