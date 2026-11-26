@@ -196,3 +196,47 @@ func TestBuildKeyPlanAvoidsOvershoot(t *testing.T) {
 		t.Fatal("应标记 skipped")
 	}
 }
+
+// 验证未扫描时返回固定长度 16384 的槽位数组：前端按下标渲染，长度不足会越界。
+func TestGetSlotDistributionEmpty(t *testing.T) {
+	b := Browser()
+	name := "unit-test-slot-distribution-empty"
+	b.dropSlotDistribution(name)
+
+	resp := b.GetSlotDistribution(name)
+	if !resp.Success {
+		t.Fatalf("GetSlotDistribution failed: %s", resp.Msg)
+	}
+	data, ok := resp.Data.(slotDistributionData)
+	if !ok {
+		t.Fatalf("unexpected data type %T", resp.Data)
+	}
+	if len(data.Slots) != slotSlotCount {
+		t.Fatalf("slots length = %d, want %d", len(data.Slots), slotSlotCount)
+	}
+	if data.ScannedAt != 0 || len(data.Nodes) != 0 {
+		t.Fatalf("expected empty snapshot, got scannedAt=%d nodes=%d", data.ScannedAt, len(data.Nodes))
+	}
+}
+
+// 验证关闭连接会丢弃分布快照，避免同名连接重连后展示旧数据。
+func TestDropSlotDistribution(t *testing.T) {
+	b := Browser()
+	name := "unit-test-slot-distribution-drop"
+	b.slotDistMutex.Lock()
+	if b.slotDistCache == nil {
+		b.slotDistCache = map[string]*slotDistributionData{}
+	}
+	b.slotDistCache[name] = &slotDistributionData{
+		Slots:     make([]int64, slotSlotCount),
+		ScannedAt: 1,
+	}
+	b.slotDistMutex.Unlock()
+
+	b.dropSlotDistribution(name)
+
+	data := b.GetSlotDistribution(name).Data.(slotDistributionData)
+	if data.ScannedAt != 0 {
+		t.Fatalf("expected snapshot dropped, got scannedAt=%d", data.ScannedAt)
+	}
+}

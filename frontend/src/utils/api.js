@@ -385,6 +385,14 @@ export function SlotOverview(server) {
     return post('/browser/slot-overview', { server })
 }
 
+export function GetSlotDistribution(server) {
+    return post('/browser/get-slot-distribution', { server })
+}
+
+export function ScanSlotDistribution(server) {
+    return post('/browser/scan-slot-distribution', { server })
+}
+
 export function PreviewSlotMigration(server, sourceId, targetId, slot) {
     return post('/browser/preview-slot-migration', { server, sourceId, targetId, slot })
 }

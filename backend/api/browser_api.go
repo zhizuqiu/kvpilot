@@ -694,6 +694,28 @@ func registerBrowserRoutes(rg *gin.RouterGroup) {
 		c.JSON(http.StatusOK, services.Browser().SlotOverview(req.Server))
 	})
 
+	g.POST("/get-slot-distribution", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().GetSlotDistribution(req.Server))
+	})
+
+	g.POST("/scan-slot-distribution", func(c *gin.Context) {
+		var req struct {
+			Server string `json:"server"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, types.JSResp{Msg: "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, services.Browser().ScanSlotDistribution(req.Server))
+	})
+
 	g.POST("/preview-slot-migration", func(c *gin.Context) {
 		var req struct {
 			Server   string `json:"server"`

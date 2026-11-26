@@ -225,3 +225,66 @@ func TestIntegrationSlotRebalance(t *testing.T) {
 		t.Fatalf("主节点数量变化: %d -> %d", len(before.Masters), len(after.Masters))
 	}
 }
+
+// 验证槽位分布扫描：唯一探针键落到的槽位计数可见，槽位总和与节点汇总一致，
+// 且再次读取返回的是同一份缓存快照而不是重新扫描。
+func TestIntegrationSlotDistribution(t *testing.T) {
+	svc, name := newEndpointService(t)
+	ctx := context.Background()
+	client := svc.connMap[name].client
+
+	tag := fmt.Sprintf("kvpilot-slotdist-%d", time.Now().UnixNano())
+	key := "{" + tag + "}:0"
+	if err := client.Set(ctx, key, "v", 0).Err(); err != nil {
+		t.Fatalf("写入探针键失败: %v", err)
+	}
+	t.Cleanup(func() { _ = client.Del(context.Background(), key).Err() })
+
+	slot, err := client.Do(ctx, "CLUSTER", "KEYSLOT", key).Int()
+	if err != nil {
+		t.Fatalf("计算探针键槽位失败: %v", err)
+	}
+
+	resp := svc.ScanSlotDistribution(name)
+	if !resp.Success {
+		t.Fatalf("ScanSlotDistribution 失败: %s", resp.Msg)
+	}
+	data, ok := resp.Data.(slotDistributionData)
+	if !ok {
+		t.Fatalf("返回类型异常: %T", resp.Data)
+	}
+	if len(data.Slots) != slotSlotCount {
+		t.Fatalf("槽位数组长度 = %d, want %d", len(data.Slots), slotSlotCount)
+	}
+	if data.Slots[slot] < 1 {
+		t.Fatalf("探针键所在槽位 %d 计数 = %d, want >= 1", slot, data.Slots[slot])
+	}
+	var slotSum, nodeSum int64
+	for _, count := range data.Slots {
+		slotSum += count
+	}
+	for _, node := range data.Nodes {
+		nodeSum += node.Keys
+	}
+	if slotSum != nodeSum {
+		t.Fatalf("槽位总和 %d != 节点汇总 %d", slotSum, nodeSum)
+	}
+	if data.ScannedAt == 0 {
+		t.Fatal("扫描时间未记录")
+	}
+	if len(data.Unavailable) != 0 {
+		t.Fatalf("存在读取失败的节点: %v", data.Unavailable)
+	}
+
+	cachedResp := svc.GetSlotDistribution(name)
+	cached, ok := cachedResp.Data.(slotDistributionData)
+	if !ok {
+		t.Fatalf("缓存返回类型异常: %T", cachedResp.Data)
+	}
+	if cached.ScannedAt != data.ScannedAt {
+		t.Fatalf("缓存扫描时间 = %d, want %d", cached.ScannedAt, data.ScannedAt)
+	}
+	if cached.Slots[slot] != data.Slots[slot] {
+		t.Fatalf("缓存槽位计数 = %d, want %d", cached.Slots[slot], data.Slots[slot])
+	}
+}

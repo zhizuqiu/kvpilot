@@ -67,6 +67,10 @@ type browserService struct {
 
 	slotMutex sync.Mutex
 	slotTasks map[string]*slotMigrationTask
+
+	slotDistMutex    sync.Mutex
+	slotDistCache    map[string]*slotDistributionData
+	slotDistScanning map[string]bool
 }
 
 var browser *browserService
@@ -258,6 +262,7 @@ func (b *browserService) OpenConnection(name string) (resp types.JSResp) {
 
 // CloseConnection close redis server connection
 func (b *browserService) CloseConnection(name string) (resp types.JSResp) {
+	b.dropSlotDistribution(name)
 	if item, ok := b.connMap[name]; ok {
 		delete(b.connMap, name)
 		if item.cancelFunc != nil {

@@ -64,6 +64,27 @@ type slotOverviewData struct {
 	Unavailable    []string     `json:"unavailable,omitempty"`
 }
 
+// slotSlotCount 是 Redis 集群的固定槽位总数。
+const slotSlotCount = 16384
+
+// slotDistributionNode 是分布图中的一个主节点。
+type slotDistributionNode struct {
+	ID         string      `json:"id"`
+	Addr       string      `json:"addr"`
+	SlotRanges []slotRange `json:"slotRanges"`
+	SlotCount  int         `json:"slotCount"`
+	Keys       int64       `json:"keys"`
+}
+
+// slotDistributionData 是一份逐槽键数量快照；Slots 按槽号索引，长度固定 16384。
+type slotDistributionData struct {
+	Slots       []int64                `json:"slots"`
+	Nodes       []slotDistributionNode `json:"nodes"`
+	ScannedAt   int64                  `json:"scannedAt"`
+	Scanning    bool                   `json:"scanning"`
+	Unavailable []string               `json:"unavailable,omitempty"`
+}
+
 // slotWarning 是一条预检提示，前端按 code 本地化。
 type slotWarning struct {
 	Code   string            `json:"code"`
@@ -1392,14 +1413,18 @@ func buildKeyPlan(masters []slotMaster, counts map[string]map[int]int64, maxSlot
 }
 
 // slotKeyCounts 读取候选槽位内的键数量；按节点流水线批量查询。
-func (b *browserService) slotKeyCounts(item *connectionItem, masters []slotMaster) map[string]map[int]int64 {
+// 第二个返回值列出读取失败的节点地址，调用方可据此提示数据不完整。
+func (b *browserService) slotKeyCounts(item *connectionItem, masters []slotMaster) (map[string]map[int]int64, []string) {
 	result := make(map[string]map[int]int64, len(masters))
+	failed := make([]string, 0)
 	for _, master := range masters {
 		client, err := b.slotNodeClient(item, master.Addr)
 		if err != nil {
+			failed = append(failed, master.Addr)
 			continue
 		}
 		perSlot := map[int]int64{}
+		hasError := false
 		slots := make([]int, 0, master.SlotCount)
 		for _, slotRange := range master.SlotRanges {
 			for slot := slotRange.End; slot >= slotRange.Start; slot-- {
@@ -1417,7 +1442,9 @@ func (b *browserService) slotKeyCounts(item *connectionItem, masters []slotMaste
 			for j, slot := range slots[i:end] {
 				cmds[j] = pipe.Do(item.ctx, "CLUSTER", "COUNTKEYSINSLOT", slot)
 			}
-			_, _ = pipe.Exec(item.ctx)
+			if _, execErr := pipe.Exec(item.ctx); execErr != nil {
+				hasError = true
+			}
 			for j, slot := range slots[i:end] {
 				if count, err := cmds[j].Int64(); err == nil && count > 0 {
 					perSlot[slot] = count
@@ -1425,9 +1452,125 @@ func (b *browserService) slotKeyCounts(item *connectionItem, masters []slotMaste
 			}
 		}
 		client.Close()
+		if hasError {
+			failed = append(failed, master.Addr)
+		}
 		result[master.ID] = perSlot
 	}
-	return result
+	return result, failed
+}
+
+// GetSlotDistribution 返回最近一次分布扫描的快照，不会触发新的扫描。
+func (b *browserService) GetSlotDistribution(server string) (resp types.JSResp) {
+	b.slotDistMutex.Lock()
+	cached := b.slotDistCache[server]
+	scanning := b.slotDistScanning[server]
+	b.slotDistMutex.Unlock()
+
+	resp.Success = true
+	if cached == nil {
+		resp.Data = slotDistributionData{
+			Slots:    make([]int64, slotSlotCount),
+			Nodes:    []slotDistributionNode{},
+			Scanning: scanning,
+		}
+		return
+	}
+	// 复制头部字段，避免调用方读到扫描过程中被替换的指针。
+	snapshot := *cached
+	snapshot.Scanning = scanning
+	resp.Data = snapshot
+	return
+}
+
+// ScanSlotDistribution 扫描所有主节点的逐槽键数量并缓存，供分布图展示。
+func (b *browserService) ScanSlotDistribution(server string) (resp types.JSResp) {
+	b.slotDistMutex.Lock()
+	if b.slotDistScanning == nil {
+		b.slotDistScanning = map[string]bool{}
+	}
+	if b.slotDistScanning[server] {
+		b.slotDistMutex.Unlock()
+		resp.Msg = "slot distribution scan already running"
+		return
+	}
+	b.slotDistScanning[server] = true
+	b.slotDistMutex.Unlock()
+	defer func() {
+		b.slotDistMutex.Lock()
+		delete(b.slotDistScanning, server)
+		b.slotDistMutex.Unlock()
+	}()
+
+	item, err := b.getRedisClient(server, -1)
+	if err != nil {
+		resp.Msg = err.Error()
+		return
+	}
+	mode, views, err := b.loadClusterView(server)
+	if err != nil {
+		resp.Msg = err.Error()
+		return
+	}
+	if mode != "cluster" {
+		resp.Msg = "not a cluster connection"
+		return
+	}
+
+	masters := make([]slotMaster, 0, len(views))
+	nodes := make([]slotDistributionNode, 0, len(views))
+	for _, view := range views {
+		masters = append(masters, slotMaster{
+			ID:         view.node.ID,
+			Addr:       view.node.Addr,
+			SlotRanges: view.ranges,
+			SlotCount:  slotRangeCount(view.ranges),
+		})
+		nodes = append(nodes, slotDistributionNode{
+			ID:         view.node.ID,
+			Addr:       view.node.Addr,
+			SlotRanges: view.ranges,
+			SlotCount:  slotRangeCount(view.ranges),
+		})
+	}
+
+	counts, failed := b.slotKeyCounts(item, masters)
+	data := slotDistributionData{
+		Slots:       make([]int64, slotSlotCount),
+		Nodes:       nodes,
+		ScannedAt:   time.Now().UnixMilli(),
+		Unavailable: failed,
+	}
+	for i := range data.Nodes {
+		node := &data.Nodes[i]
+		for slot, count := range counts[node.ID] {
+			if slot < 0 || slot >= slotSlotCount {
+				continue
+			}
+			data.Slots[slot] = count
+			node.Keys += count
+		}
+	}
+
+	b.slotDistMutex.Lock()
+	if b.slotDistCache == nil {
+		b.slotDistCache = map[string]*slotDistributionData{}
+	}
+	snapshot := data
+	b.slotDistCache[server] = &snapshot
+	b.slotDistMutex.Unlock()
+
+	resp.Success = true
+	resp.Data = data
+	return
+}
+
+// dropSlotDistribution 在连接关闭或切换数据库时丢弃分布快照，避免展示过期数据。
+func (b *browserService) dropSlotDistribution(server string) {
+	b.slotDistMutex.Lock()
+	delete(b.slotDistCache, server)
+	delete(b.slotDistScanning, server)
+	b.slotDistMutex.Unlock()
 }
 
 // SlotRebalancePlan 返回一份只读的均衡计划。strategy 支持 slots / keys。
@@ -1470,7 +1613,7 @@ func (b *browserService) SlotRebalancePlan(server string, strategy string, maxSl
 		Masters:   overview.Masters,
 	}
 	if strategy == "keys" {
-		counts := b.slotKeyCounts(item, overview.Masters)
+		counts, _ := b.slotKeyCounts(item, overview.Masters)
 		moves, total, _, skipped := buildKeyPlan(overview.Masters, counts, maxSlots, tolerancePercent)
 		var totalKeys int64
 		for _, master := range overview.Masters {
@@ -1537,6 +1680,10 @@ func (b *browserService) StartSlotRebalance(server string, moves []slotMove, opt
 		}
 		if _, ok := masters[move.Target.ID]; !ok {
 			resp.Msg = "target is not a master"
+			return
+		}
+		if move.Source.ID == move.Target.ID {
+			resp.Msg = "source and target must differ"
 			return
 		}
 		for _, slot := range move.Slots {

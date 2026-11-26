@@ -1,20 +1,20 @@
 <script setup>
 import { computed, h, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NButton, NEmpty, NIcon, NInputNumber, NProgress, NSelect, NTag, NTooltip, useThemeVars } from 'naive-ui'
+import { NButton, NEmpty, NIcon, NInput, NInputNumber, NProgress, NSelect, NTag, NTooltip, useThemeVars } from 'naive-ui'
 import Refresh from '@/components/icons/Refresh.vue'
 import CopyIcon from '@/components/icons/Copy.vue'
 import { ClipboardSetText } from 'wailsjs/runtime/runtime.js'
 import ContentDeployTopology from '@/components/content_value/ContentDeployTopology.vue'
+import SlotDistribution from '@/components/content_value/SlotDistribution.vue'
 import { formatBytes } from '@/utils/byte_convert.js'
+import { formatSlotRanges, parseSlotList } from '@/utils/slot_text.js'
 import {
     CancelSlotMigration,
     GetSlotMigration,
     PauseSlotMigration,
-    PreviewSlotMigration,
     ResumeSlotMigration,
     SlotOverview,
-    StartSlotMigration,
     SlotRebalancePlan,
     StartSlotRebalance,
 } from 'wailsjs/go/services/browserService.js'
@@ -57,12 +57,13 @@ const overview = reactive({
     unavailable: [],
 })
 
-const form = reactive({ sourceId: '', targetId: '', slot: 0 })
-const preview = reactive({ loading: false, error: '', data: null })
+// 批量迁移列表：每条记录各自选择目标节点。
+const batch = reactive({ items: [], sourceId: '', targetId: '', slotsText: '' })
 const params = reactive(loadSavedOptions())
 const advancedOpen = ref(false)
-const section = ref('single')
+const section = ref('batch')
 const topologyToken = ref(0)
+const distRef = ref(null)
 const plan = reactive({ loading: false, data: null })
 
 const task = reactive({
@@ -89,8 +90,35 @@ const masterOptions = computed(() =>
     overview.masters.map((master) => ({ label: master.addr, value: master.id }))
 )
 
-const sourceMaster = computed(() => overview.masters.find((master) => master.id === form.sourceId))
-const targetMaster = computed(() => overview.masters.find((master) => master.id === form.targetId))
+const batchTotalKeys = computed(() => batch.items.reduce((sum, item) => sum + (item.keys || 0), 0))
+
+// 列表按「源节点 + 目标节点」合并展示，避免框选后出现成百上千行。
+const batchGroups = computed(() => {
+    const groups = new Map()
+    for (const item of batch.items) {
+        const key = `${item.sourceId}|${item.targetId}`
+        if (!groups.has(key)) {
+            groups.set(key, {
+                key,
+                sourceId: item.sourceId,
+                sourceAddr: item.sourceAddr,
+                targetId: item.targetId,
+                targetAddr: item.targetAddr,
+                slots: [],
+                keys: 0,
+            })
+        }
+        const group = groups.get(key)
+        group.slots.push(item.slot)
+        group.keys += item.keys || 0
+    }
+    return [...groups.values()]
+        .map((group) => ({ ...group, slots: group.slots.sort((a, b) => a - b) }))
+        .sort((a, b) => a.slots[0] - b.slots[0])
+})
+
+const masterOwnsSlot = (master, slot) =>
+    (master?.slotRanges || []).some((range) => slot >= range.start && slot <= range.end)
 
 const slotRangeList = (master) => {
     if (!master || !master.slotRanges) return []
@@ -100,14 +128,14 @@ const slotRangeList = (master) => {
 const copyRanges = async (master) => {
     const list = slotRangeList(master)
     if (list.length === 0) return
-    await ClipboardSetText(list.join(', '))
+    await ClipboardSetText(list.join(','))
     $message.success(i18n.t('slot.copied'))
 }
 
 const copyAllRanges = async () => {
     const lines = overview.masters
         .filter((master) => slotRangeList(master).length > 0)
-        .map((master) => `${master.addr}\t${slotRangeList(master).join(', ')}`)
+        .map((master) => `${master.addr}\t${slotRangeList(master).join(',')}`)
     if (lines.length === 0) return
     await ClipboardSetText(lines.join('\n'))
     $message.success(i18n.t('slot.copied'))
@@ -192,12 +220,11 @@ const loadOverview = async () => {
             unavailable: data?.unavailable || [],
         })
         if (overview.masters.length > 0) {
-            if (!form.sourceId) {
-                form.sourceId = overview.masters[0].id
-                form.slot = overview.masters[0].slotRanges?.[0]?.start ?? 0
+            if (!batch.sourceId) {
+                batch.sourceId = overview.masters[0].id
             }
-            if (!form.targetId && overview.masters.length > 1) {
-                form.targetId = overview.masters[1].id
+            if (!batch.targetId && overview.masters.length > 1) {
+                batch.targetId = overview.masters[1].id
             }
         }
     } finally {
@@ -209,6 +236,286 @@ const refreshAll = () => {
     loadOverview()
     topologyToken.value++
 }
+
+// 分布图里点击「迁移此槽」并选好目标节点后，统一加入批量列表。
+const migrateFromDistribution = (payload) => {
+    if (Array.isArray(payload.items)) {
+        addSlotsToBatch(payload.items, payload.targetId)
+        return
+    }
+    const { slot, nodeId, targetId, targetAddr, keys = 0 } = payload
+    const source = overview.masters.find((master) => master.id === nodeId)
+    if (!source) return
+    const target = overview.masters.find((master) => master.id === targetId)
+    if (!target) {
+        $message.warning(i18n.t('slot.batch_no_target'))
+        return
+    }
+    const item = { slot, sourceId: source.id, sourceAddr: source.addr, targetId: target.id, targetAddr: target.addr, keys }
+    if (pushBatchItem(item)) {
+        section.value = 'batch'
+        $message.success(i18n.t('slot.batch_added', { slot }))
+    }
+}
+
+// 框选多个槽位：能迁的加入列表，不可迁的汇总提示，不逐条刷屏。
+const addSlotsToBatch = (entries, targetId) => {
+    const target = overview.masters.find((master) => master.id === targetId)
+    if (!target) {
+        $message.warning(i18n.t('slot.batch_no_target'))
+        return
+    }
+    if (section.value !== 'batch') {
+        section.value = 'batch'
+    }
+    let added = 0
+    let skipped = 0
+    for (const entry of entries) {
+        const source = overview.masters.find((master) => master.id === entry.nodeId) ||
+            overview.masters.find((master) => masterOwnsSlot(master, entry.slot))
+        if (!source) {
+            skipped++
+            continue
+        }
+        const item = {
+            slot: entry.slot,
+            sourceId: source.id,
+            sourceAddr: source.addr,
+            targetId: target.id,
+            targetAddr: target.addr,
+            keys: entry.keys || 0,
+        }
+        if (validateBatchItem(item)) {
+            skipped++
+            continue
+        }
+        batch.items.push(item)
+        added++
+    }
+    if (added > 0) {
+        $message.success(i18n.t('slot.batch_added_many', { n: added }))
+    }
+    if (skipped > 0) {
+        $message.warning(i18n.t('slot.batch_skipped_many', { n: skipped }))
+    }
+    return { added, skipped }
+}
+
+// 加入列表前先做可迁移性校验，避免把必然失败的槽位攒到最后才发现。
+const validateBatchItem = (item) => {
+    const { slot } = item
+    if (batch.items.some((existing) => existing.slot === slot)) {
+        return { code: 'batch_duplicate', values: { slot }, level: 'info' }
+    }
+    if (batch.items.length >= 1000) {
+        return { code: 'batch_limit', level: 'warning' }
+    }
+    if (overview.state && overview.state !== 'ok') {
+        return { code: 'batch_cluster_state', values: { state: overview.state }, level: 'warning' }
+    }
+    const source = overview.masters.find((master) => master.id === item.sourceId)
+    if (!source || !masterOwnsSlot(source, slot)) {
+        return { code: 'batch_not_owner', values: { slot }, level: 'warning' }
+    }
+    if (overview.unavailable.includes(source.addr)) {
+        return { code: 'batch_node_unavailable', values: { addr: source.addr }, level: 'warning' }
+    }
+    if (overview.migratingSlots.includes(slot) || (source.migrating || []).includes(slot)) {
+        return { code: 'batch_slot_migrating', values: { slot }, level: 'warning' }
+    }
+    const target = overview.masters.find((master) => master.id === item.targetId)
+    if (!target) {
+        return { code: 'batch_no_target', level: 'warning' }
+    }
+    if (target.id === source.id) {
+        return { code: 'batch_target_same', level: 'warning' }
+    }
+    if (overview.unavailable.includes(target.addr)) {
+        return { code: 'batch_node_unavailable', values: { addr: target.addr }, level: 'warning' }
+    }
+    return null
+}
+
+// 启动前按最新拓扑再校验一次，避免列表停留期间集群状态发生变化。
+const validateBatchForStart = () => {
+    if (overview.state && overview.state !== 'ok') {
+        return { code: 'batch_cluster_state', values: { state: overview.state }, level: 'warning' }
+    }
+    for (const item of batch.items) {
+        const source = overview.masters.find((master) => master.id === item.sourceId)
+        if (!source || !masterOwnsSlot(source, item.slot)) {
+            return { code: 'batch_not_owner', values: { slot: item.slot }, level: 'warning' }
+        }
+        if (overview.migratingSlots.includes(item.slot)) {
+            return { code: 'batch_slot_migrating', values: { slot: item.slot }, level: 'warning' }
+        }
+        const target = overview.masters.find((master) => master.id === item.targetId)
+        if (!target) {
+            return { code: 'batch_no_target', level: 'warning' }
+        }
+        if (target.id === source.id) {
+            return { code: 'batch_target_same', level: 'warning' }
+        }
+        if (overview.unavailable.includes(target.addr)) {
+            return { code: 'batch_node_unavailable', values: { addr: target.addr }, level: 'warning' }
+        }
+    }
+    return null
+}
+
+const pushBatchItem = (item) => {
+    const reason = validateBatchItem(item)
+    if (reason) {
+        const message = i18n.t(`slot.${reason.code}`, reason.values || {})
+        $message[reason.level || 'warning'](message)
+        return false
+    }
+    batch.items.push(item)
+    return true
+}
+
+const addBatchFromForm = () => {
+    const source = overview.masters.find((master) => master.id === batch.sourceId)
+    const target = overview.masters.find((master) => master.id === batch.targetId)
+    if (!source || !target) return
+    const parsed = parseSlotList(batch.slotsText)
+    if (parsed.error) {
+        $message.warning(i18n.t('slot.batch_parse_fail', { text: parsed.error }))
+        return
+    }
+    if (parsed.slots.length === 0) return
+    const entries = parsed.slots.map((slot) => ({ slot, nodeId: source.id, keys: 0 }))
+    const { added } = addSlotsToBatch(entries, target.id)
+    if (added > 0) {
+        batch.slotsText = ''
+    }
+}
+
+const removeBatchGroup = (group) => {
+    batch.items = batch.items.filter(
+        (item) => !(item.sourceId === group.sourceId && item.targetId === group.targetId)
+    )
+}
+
+const clearBatch = () => {
+    batch.items = []
+}
+
+const startBatch = () => {
+    if (!batch.items.length || taskActive.value) return
+    const reason = validateBatchForStart()
+    if (reason) {
+        $message[reason.level || 'warning'](i18n.t(`slot.${reason.code}`, reason.values || {}))
+        return
+    }
+
+    // 相同源节点 + 相同目标节点的槽位合并成一个 move，后端按 move 顺序逐槽迁移。
+    const groups = new Map()
+    for (const item of batch.items) {
+        const key = `${item.sourceId}|${item.targetId}`
+        if (!groups.has(key)) {
+            groups.set(key, {
+                source: { id: item.sourceId, addr: item.sourceAddr },
+                target: { id: item.targetId, addr: item.targetAddr },
+                slots: [],
+                approxKeys: 0,
+            })
+        }
+        const move = groups.get(key)
+        move.slots.push(item.slot)
+        move.approxKeys += item.keys || 0
+    }
+    const moves = [...groups.values()]
+    const totalSlots = batch.items.length
+
+    $dialog.warning(i18n.t('slot.batch_confirm', { n: totalSlots }), async () => {
+        const options = {
+            batchKeys: params.batchKeys,
+            batchBytes: Math.round(params.batchBytesMB * 1024 * 1024),
+            migrateTimeoutMs: params.migrateTimeoutMs,
+            batchIntervalMs: params.batchIntervalMs,
+        }
+        const { success, data, msg } = await StartSlotRebalance(props.server, moves, options)
+        if (!success) {
+            $message.error(msg || i18n.t('slot.batch_start_fail'))
+            return
+        }
+        applyTask(data)
+        batch.items = []
+        clearTimer()
+        timer = setTimeout(poll, 700)
+    })
+}
+
+const renderSlotRanges = (slots) => {
+    const ranges = formatSlotRanges(slots)
+    if (ranges.length === 0) return '-'
+    const visible = ranges.slice(0, 5)
+    const hidden = ranges.length - visible.length
+    const text = h('span', { class: 'slot-range-text' }, visible.join(', '))
+    if (hidden <= 0) {
+        return h('div', { class: 'slot-range-cell' }, [text])
+    }
+    const more = h(
+        NTooltip,
+        {
+            trigger: 'hover',
+            scrollable: true,
+            style: { maxWidth: '60vw', maxHeight: '50vh' },
+        },
+        {
+            trigger: () => h('span', { class: 'slot-range-more' }, `+${hidden}`),
+            default: () =>
+                h('div', {
+                    class: 'slot-range-tooltip',
+                    style: { maxHeight: '220px', overflowY: 'auto', paddingRight: '6px' },
+                }, ranges.map((range) => h('div', { class: 'slot-range-tooltip-line' }, range))),
+        }
+    )
+    return h('div', { class: 'slot-range-cell' }, [text, more])
+}
+
+const batchColumns = computed(() => [
+    {
+        title: () => i18n.t('slot.source'),
+        key: 'sourceAddr',
+        minWidth: 170,
+    },
+    {
+        title: () => i18n.t('slot.slot_number'),
+        key: 'slots',
+        minWidth: 220,
+        render: (group) => renderSlotRanges(group.slots),
+    },
+    {
+        title: () => i18n.t('slot.batch_target'),
+        key: 'targetAddr',
+        minWidth: 170,
+    },
+    {
+        title: () => i18n.t('keyspace.col_keys'),
+        key: 'keys',
+        width: 90,
+        align: 'right',
+    },
+    {
+        title: () => i18n.t('config.actions'),
+        key: 'action',
+        width: 80,
+        align: 'center',
+        render: (group) =>
+            h(
+                NButton,
+                {
+                    size: 'tiny',
+                    quaternary: true,
+                    disabled: taskActive.value,
+                    onClick: () => removeBatchGroup(group),
+                },
+                { default: () => i18n.t('slot.batch_remove') }
+            ),
+    },
+])
 
 const loadTask = async () => {
     const { success, data } = await GetSlotMigration(props.server)
@@ -229,6 +536,8 @@ const poll = async () => {
     } else if (data?.state === 'completed') {
         plan.data = null
         refreshAll()
+        // 迁移完成后槽位归属已变化，重新扫描分布，避免地图停留在旧快照。
+        distRef.value?.refresh?.()
     }
 }
 
@@ -319,54 +628,6 @@ const clearResult = () => {
     task.totalSlots = 0
     task.doneSlots = 0
     task.currentSlot = 0
-}
-
-const runPreview = async () => {
-    clearTimer()
-    preview.data = null
-    preview.error = ''
-    if (!form.sourceId || !form.targetId || form.slot === null || form.slot === undefined) {
-        preview.error = i18n.t('slot.select_source')
-        return
-    }
-    preview.loading = true
-    try {
-        const { success, data, msg } = await PreviewSlotMigration(props.server, form.sourceId, form.targetId, form.slot)
-        if (!success) {
-            preview.error = msg || i18n.t('slot.preview_fail')
-            return
-        }
-        preview.data = data
-    } finally {
-        preview.loading = false
-    }
-}
-
-const start = () => {
-    if (!preview.data?.canStart) return
-    $dialog.warning(i18n.t('slot.confirm_start', { slot: form.slot }), async () => {
-        const options = {
-            batchKeys: params.batchKeys,
-            batchBytes: Math.round(params.batchBytesMB * 1024 * 1024),
-            migrateTimeoutMs: params.migrateTimeoutMs,
-            batchIntervalMs: params.batchIntervalMs,
-        }
-        const { success, data, msg } = await StartSlotMigration(
-            props.server,
-            form.sourceId,
-            form.targetId,
-            form.slot,
-            options
-        )
-        if (!success) {
-            $message.error(msg || i18n.t('slot.start_fail'))
-            return
-        }
-        applyTask(data)
-        preview.data = null
-        clearTimer()
-        timer = setTimeout(poll, 700)
-    })
 }
 
 const pause = async () => {
@@ -498,23 +759,15 @@ const columns = computed(() => [
                     secondary: true,
                     disabled: taskActive.value,
                     onClick: () => {
-                        form.sourceId = master.id
-                        form.slot = master.slotRanges?.[0]?.start ?? form.slot
-                        preview.data = null
+                        batch.sourceId = master.id
+                        batch.slotsText = String(master.slotRanges?.[0]?.start ?? '')
+                        section.value = 'batch'
                     },
                 },
                 { default: () => i18n.t('slot.select_source') }
             ),
     },
 ])
-
-watch(
-    () => [form.sourceId, form.targetId, form.slot],
-    () => {
-        preview.data = null
-        preview.error = ''
-    }
-)
 
 watch(params, () => localStorage.setItem(OPTIONS_KEY, JSON.stringify({ ...params })), { deep: true })
 
@@ -589,73 +842,19 @@ watch(
                     striped />
             </div>
 
+            <slot-distribution
+                ref="distRef"
+                :pause="props.pause"
+                :server="props.server"
+                @migrate="migrateFromDistribution" />
+
             <div class="slot-migration-panel">
                 <div class="slot-panel-header">
                     <span class="slot-panel-title">{{ $t('slot.migration_panel') }}</span>
                     <span class="slot-panel-hint">{{ $t('slot.migration_panel_hint') }}</span>
                 </div>
-                <n-tabs v-model:value="section" size="small" type="line">
-                    <n-tab-pane :tab="$t('slot.single_migration')" display-directive="show" name="single">
-            <div class="slot-migrate">
-                <div class="slot-form flex-box-h">
-                    <span class="slot-label">{{ $t('slot.source') }}</span>
-                    <n-select
-                        v-model:value="form.sourceId"
-                        :options="masterOptions"
-                        :disabled="taskActive"
-                        class="slot-select"
-                        size="small" />
-                    <span class="slot-label">{{ $t('slot.slot_number') }}</span>
-                    <n-input-number
-                        v-model:value="form.slot"
-                        :disabled="taskActive"
-                        :max="16383"
-                        :min="0"
-                        class="slot-number"
-                        size="small" />
-                    <span class="slot-label">{{ $t('slot.target') }}</span>
-                    <n-select
-                        v-model:value="form.targetId"
-                        :options="masterOptions"
-                        :disabled="taskActive"
-                        class="slot-select"
-                        size="small" />
-                    <n-button size="small" secondary :loading="preview.loading" :disabled="taskActive" @click="runPreview">
-                        {{ $t('slot.preview') }}
-                    </n-button>
-                </div>
-
-                <div v-if="preview.error" class="slot-preview-error">{{ preview.error }}</div>
-
-                <div v-if="preview.data" class="slot-preview">
-                    <div class="slot-metrics flex-box-h">
-                        <span>{{ $t('slot.keys_count', { n: preview.data.keyCount }) }}</span>
-                        <span>{{ $t('slot.estimated_size') }}: {{ formatBytes(preview.data.estimatedBytes || 0, 1) }}</span>
-                        <span v-if="preview.data.largestKey">
-                            {{ $t('slot.largest_key') }}:
-                            {{ formatBytes(preview.data.largestKey.size, 1) }}
-                        </span>
-                        <span v-if="preview.data.targetMax">
-                            {{ $t('slot.target_free') }}: {{ formatBytes(Math.max(0, preview.data.targetMax - preview.data.targetUsed), 1) }}
-                        </span>
-                        <n-tag v-if="preview.data.resume" size="tiny" type="info" :bordered="false">
-                            {{ $t('slot.warning.resume') }}
-                        </n-tag>
-                    </div>
-
-                    <div v-if="preview.data.warnings.length" class="slot-warnings">
-                        <n-tag
-                            v-for="(warning, index) in preview.data.warnings"
-                            :key="index"
-                            size="small"
-                            :bordered="false"
-                            :type="warningType(warning)">
-                            {{ warningText(warning) }}
-                        </n-tag>
-                    </div>
-                    <div v-else class="slot-no-warnings">{{ $t('slot.no_warnings') }}</div>
-
-                    <n-button text class="slot-advanced-toggle" @click="advancedOpen = !advancedOpen">
+                <div class="slot-panel-advanced">
+                    <n-button text size="small" @click="advancedOpen = !advancedOpen">
                         {{ $t('slot.advanced') }}
                     </n-button>
                     <div v-if="advancedOpen" class="slot-advanced flex-box-h">
@@ -668,12 +867,62 @@ watch(
                         <span class="slot-label">{{ $t('slot.interval') }}</span>
                         <n-input-number v-model:value="params.batchIntervalMs" :max="1000" :min="0" :step="10" size="small" class="slot-number" />
                     </div>
+                </div>
+                <n-tabs v-model:value="section" size="small" type="line">
+                    <n-tab-pane :tab="$t('slot.batch_migration')" display-directive="show" name="batch">
+            <div class="slot-migrate">
+                <div class="slot-form flex-box-h">
+                    <span class="slot-label">{{ $t('slot.source') }}</span>
+                    <n-select
+                        v-model:value="batch.sourceId"
+                        :options="masterOptions"
+                        :disabled="taskActive"
+                        class="slot-select"
+                        size="small" />
+                    <span class="slot-label">{{ $t('slot.slot_number') }}</span>
+                    <n-input
+                        v-model:value="batch.slotsText"
+                        :disabled="taskActive"
+                        :placeholder="$t('slot.batch_slots_placeholder')"
+                        class="slot-slots-input"
+                        size="small" />
+                    <n-button size="small" secondary :disabled="taskActive" @click="addBatchFromForm">
+                        {{ $t('slot.batch_add') }}
+                    </n-button>
+                    <span class="slot-label">{{ $t('slot.batch_target') }}</span>
+                    <n-select
+                        v-model:value="batch.targetId"
+                        :options="masterOptions"
+                        :disabled="taskActive"
+                        class="slot-select"
+                        size="small" />
+                </div>
 
-                    <div class="slot-actions">
-                        <n-button type="primary" size="small" :disabled="!preview.data.canStart || taskActive" @click="start">
-                            {{ $t('slot.start') }}
-                        </n-button>
-                    </div>
+                <div class="slot-batch-hint-line">{{ $t('slot.batch_hint') }}</div>
+
+                <n-data-table
+                    v-if="batchGroups.length"
+                    :columns="batchColumns"
+                    :data="batchGroups"
+                    :row-key="(group) => group.key"
+                    :max-height="200"
+                    :pagination="false"
+                    class="slot-plan-table"
+                    size="small"
+                    striped />
+                <div v-else class="slot-no-warnings">{{ $t('slot.batch_empty') }}</div>
+
+                <div class="slot-batch-footer flex-box-h">
+                    <span class="slot-batch-summary">
+                        {{ $t('slot.batch_count', { n: batch.items.length, keys: batchTotalKeys }) }}
+                    </span>
+                    <div class="flex-item-expand"></div>
+                    <n-button size="small" quaternary :disabled="!batch.items.length || taskActive" @click="clearBatch">
+                        {{ $t('slot.batch_clear') }}
+                    </n-button>
+                    <n-button size="small" type="primary" :disabled="!batch.items.length || taskActive" @click="startBatch">
+                        {{ $t('slot.batch_start') }}
+                    </n-button>
                 </div>
             </div>
                     </n-tab-pane>
@@ -759,7 +1008,7 @@ watch(
                     <n-tag size="small" :bordered="false" :type="stateTagType">
                         {{ $t(`slot.task_state.${task.state}`) }}
                     </n-tag>
-                    <span v-if="task.slot !== undefined" class="slot-task-slot">
+                    <span v-if="!task.batch && task.slot !== undefined" class="slot-task-slot">
                         Slot {{ task.slot }} · {{ task.source.addr }} → {{ task.target.addr }}
                     </span>
                     <span v-if="stepLabel" class="slot-task-step">{{ stepLabel }}</span>
@@ -860,35 +1109,36 @@ watch(
         word-break: break-all;
     }
 
-    :deep(.slot-range-cell) {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        max-width: 100%;
-        min-width: 0;
-    }
+}
 
-    :deep(.slot-range-text) {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+:deep(.slot-range-cell) {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    min-width: 0;
+}
 
-    :deep(.slot-range-copy) {
-        flex: none;
-    }
+:deep(.slot-range-text) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
-    :deep(.slot-range-more) {
-        flex: none;
-        padding: 0 6px;
-        border-radius: 9px;
-        border: 1px solid v-bind('themeVars.borderColor');
-        background: v-bind('themeVars.actionColor');
-        color: v-bind('themeVars.textColor2');
-        font-size: 11px;
-        line-height: 18px;
-        cursor: help;
-    }
+:deep(.slot-range-copy) {
+    flex: none;
+}
+
+:deep(.slot-range-more) {
+    flex: none;
+    padding: 0 6px;
+    border-radius: 9px;
+    border: 1px solid v-bind('themeVars.borderColor');
+    background: v-bind('themeVars.actionColor');
+    color: v-bind('themeVars.textColor2');
+    font-size: 11px;
+    line-height: 18px;
+    cursor: help;
 }
 
 .slot-range-tooltip {
@@ -980,8 +1230,8 @@ watch(
     width: 120px;
 }
 
-.slot-preview {
-    margin-top: 10px;
+.slot-slots-input {
+    width: 200px;
 }
 
 .slot-metrics {
@@ -999,10 +1249,6 @@ watch(
     color: v-bind('themeVars.textColor3');
 }
 
-.slot-advanced-toggle {
-    margin-top: 8px;
-}
-
 .slot-advanced {
     margin-top: 8px;
 }
@@ -1011,10 +1257,21 @@ watch(
     margin-top: 10px;
 }
 
-.slot-preview-error {
-    margin-top: 8px;
-    color: v-bind('themeVars.errorColor');
+.slot-batch-hint-line {
+    margin-top: 6px;
     font-size: 12px;
+    color: v-bind('themeVars.textColor3');
+}
+
+.slot-batch-footer {
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.slot-batch-summary {
+    font-size: 12px;
+    color: v-bind('themeVars.textColor3');
 }
 
 .slot-task-header {
