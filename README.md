@@ -6,6 +6,7 @@
 <h4 align="center"><strong>English</strong> | <a href="https://github.com/zhizuqiu/kvpilot/blob/main/README_zh.md">简体中文</a></h4>
 
 > **KVPilot** is an unofficial community continuation of **Tiny RDM** 1.2.7 (GPL-3.0).
+> Current release: **1.3.0**.
 > Not affiliated with, endorsed by, or sponsored by Tiny Craft.
 
 <div align="center">
@@ -21,11 +22,11 @@ also provides a web version that can be deployed via Docker.</strong>
 </div>
 
 <div align="center">
-<img alt="KVPilot 仪表盘" src="docs/assets/03-browser.png" />
+<img alt="KVPilot status dashboard" src="docs/assets/03-browser.png" />
 
-<img alt="KVPilot 键详情" src="docs/assets/02-key-detail.png" />
+<img alt="KVPilot key detail" src="docs/assets/02-key-detail.png" />
 
-<img alt="KVPilot 偏好设置" src="docs/assets/04-preferences.png" />
+<img alt="KVPilot slot management" src="docs/assets/05-slot-management.png" />
 </div>
 
 ## Feature
@@ -35,7 +36,7 @@ also provides a web version that can be deployed via Docker.</strong>
 * Provides visually and user-friendly UI, light and dark themes (Thanks
   to [Naive UI](https://github.com/tusen-ai/naive-ui)
   and [IconPark](https://iconpark.oceanengine.com)).
-* Multi-language support ([Need more languages ? Click here to contribute](.github/CONTRIBUTING.md)).
+* Multi-language support: English, 简体中文, 繁體中文, 日本語, 한국어, Français, Español, Português, Русский, Türkçe ([Need more languages ? Click here to contribute](.github/CONTRIBUTING.md)).
 * Better connection management: supports SSH Tunnel/SSL/Sentinel Mode/Cluster Mode/HTTP proxy/SOCKS5 proxy.
 * Visualize key value operations, CRUD support for Lists, Hashes, Strings, Sets, Sorted Sets, and Streams.
 * Support multiple data viewing format and decode/decompression methods.
@@ -47,13 +48,29 @@ also provides a web version that can be deployed via Docker.</strong>
 * Provide value decode/decompression for List/Hash/Set/Sorted Set.
 * Integrate with Monaco Editor
 * Support real-time commands monitoring.
-* Visual ACL management with permission dry-run and denial logs.
-* Deployment topology for standalone, master-replica, sentinel and cluster.
 * Support import/export data.
 * Support publish/subscribe.
 * Support import/export connection profile.
 * Custom data encoder and decoder for value
   display ([Here are the instructions](https://github.com/zhizuqiu/kvpilot/blob/main/docs/custom-decoder.md)).
+* Deployment topology for standalone, master-replica, sentinel and cluster.
+* Visual ACL management with permission dry-run and denial logs.
+* Visual configuration management: view and edit Redis parameters, with per-node comparison for clusters.
+* Session management with protection for master/replica/pub-sub connections.
+* Big key scan and keyspace statistics (types, TTL, prefixes) with CSV export.
+* Read-only cluster health checks with severity, reasons and suggestions.
+* Maintenance actions: per-master BGSAVE with progress, SLOWLOG reset.
+* Cluster slot management: per-slot key distribution map, batch migration with range paste and multi-select, and rebalancing by slot count or key count.
+
+## Cluster Operations
+
+KVPilot includes read-only cluster inspection and controlled slot operations for Redis Cluster:
+
+* **Slot distribution**: one block per master, colored by key count, with log/linear scales and hover details.
+* **Batch migration**: click a slot on the map, choose a target master, then add it to the batch list. The slot field also accepts comma-separated numbers or ranges copied from the slot range column (`0-6, 8, 10-12`).
+* **Multi-select**: hold ⌘ Command on macOS or Alt on other platforms and drag on the map to select a rectangle of slots.
+* **Rebalance**: generate a plan by slot count or key count with an adjustable tolerance, then run it with pause/resume/cancel.
+* **Safety**: slot operations run against masters only; completed slots are never rolled back; cancellation takes effect between slots; nodes that fail to respond during a scan are reported and excluded from the map.
 
 ## Installation
 
@@ -76,7 +93,7 @@ Prefer the browser? See [Docker Deployment](#docker-deployment) for the web vers
 
 ### Prerequisites
 
-* Go (latest version)
+* Go >= 1.25
 * Node.js >= 20
 * NPM >= 9
 
@@ -111,6 +128,25 @@ npm install
 wails dev
 ```
 
+### Tests and Local Web Development
+
+Run the test suites:
+
+```bash
+go test ./...
+cd frontend && npm run test
+```
+
+For local web development, run the API server and the Vite dev server separately:
+
+```bash
+# terminal 1: backend on :8088
+go build -tags web -o /tmp/kvpilot-web . && PORT=8088 /tmp/kvpilot-web
+
+# terminal 2: frontend dev server, proxying /api and /ws to :8088
+cd frontend && VITE_WEB=true npm run dev
+```
+
 ## Docker Deployment
 
 Images are published to Docker Hub as [`zhizuqiu/kvpilot`](https://hub.docker.com/r/zhizuqiu/kvpilot)
@@ -132,6 +168,7 @@ services:
     environment:
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=change-me
+      - SESSION_TTL=24h
     volumes:
       - ./data:/app/tinyrdm
 ```
@@ -143,6 +180,9 @@ docker compose up -d
 ```
 
 Once started, visit `http://localhost:8086` and log in with the credentials configured above.
+The frontend uses `./` relative asset/API/WebSocket paths by default, so it can be served at the root
+or under a sub-path such as `/kvpilot/`. Override the build base path with
+`--build-arg VITE_BASE_PATH=...` when building the image.
 
 ### Using Docker Command
 
@@ -157,10 +197,16 @@ docker run -d --name kvpilot \
 
 ### Environment Variables
 
-| Variable         | Description    | Default |
-|------------------|----------------|---------|
-| `ADMIN_USERNAME` | Login username | -       |
-| `ADMIN_PASSWORD` | Login password | -       |
+| Variable            | Description                                                                                  | Default |
+|---------------------|----------------------------------------------------------------------------------------------|---------|
+| `ADMIN_USERNAME`    | Login username                                                                               | -       |
+| `ADMIN_PASSWORD`    | Login password                                                                               | -       |
+| `SESSION_TTL`       | Login session lifetime, in Go duration format (for example `24h`)                            | `24h`   |
+| `PORT`              | Backend listen port inside the container; nginx exposes `8086`                               | `8088`  |
+
+Connections and preferences are stored under `/app/tinyrdm`. Keep that volume before upgrading or
+recreating the container. Web mode uses a single administrator account; put it behind HTTPS when
+exposed to a network.
 
 ## About
 
@@ -168,7 +214,8 @@ KVPilot is a community continuation of [Tiny RDM](https://github.com/tiny-craft/
 aimed at users who still rely on the open-source desktop client and need to keep up with
 new Redis / KV compatible implementations.
 
-- Scope: bug fixes, dependency and security updates, Redis protocol/command compatibility, hardening of the web mode
+- Scope: bug fixes, dependency and security updates, Redis protocol/command compatibility, cluster slot operations, and hardening of the web mode
+- Current release: 1.3.0 (based on Tiny RDM 1.2.7)
 - Non-goals: major UI redesigns, chasing features of the closed-source successor (Redisee)
 - Maintenance: issue/PR driven, see [Contributing](#contributing)
 - License: GPL-3.0; unofficial derivative work, not affiliated with Tiny Craft
