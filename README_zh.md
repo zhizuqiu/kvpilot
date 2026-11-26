@@ -194,6 +194,11 @@ docker run -d --name kvpilot \
 | `ADMIN_PASSWORD` | 登录密码  | -   |
 | `SESSION_TTL` | 登录会话有效期，Go duration 格式（例如 `24h`） | `24h` |
 | `PORT` | 容器内后端监听端口，对外仍由 nginx 暴露 `8086` | `8088` |
+| `API_BASIC_AUTH_USERNAME` | 可选的原生 API Basic Auth 用户名 | - |
+| `API_BASIC_AUTH_PASSWORD` | 可选的原生 API Basic Auth 密码 | - |
+
+配置 `API_BASIC_AUTH_USERNAME` 和 `API_BASIC_AUTH_PASSWORD` 后，受保护的原生 API 同时接受 HTTP Basic Auth，
+适合自动化客户端逐请求认证；浏览器仍可使用管理员账号登录。
 
 连接配置和偏好设置保存在 `/app/tinyrdm`，升级或重建容器前请保留该目录。Web 模式使用
 单管理员账号，暴露到网络时建议放在 HTTPS 反向代理之后。

@@ -163,7 +163,8 @@ func (c *ConnectionsStorage) CreateConnection(param types.ConnectionConfig) erro
 		if len(param.Group) > 0 {
 			// no group matched, create new group
 			conns = append(conns, types.Connection{
-				Type: "group",
+				ConnectionConfig: types.ConnectionConfig{Name: param.Group},
+				Type:             "group",
 				Connections: types.Connections{
 					types.Connection{
 						ConnectionConfig: param,

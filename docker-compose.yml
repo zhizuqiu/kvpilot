@@ -10,6 +10,8 @@ services:
       - GIN_MODE=release
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=tinyrdm
+      - API_BASIC_AUTH_USERNAME=${API_BASIC_AUTH_USERNAME:-}
+      - API_BASIC_AUTH_PASSWORD=${API_BASIC_AUTH_PASSWORD:-}
       # - SESSION_TTL=24h
     volumes:
       - ./data:/app/tinyrdm

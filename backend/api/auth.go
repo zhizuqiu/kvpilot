@@ -20,11 +20,14 @@ import (
 
 // Auth configuration
 var (
-	authEnabled  bool
-	authUsername string
-	authPassword string
-	jwtSecret    []byte
-	sessionTTL   = 24 * time.Hour
+	authEnabled      bool
+	authUsername     string
+	authPassword     string
+	apiBasicUsername string
+	apiBasicPassword string
+	apiBasicEnabled  bool
+	jwtSecret        []byte
+	sessionTTL       = 24 * time.Hour
 )
 
 // Rate limiter for login attempts
@@ -101,6 +104,9 @@ func InitAuth() {
 	authUsername = os.Getenv("ADMIN_USERNAME")
 	authPassword = os.Getenv("ADMIN_PASSWORD")
 	authEnabled = authUsername != "" && authPassword != ""
+	apiBasicUsername = os.Getenv("API_BASIC_AUTH_USERNAME")
+	apiBasicPassword = os.Getenv("API_BASIC_AUTH_PASSWORD")
+	apiBasicEnabled = apiBasicUsername != "" && apiBasicPassword != ""
 
 	// Generate random JWT secret on each startup
 	secret := make([]byte, 32)
@@ -199,22 +205,31 @@ func getClientIP(c *gin.Context) string {
 // AuthMiddleware protects API routes
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if !authEnabled {
+		if !authEnabled && !apiBasicEnabled {
 			c.Next()
 			return
 		}
 
-		// Get token from cookie
-		token, err := c.Cookie("rdm_token")
-		if err != nil || !validateToken(token, getClientIP(c)) {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"msg":     "unauthorized",
-			})
-			return
+		if authEnabled {
+			if token, err := c.Cookie("rdm_token"); err == nil && validateToken(token, getClientIP(c)) {
+				c.Next()
+				return
+			}
 		}
 
-		c.Next()
+		if apiBasicEnabled {
+			username, password, ok := c.Request.BasicAuth()
+			if ok && hmac.Equal([]byte(username), []byte(apiBasicUsername)) &&
+				hmac.Equal([]byte(password), []byte(apiBasicPassword)) {
+				c.Next()
+				return
+			}
+		}
+
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"success": false,
+			"msg":     "unauthorized",
+		})
 	}
 }
 
