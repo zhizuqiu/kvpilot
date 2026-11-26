@@ -1,8 +1,10 @@
 <script setup>
 import { computed, h, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NButton, NEmpty, NInputNumber, NProgress, NSelect, NTag, useThemeVars } from 'naive-ui'
+import { NButton, NEmpty, NIcon, NInputNumber, NProgress, NSelect, NTag, NTooltip, useThemeVars } from 'naive-ui'
 import Refresh from '@/components/icons/Refresh.vue'
+import CopyIcon from '@/components/icons/Copy.vue'
+import { ClipboardSetText } from 'wailsjs/runtime/runtime.js'
 import ContentDeployTopology from '@/components/content_value/ContentDeployTopology.vue'
 import { formatBytes } from '@/utils/byte_convert.js'
 import {
@@ -93,6 +95,22 @@ const targetMaster = computed(() => overview.masters.find((master) => master.id 
 const slotRangeList = (master) => {
     if (!master || !master.slotRanges) return []
     return master.slotRanges.map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
+}
+
+const copyRanges = async (master) => {
+    const list = slotRangeList(master)
+    if (list.length === 0) return
+    await ClipboardSetText(list.join(', '))
+    $message.success(i18n.t('slot.copied'))
+}
+
+const copyAllRanges = async () => {
+    const lines = overview.masters
+        .filter((master) => slotRangeList(master).length > 0)
+        .map((master) => `${master.addr}\t${slotRangeList(master).join(', ')}`)
+    if (lines.length === 0) return
+    await ClipboardSetText(lines.join('\n'))
+    $message.success(i18n.t('slot.copied'))
 }
 
 const slotRangesText = (master) => {
@@ -395,10 +413,50 @@ const columns = computed(() => [
     {
         title: () => i18n.t('slot.col_ranges'),
         key: 'ranges',
-        minWidth: 180,
-        ellipsis: { tooltip: true },
-        render: (master) =>
-            h('span', { title: slotRangeList(master).join(', ') }, slotRangesText(master)),
+        minWidth: 200,
+        render: (master) => {
+            const list = slotRangeList(master)
+            if (list.length === 0) return '-'
+            const visible = list.slice(0, 6)
+            const hidden = list.length - visible.length
+            const text = h('span', { class: 'slot-range-text' }, visible.join(', '))
+            const copy = h(
+                NButton,
+                {
+                    size: 'tiny',
+                    quaternary: true,
+                    class: 'slot-range-copy',
+                    title: i18n.t('slot.copy_ranges'),
+                    onClick: () => copyRanges(master),
+                },
+                { icon: () => h(NIcon, { size: 13 }, () => h(CopyIcon)) }
+            )
+            if (hidden <= 0) {
+                return h('div', { class: 'slot-range-cell' }, [text, copy])
+            }
+            // 只有 +N 这个小胶囊触发详情，普通区间文本不响应悬停
+            const more = h(
+                NTooltip,
+                {
+                    trigger: 'hover',
+                    scrollable: true,
+                    style: { maxWidth: '60vw', maxHeight: '50vh' },
+                },
+                {
+                    trigger: () => h('span', { class: 'slot-range-more' }, `+${hidden}`),
+                    default: () =>
+                        h('div', {
+                            class: 'slot-range-tooltip',
+                            style: { maxHeight: '220px', overflowY: 'auto', paddingRight: '6px' },
+                        }, [
+                            h('div', { class: 'slot-range-tooltip-title' },
+                                `${i18n.t('slot.col_ranges')} · ${list.length}`),
+                            ...list.map((range) => h('div', { class: 'slot-range-tooltip-line' }, range)),
+                        ]),
+                }
+            )
+            return h('div', { class: 'slot-range-cell' }, [text, more, copy])
+        },
     },
     {
         title: () => i18n.t('slot.col_slots'),
@@ -497,6 +555,12 @@ watch(
                 {{ $t('slot.migrating', { n: overview.migratingSlots.length }) }}
             </n-tag>
             <div class="flex-item-expand"></div>
+            <n-button size="small" secondary @click="copyAllRanges">
+                <template #icon>
+                    <n-icon :component="CopyIcon" />
+                </template>
+                {{ $t('slot.copy_all_ranges') }}
+            </n-button>
             <n-button size="small" secondary :loading="loading" @click="refreshAll">
                 <template #icon>
                     <n-icon :component="Refresh" />
@@ -549,7 +613,6 @@ watch(
                         :min="0"
                         class="slot-number"
                         size="small" />
-                    <span class="slot-hint">{{ $t('slot.slot_hint') }}</span>
                     <span class="slot-label">{{ $t('slot.target') }}</span>
                     <n-select
                         v-model:value="form.targetId"
@@ -796,6 +859,53 @@ watch(
         color: v-bind('themeVars.textColor3');
         word-break: break-all;
     }
+
+    :deep(.slot-range-cell) {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    :deep(.slot-range-text) {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    :deep(.slot-range-copy) {
+        flex: none;
+    }
+
+    :deep(.slot-range-more) {
+        flex: none;
+        padding: 0 6px;
+        border-radius: 9px;
+        border: 1px solid v-bind('themeVars.borderColor');
+        background: v-bind('themeVars.actionColor');
+        color: v-bind('themeVars.textColor2');
+        font-size: 11px;
+        line-height: 18px;
+        cursor: help;
+    }
+}
+
+.slot-range-tooltip {
+    max-height: 220px;
+    overflow: auto;
+    padding-right: 6px;
+    font-size: 12px;
+    line-height: 1.6;
+
+    .slot-range-tooltip-title {
+        margin-bottom: 4px;
+        color: v-bind('themeVars.textColor3');
+    }
+
+    .slot-range-tooltip-line {
+        white-space: nowrap;
+    }
 }
 
 .slot-migration-panel {
@@ -856,11 +966,6 @@ watch(
     font-size: 12px;
     color: v-bind('themeVars.textColor3');
     white-space: nowrap;
-}
-
-.slot-hint {
-    font-size: 11px;
-    color: v-bind('themeVars.textColor3');
 }
 
 .slot-select {

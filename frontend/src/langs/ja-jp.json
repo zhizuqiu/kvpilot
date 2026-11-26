@@ -854,7 +854,6 @@
       "permission_denied": "CLUSTER/MIGRATE 権限がありません: {msg}",
       "overshoot_skipped": "許容範囲を超えずに移行できるスロットがない差異があります。しきい値か上限を調整してください"
     },
-    "slot_hint": "単一のスロット番号（0-16383）を入力してください（件数ではありません）",
     "rebalance": "再均衡移行",
     "max_slots": "最大スロット数",
     "plan": "計画を作成",
@@ -879,6 +878,9 @@
     "tolerance": "許容範囲 (%)",
     "clear_result": "結果を消去",
     "migration_panel": "スロット移行",
-    "migration_panel_hint": "ソースとターゲットのマスターを選び、スロットとそのキーを移動します。移動済みのキーは元に戻せません"
+    "migration_panel_hint": "ソースとターゲットのマスターを選び、スロットとそのキーを移動します。移動済みのキーは元に戻せません",
+    "copy_ranges": "スロット範囲をコピー",
+    "copy_all_ranges": "すべての範囲をコピー",
+    "copied": "コピーしました"
   }
 }

@@ -854,7 +854,6 @@
       "permission_denied": "CLUSTER/MIGRATE izni yok: {msg}",
       "overshoot_skipped": "Bazı farklar tolerans aşılmadan kapatılamaz; sınırı veya eşiği ayarlayın"
     },
-    "slot_hint": "Tek bir slot numarası girin (0-16383), adet değil",
     "rebalance": "Dengeleme taşıması",
     "max_slots": "En fazla slot",
     "plan": "Plan oluştur",
@@ -879,6 +878,9 @@
     "tolerance": "Tolerans (%)",
     "clear_result": "Sonucu temizle",
     "migration_panel": "Slot taşıma",
-    "migration_panel_hint": "Bir kaynak ve hedef ana düğüm seçip slotu ve anahtarlarını taşıyın. Taşınan anahtarlar geri alınamaz."
+    "migration_panel_hint": "Bir kaynak ve hedef ana düğüm seçip slotu ve anahtarlarını taşıyın. Taşınan anahtarlar geri alınamaz.",
+    "copy_ranges": "Aralıkları kopyala",
+    "copy_all_ranges": "Tüm aralıkları kopyala",
+    "copied": "Kopyalandı"
   }
 }

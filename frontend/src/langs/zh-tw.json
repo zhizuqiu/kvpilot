@@ -854,7 +854,6 @@
       "permission_denied": "缺少 CLUSTER/MIGRATE 權限：{msg}",
       "overshoot_skipped": "部分差距無法在不超出閾值的情況下透過整槽遷移消除，可調整閾值或遷移上限"
     },
-    "slot_hint": "填寫單一槽位編號（0-16383），不是遷移數量",
     "rebalance": "均衡遷移",
     "max_slots": "最多遷移槽位",
     "plan": "產生均衡計畫",
@@ -879,6 +878,9 @@
     "tolerance": "均衡閾值 (%)",
     "clear_result": "清除結果",
     "migration_panel": "槽位遷移",
-    "migration_panel_hint": "選擇來源與目標節點，把槽位及其資料遷移到目標節點；已搬遷的鍵無法復原"
+    "migration_panel_hint": "選擇來源與目標節點，把槽位及其資料遷移到目標節點；已搬遷的鍵無法復原",
+    "copy_ranges": "複製槽位範圍",
+    "copy_all_ranges": "複製全部槽位",
+    "copied": "已複製"
   }
 }

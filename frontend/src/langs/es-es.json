@@ -854,7 +854,6 @@
       "permission_denied": "Falta permiso CLUSTER/MIGRATE: {msg}",
       "overshoot_skipped": "Algunas diferencias no se pueden cerrar sin superar la tolerancia; ajusta el límite"
     },
-    "slot_hint": "Introduce un número de slot (0-16383), no una cantidad",
     "rebalance": "Migración de reequilibrio",
     "max_slots": "Slots máximos",
     "plan": "Generar plan",
@@ -879,6 +878,9 @@
     "tolerance": "Tolerancia (%)",
     "clear_result": "Borrar resultado",
     "migration_panel": "Migración de slots",
-    "migration_panel_hint": "Elige un maestro de origen y destino y mueve el slot con sus claves. Las claves movidas no se pueden revertir."
+    "migration_panel_hint": "Elige un maestro de origen y destino y mueve el slot con sus claves. Las claves movidas no se pueden revertir.",
+    "copy_ranges": "Copiar rangos",
+    "copy_all_ranges": "Copiar todos los rangos",
+    "copied": "Copiado"
   }
 }

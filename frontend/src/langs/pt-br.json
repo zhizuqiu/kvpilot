@@ -854,7 +854,6 @@
       "permission_denied": "Permissão CLUSTER/MIGRATE ausente: {msg}",
       "overshoot_skipped": "Algumas diferenças não podem ser fechadas sem exceder a tolerância; ajuste o limite"
     },
-    "slot_hint": "Informe um número de slot (0-16383), não uma quantidade",
     "rebalance": "Migração de rebalanceamento",
     "max_slots": "Slots máximos",
     "plan": "Gerar plano",
@@ -879,6 +878,9 @@
     "tolerance": "Tolerância (%)",
     "clear_result": "Limpar resultado",
     "migration_panel": "Migração de slots",
-    "migration_panel_hint": "Escolha um mestre de origem e destino e mova o slot com suas chaves. As chaves movidas não podem ser revertidas."
+    "migration_panel_hint": "Escolha um mestre de origem e destino e mova o slot com suas chaves. As chaves movidas não podem ser revertidas.",
+    "copy_ranges": "Copiar faixas",
+    "copy_all_ranges": "Copiar todas as faixas",
+    "copied": "Copiado"
   }
 }

@@ -854,7 +854,6 @@
       "permission_denied": "CLUSTER/MIGRATE 권한이 없습니다: {msg}",
       "overshoot_skipped": "허용 오차를 넘지 않고는 이동할 수 없는 차이가 있습니다. 기준이나 상한을 조정하세요"
     },
-    "slot_hint": "단일 슬롯 번호(0-16383)를 입력하세요. 개수가 아닙니다",
     "rebalance": "재분배 마이그레이션",
     "max_slots": "최대 슬롯 수",
     "plan": "계획 생성",
@@ -879,6 +878,9 @@
     "tolerance": "허용 오차 (%)",
     "clear_result": "결과 지우기",
     "migration_panel": "슬롯 마이그레이션",
-    "migration_panel_hint": "소스와 대상 마스터를 선택해 슬롯과 키를 이동합니다. 이동한 키는 되돌릴 수 없습니다"
+    "migration_panel_hint": "소스와 대상 마스터를 선택해 슬롯과 키를 이동합니다. 이동한 키는 되돌릴 수 없습니다",
+    "copy_ranges": "슬롯 범위 복사",
+    "copy_all_ranges": "모든 범위 복사",
+    "copied": "복사됨"
   }
 }

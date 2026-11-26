@@ -4,6 +4,9 @@ import { createI18n } from 'vue-i18n'
 import { NSelect } from 'naive-ui'
 import zhCn from '@/langs/zh-cn.json'
 
+const clipboard = vi.hoisted(() => vi.fn())
+vi.mock('wailsjs/runtime/runtime.js', () => ({ ClipboardSetText: clipboard }))
+
 const api = vi.hoisted(() => ({
     SlotOverview: vi.fn(),
     PreviewSlotMigration: vi.fn(),
@@ -108,6 +111,23 @@ describe('ContentSlots', () => {
             success: true,
             data: taskData({ state: 'running', step: 'preparing', slot: 0, totalKeys: 10 }),
         })
+    })
+
+    it('可以复制单个节点与全部节点的槽位范围', async () => {
+        const wrapper = await mountSlots()
+
+        const copyButton = wrapper.findAll('button').find((button) => button.text().includes('复制全部槽位'))
+        await copyButton.trigger('click')
+        await flushPromises()
+        expect(clipboard).toHaveBeenCalledWith(expect.stringContaining('10.0.0.1:6379\t0-5460'))
+
+        clipboard.mockClear()
+        const rows = wrapper.findAll('.slot-masters .n-data-table-tbody .n-data-table-tr')
+        await rows[0].find('.slot-range-copy').trigger('click')
+        await flushPromises()
+        expect(clipboard).toHaveBeenCalledWith('0-5460')
+
+        wrapper.unmount()
     })
 
     it('非集群连接给出提示', async () => {

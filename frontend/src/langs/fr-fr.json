@@ -854,7 +854,6 @@
       "permission_denied": "Permission CLUSTER/MIGRATE manquante : {msg}",
       "overshoot_skipped": "Certains écarts ne peuvent pas être comblés sans dépasser la tolérance ; ajustez la limite"
     },
-    "slot_hint": "Saisissez un numéro de slot (0-16383), pas un nombre de slots",
     "rebalance": "Migration de rééquilibrage",
     "max_slots": "Slots maximum",
     "plan": "Créer un plan",
@@ -879,6 +878,9 @@
     "tolerance": "Tolérance (%)",
     "clear_result": "Effacer le résultat",
     "migration_panel": "Migration de slots",
-    "migration_panel_hint": "Choisissez un maître source et cible, puis déplacez le slot et ses clés. Les clés déplacées ne peuvent pas être restaurées."
+    "migration_panel_hint": "Choisissez un maître source et cible, puis déplacez le slot et ses clés. Les clés déplacées ne peuvent pas être restaurées.",
+    "copy_ranges": "Copier les plages",
+    "copy_all_ranges": "Copier toutes les plages",
+    "copied": "Copié"
   }
 }

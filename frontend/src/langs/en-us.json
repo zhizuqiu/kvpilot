@@ -854,7 +854,6 @@
       "permission_denied": "CLUSTER/MIGRATE permission missing: {msg}",
       "overshoot_skipped": "Some gaps cannot be closed without exceeding the tolerance; adjust the limit or accept the difference"
     },
-    "slot_hint": "Enter one slot number (0-16383), not a count",
     "rebalance": "Rebalance migration",
     "max_slots": "Max slots",
     "plan": "Build plan",
@@ -879,6 +878,9 @@
     "tolerance": "Tolerance (%)",
     "clear_result": "Clear result",
     "migration_panel": "Slot migration",
-    "migration_panel_hint": "Choose a source and target master, then move the slot and its keys. Migrated keys cannot be rolled back."
+    "migration_panel_hint": "Choose a source and target master, then move the slot and its keys. Migrated keys cannot be rolled back.",
+    "copy_ranges": "Copy ranges",
+    "copy_all_ranges": "Copy all ranges",
+    "copied": "Copied"
   }
 }
