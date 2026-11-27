@@ -872,7 +872,7 @@
     "copy_all_ranges": "Copy all ranges",
     "copied": "Copied",
     "dist_title": "Slot distribution",
-    "dist_hint": "One block per node, block width follows slot count; darker means more keys; hold {key} and drag to select multiple slots",
+    "dist_hint": "One block per node, block width follows slot count; colour shows hotness relative to the median; hold {key} and drag to select multiple slots",
     "dist_scan": "Scan",
     "dist_rescan": "Rescan",
     "dist_scanning": "Scanning…",
@@ -880,15 +880,12 @@
     "dist_never": "Not scanned yet",
     "dist_empty": "No scan result yet. Click \"Scan\" to count keys per slot",
     "dist_partial": "{n} node(s) failed to read; data may be incomplete",
-    "dist_scale_log": "Log",
-    "dist_scale_linear": "Linear",
     "dist_slot": "Slot {slot}",
     "dist_keys": "{n} keys",
     "dist_unassigned": "Unassigned",
     "dist_detail": "Slot {slot} · {addr} · {n} keys",
     "dist_migrate": "Migrate this slot",
     "dist_scan_fail": "Failed to scan slot distribution",
-    "dist_scale_hint": "Log: low counts stay visible, best for finding hot spots. Linear: true proportion, best for comparing how uneven the load is.",
     "dist_deselect": "Deselect",
     "batch_migration": "Batch migration",
     "batch_add": "Add",
@@ -916,7 +913,6 @@
     "batch_skipped_many": "Skipped {n} slots that cannot be migrated",
     "batch_parse_fail": "Invalid slot expression: {text}",
     "batch_slots_placeholder": "0-6, 8, 10-12",
-    "dist_range": "Colour range {lo}–{hi} keys (P2–P98)",
-    "dist_range_equal": "All slots have {n} keys"
+    "dist_hotspot": "Hotspot baseline: median {n} keys · 1× lightest, 2× darkest"
   }
 }

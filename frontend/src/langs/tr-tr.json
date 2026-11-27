@@ -872,7 +872,7 @@
     "copy_all_ranges": "Tüm aralıkları kopyala",
     "copied": "Kopyalandı",
     "dist_title": "Slot dağılımı",
-    "dist_hint": "Her düğüm için bir blok, genişlik slot sayısına göre; koyu renk daha çok anahtar; {key} basılı tutup sürükleyerek birden fazla slot seçin",
+    "dist_hint": "Her düğüm için bir blok, genişlik slot sayısına göre; renk medyana göre sıcaklığı gösterir; {key} basılı tutup sürükleyerek birden fazla slot seçin",
     "dist_scan": "Tara",
     "dist_rescan": "Yeniden tara",
     "dist_scanning": "Taranıyor…",
@@ -880,15 +880,12 @@
     "dist_never": "Henüz taranmadı",
     "dist_empty": "Henüz sonuç yok. Slot başına anahtar saymak için \"Tara\"ya tıklayın",
     "dist_partial": "{n} düğüm okunamadı, veriler eksik olabilir",
-    "dist_scale_log": "Log",
-    "dist_scale_linear": "Doğrusal",
     "dist_slot": "Slot {slot}",
     "dist_keys": "{n} anahtar",
     "dist_unassigned": "Atanmamış",
     "dist_detail": "Slot {slot} · {addr} · {n} anahtar",
     "dist_migrate": "Bu slotu taşı",
     "dist_scan_fail": "Slot dağılımı taranamadı",
-    "dist_scale_hint": "Log: düşük değerler görünür kalır, sıcak noktaları bulmak için idealdir. Doğrusal: gerçek oran, yük dengesizliğini karşılaştırmak için idealdir.",
     "dist_deselect": "Seçimi kaldır",
     "batch_migration": "Toplu taşıma",
     "batch_add": "Ekle",
@@ -916,7 +913,6 @@
     "batch_skipped_many": "Taşınamayan {n} slot atlandı",
     "batch_parse_fail": "Slot ifadesi geçersiz: {text}",
     "batch_slots_placeholder": "0-6, 8, 10-12",
-    "dist_range": "Renk aralığı {lo}–{hi} anahtar (P2–P98)",
-    "dist_range_equal": "Tüm slotlarda {n} anahtar var"
+    "dist_hotspot": "Sıcak nokta temeli: medyan {n} anahtar · 1× en açık, 2× en koyu"
   }
 }

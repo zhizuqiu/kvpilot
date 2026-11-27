@@ -1,10 +1,10 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NButton, NDropdown, NIcon, NRadioButton, NRadioGroup, NTag, useThemeVars } from 'naive-ui'
+import { NButton, NDropdown, NIcon, NTag, useThemeVars } from 'naive-ui'
 import Refresh from '@/components/icons/Refresh.vue'
 import { computeSlotLayout, slotAtPoint, slotsInRect, SLOT_COUNT } from '@/utils/slot_layout.js'
-import { buildSlotScale, scaleRatio } from '@/utils/slot_color.js'
+import { buildHotspotScale, hotspotAlpha, hotspotRatio } from '@/utils/slot_color.js'
 import { GetSlotDistribution, ScanSlotDistribution } from 'wailsjs/go/services/browserService.js'
 
 const MAP_HEIGHT = 300
@@ -32,7 +32,6 @@ const isMac = /mac/i.test(`${navigator.platform || ''} ${navigator.userAgent || 
 const modifierKey = isMac ? '⌘ Command' : 'Alt'
 const isSelectionModifier = (event) => (isMac ? event.metaKey : event.altKey)
 
-const scale = ref('log')
 const selection = ref([])
 const drag = reactive({ active: false, x1: 0, y1: 0, x2: 0, y2: 0 })
 const loading = ref(false)
@@ -47,8 +46,8 @@ let drawFrame = null
 let pollTimer = null
 let resizeObserver = null
 
-// 用非零槽位的 P2~P98 作为色阶范围，均匀集群也能看出细微差异。
-const slotScale = computed(() => buildSlotScale(data.slots))
+// 颜色表达相对中位数的热点程度：均匀集群整体浅色，只有热点变深。
+const hotScale = computed(() => buildHotspotScale(data.slots))
 
 const scannedTime = computed(() => {
     if (!data.scannedAt) return ''
@@ -176,7 +175,6 @@ const draw = () => {
     const empty = themeVars.value.textColor3 || '#999999'
     const labelColor = themeVars.value.textColor3 || '#999999'
     const lineColor = isDarkBody() ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.25)'
-    const currentScale = slotScale.value
     const emptyAlpha = isDarkBody() ? 0.1 : 0.07
     const cell = layout.cell
 
@@ -197,7 +195,7 @@ const draw = () => {
             if (count === 0) {
                 alpha = emptyAlpha
             } else {
-                alpha = 0.08 + 0.92 * scaleRatio(count, currentScale, scale.value)
+                alpha = hotspotAlpha(hotspotRatio(count, hotScale.value))
             }
             ctx.globalAlpha = alpha
             ctx.fillStyle = count > 0 ? primary : empty
@@ -444,7 +442,6 @@ const clearPoll = () => {
     }
 }
 
-watch(scale, () => draw())
 watch(selection, () => draw())
 watch(() => themeVars.value.primaryColor, () => draw())
 watch(() => themeVars.value.bodyColor, () => draw())
@@ -488,16 +485,6 @@ onUnmounted(() => {
                 {{ $t('slot.dist_partial', { n: data.unavailable.length }) }}
             </n-tag>
             <div class="flex-item-expand"></div>
-            <n-radio-group v-model:value="scale" size="small">
-                <n-radio-button value="log">{{ $t('slot.dist_scale_log') }}</n-radio-button>
-                <n-radio-button value="linear">{{ $t('slot.dist_scale_linear') }}</n-radio-button>
-            </n-radio-group>
-            <n-tooltip trigger="hover" placement="bottom" style="max-width: 320px">
-                <template #trigger>
-                    <span class="slot-dist-hint-badge">?</span>
-                </template>
-                {{ $t('slot.dist_scale_hint') }}
-            </n-tooltip>
             <n-button size="small" secondary :loading="loading" :disabled="data.scanning" @click="scan">
                 <template #icon>
                     <n-icon :component="Refresh" />
@@ -508,10 +495,8 @@ onUnmounted(() => {
 
         <div class="slot-dist-hint-line">
             {{ $t('slot.dist_hint', { key: modifierKey }) }}
-            <template v-if="slotScale.hi > 0">
-                · {{ slotScale.uniform
-                    ? $t('slot.dist_range_equal', { n: slotScale.lo })
-                    : $t('slot.dist_range', { lo: slotScale.lo, hi: slotScale.hi }) }}
+            <template v-if="hotScale.median > 0">
+                · {{ $t('slot.dist_hotspot', { n: Math.round(hotScale.median) }) }}
             </template>
         </div>
 
@@ -604,28 +589,6 @@ onUnmounted(() => {
 .slot-dist-hint {
     font-size: 12px;
     color: v-bind('themeVars.textColor3');
-}
-
-.slot-dist-hint-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    color: v-bind('themeVars.textColor3');
-    font-size: 11px;
-    line-height: 1;
-    opacity: 0.6;
-    cursor: help;
-    transition: opacity 0.2s, color 0.2s, background-color 0.2s;
-
-    &:hover {
-        background: v-bind('themeVars.actionColor');
-        color: v-bind('themeVars.textColor1');
-        opacity: 1;
-    }
 }
 
 .slot-dist-hint-line {

@@ -872,7 +872,7 @@
     "copy_all_ranges": "모든 범위 복사",
     "copied": "복사됨",
     "dist_title": "슬롯 분포",
-    "dist_hint": "노드마다 한 블록, 블록 너비는 슬롯 수에 비례. 색이 진할수록 키가 많음. {key}를 누른 채 드래그하면 여러 슬롯을 선택할 수 있습니다",
+    "dist_hint": "노드마다 한 블록, 블록 너비는 슬롯 수에 비례. 색은 중앙값 대비 핫스팟 정도를 나타냅니다. {key}를 누른 채 드래그하면 여러 슬롯을 선택할 수 있습니다",
     "dist_scan": "스캔",
     "dist_rescan": "다시 스캔",
     "dist_scanning": "스캔 중…",
@@ -880,15 +880,12 @@
     "dist_never": "아직 스캔하지 않음",
     "dist_empty": "스캔 결과가 없습니다. \"스캔\"을 눌러 슬롯별 키 수를 집계하세요",
     "dist_partial": "{n}개 노드 읽기 실패, 데이터가 불완전할 수 있습니다",
-    "dist_scale_log": "로그",
-    "dist_scale_linear": "선형",
     "dist_slot": "슬롯 {slot}",
     "dist_keys": "{n} 키",
     "dist_unassigned": "미할당",
     "dist_detail": "슬롯 {slot} · {addr} · {n} 키",
     "dist_migrate": "이 슬롯 마이그레이션",
     "dist_scan_fail": "슬롯 분포 스캔 실패",
-    "dist_scale_hint": "로그: 키가 적은 슬롯도 보여 핫스팟 찾기에 적합합니다. 선형: 실제 비율로 표시해 부하 편차 비교에 적합합니다.",
     "dist_deselect": "선택 해제",
     "batch_migration": "일괄 마이그레이션",
     "batch_add": "추가",
@@ -916,7 +913,6 @@
     "batch_skipped_many": "마이그레이션할 수 없는 {n}개를 건너뜀",
     "batch_parse_fail": "슬롯 번호를 해석할 수 없습니다: {text}",
     "batch_slots_placeholder": "0-6, 8, 10-12",
-    "dist_range": "색상 범위 {lo}–{hi} 키 (P2–P98)",
-    "dist_range_equal": "모든 슬롯이 {n} 키"
+    "dist_hotspot": "핫스팟 기준: 중앙값 {n} 키 · 1× 가장 연함, 2× 가장 진함"
   }
 }

@@ -872,7 +872,7 @@
     "copy_all_ranges": "複製全部槽位",
     "copied": "已複製",
     "dist_title": "槽位分佈",
-    "dist_hint": "每個節點一塊，塊寬按槽位數分配；顏色越深鍵越多；按住 {key} 拖曳可框選多個槽位",
+    "dist_hint": "每個節點一塊，塊寬按槽位數分配；顏色表示相對中位數的熱點程度；按住 {key} 拖曳可框選多個槽位",
     "dist_scan": "掃描",
     "dist_rescan": "重新掃描",
     "dist_scanning": "掃描中…",
@@ -880,15 +880,12 @@
     "dist_never": "尚未掃描",
     "dist_empty": "還沒有掃描結果，點擊「掃描」統計每個槽的鍵數量",
     "dist_partial": "{n} 個節點讀取失敗，資料可能不完整",
-    "dist_scale_log": "對數",
-    "dist_scale_linear": "線性",
     "dist_slot": "槽位 {slot}",
     "dist_keys": "{n} 鍵",
     "dist_unassigned": "未分配",
     "dist_detail": "槽 {slot} · {addr} · {n} 鍵",
     "dist_migrate": "遷移此槽",
     "dist_scan_fail": "掃描槽位分佈失敗",
-    "dist_scale_hint": "對數：低鍵數的槽也可見，適合找熱點；線性：按真實比例顯示，適合比較負載懸殊程度。",
     "dist_deselect": "取消選取",
     "batch_migration": "批次遷移",
     "batch_add": "新增",
@@ -916,7 +913,6 @@
     "batch_skipped_many": "已跳過 {n} 個不可遷移的槽位",
     "batch_parse_fail": "無法解析槽位號：{text}",
     "batch_slots_placeholder": "0-6, 8, 10-12",
-    "dist_range": "顏色範圍 {lo}–{hi} 鍵（P2–P98）",
-    "dist_range_equal": "所有槽位均為 {n} 鍵"
+    "dist_hotspot": "熱點基準：中位數 {n} 鍵 · 1× 最淺，2× 最深"
   }
 }

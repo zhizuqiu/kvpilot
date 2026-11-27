@@ -872,7 +872,7 @@
     "copy_all_ranges": "Copiar todas as faixas",
     "copied": "Copiado",
     "dist_title": "Distribuição de slots",
-    "dist_hint": "Um bloco por nó, largura proporcional aos slots; mais escuro = mais chaves; segure {key} e arraste para selecionar vários slots",
+    "dist_hint": "Um bloco por nó, largura proporcional aos slots; a cor indica o quão quente em relação à mediana; segure {key} e arraste para selecionar vários slots",
     "dist_scan": "Escanear",
     "dist_rescan": "Escanear novamente",
     "dist_scanning": "Escaneando…",
@@ -880,15 +880,12 @@
     "dist_never": "Ainda não escaneado",
     "dist_empty": "Sem resultados. Clique em \"Escanear\" para contar as chaves por slot",
     "dist_partial": "Falha ao ler {n} nó(s); os dados podem estar incompletos",
-    "dist_scale_log": "Log",
-    "dist_scale_linear": "Linear",
     "dist_slot": "Slot {slot}",
     "dist_keys": "{n} chaves",
     "dist_unassigned": "Não atribuído",
     "dist_detail": "Slot {slot} · {addr} · {n} chaves",
     "dist_migrate": "Migrar este slot",
     "dist_scan_fail": "Falha ao escanear a distribuição",
-    "dist_scale_hint": "Log: valores baixos continuam visíveis, ideal para achar pontos quentes. Linear: proporção real, ideal para comparar o desequilíbrio.",
     "dist_deselect": "Desmarcar",
     "batch_migration": "Migração em lote",
     "batch_add": "Adicionar",
@@ -916,7 +913,6 @@
     "batch_skipped_many": "{n} slots não migráveis ignorados",
     "batch_parse_fail": "Expressão de slot inválida: {text}",
     "batch_slots_placeholder": "0-6, 8, 10-12",
-    "dist_range": "Faixa de cor {lo}–{hi} chaves (P2–P98)",
-    "dist_range_equal": "Todos os slots têm {n} chaves"
+    "dist_hotspot": "Referência de ponto quente: mediana {n} chaves · 1× mais claro, 2× mais escuro"
   }
 }

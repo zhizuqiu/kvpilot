@@ -872,7 +872,7 @@
     "copy_all_ranges": "复制全部槽位",
     "copied": "已复制",
     "dist_title": "槽位分布",
-    "dist_hint": "每个节点一块，块宽按槽位数分配；颜色越深键越多；按住 {key} 拖动可框选多个槽位",
+    "dist_hint": "每个节点一块，块宽按槽位数分配；颜色表示相对中位数的热点程度；按住 {key} 拖动可框选多个槽位",
     "dist_scan": "扫描",
     "dist_rescan": "重新扫描",
     "dist_scanning": "扫描中…",
@@ -880,15 +880,12 @@
     "dist_never": "尚未扫描",
     "dist_empty": "还没有扫描结果，点击「扫描」统计每个槽的键数量",
     "dist_partial": "{n} 个节点读取失败，数据可能不完整",
-    "dist_scale_log": "对数",
-    "dist_scale_linear": "线性",
     "dist_slot": "槽位 {slot}",
     "dist_keys": "{n} 键",
     "dist_unassigned": "未分配",
     "dist_detail": "槽 {slot} · {addr} · {n} 键",
     "dist_migrate": "迁移此槽",
     "dist_scan_fail": "扫描槽位分布失败",
-    "dist_scale_hint": "对数：低键数的槽也可见，适合找热点；线性：按真实比例显示，适合比较负载悬殊程度。",
     "dist_deselect": "取消选中",
     "batch_migration": "批量迁移",
     "batch_add": "添加",
@@ -916,7 +913,6 @@
     "batch_skipped_many": "已跳过 {n} 个不可迁移的槽位",
     "batch_parse_fail": "无法解析槽位号：{text}",
     "batch_slots_placeholder": "0-6, 8, 10-12",
-    "dist_range": "颜色范围 {lo}–{hi} 键（P2–P98）",
-    "dist_range_equal": "所有槽位均为 {n} 键"
+    "dist_hotspot": "热点基准：中位数 {n} 键 · 1× 最浅，2× 最深"
   }
 }

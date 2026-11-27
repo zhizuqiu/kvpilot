@@ -1,42 +1,35 @@
 /**
- * 槽位分布图的颜色标尺。
+ * 槽位分布图的热点色阶。
  *
- * 直接按 0~最大值 归一化时，均匀集群（每槽 10~25 键）会全部落在色阶顶端，
- * 看起来是一片同色。这里改用非零槽位的 P2~P98 作为色阶区间，让常见区间
- * 占满整条梯度，极端值饱和处理。
+ * 颜色表达的是“相对热点的程度”，而不是绝对键数：
+ * 以非零槽位键数的中位数为基准，1 倍中位数及以下为最浅，
+ * 2 倍中位数及以上为最深。均匀集群因此整体呈浅色，只有真正
+ * 偏离中位数的槽才会显眼。
  */
 
 const clamp01 = (value) => Math.min(1, Math.max(0, value))
 
-// 计算非零槽位的色阶范围；样本很少时退化为 min~max。
-export function buildSlotScale(counts, lowPercentile = 0.02, highPercentile = 0.98) {
+// 计算热点基准；没有非零槽位时返回 0。
+export function buildHotspotScale(counts) {
     const values = []
     for (let i = 0; i < counts.length; i++) {
         if (counts[i] > 0) values.push(counts[i])
     }
-    if (values.length === 0) {
-        return { lo: 0, hi: 0, uniform: true }
-    }
+    if (values.length === 0) return { median: 0 }
     values.sort((a, b) => a - b)
-    const pick = (percentile) => values[Math.min(values.length - 1, Math.floor((values.length - 1) * percentile))]
-    let lo = pick(lowPercentile)
-    let hi = pick(highPercentile)
-    if (hi <= lo) {
-        lo = values[0]
-        hi = values[values.length - 1]
-    }
-    return { lo, hi, uniform: hi <= lo }
+    const mid = Math.floor(values.length / 2)
+    const median = values.length % 2 === 1 ? values[mid] : (values[mid - 1] + values[mid]) / 2
+    return { median }
 }
 
-// 把单个槽的键数映射到 0~1；0 键返回 0，范围外饱和。
-export function scaleRatio(value, scale, mode = 'log') {
-    if (value <= 0) return 0
-    if (!scale || scale.uniform) return 0.55
-    const { lo, hi } = scale
-    if (value <= lo) return 0
-    if (value >= hi) return 1
-    if (mode === 'log') {
-        return clamp01((Math.log1p(value) - Math.log1p(lo)) / (Math.log1p(hi) - Math.log1p(lo)))
-    }
-    return clamp01((value - lo) / (hi - lo))
+// 把键数映射到 0~1 的热点比例：1x 中位数为 0，2x 及以上为 1。
+export function hotspotRatio(value, scale) {
+    if (value <= 0 || !scale || scale.median <= 0) return 0
+    if (value <= scale.median) return 0
+    return clamp01(Math.log2(value / scale.median))
+}
+
+// 把热点比例映射为不透明度：1x 中位数为 0.05，2x 及以上为 1。
+export function hotspotAlpha(ratio) {
+    return 0.05 + 0.95 * clamp01(ratio)
 }

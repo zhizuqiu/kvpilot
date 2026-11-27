@@ -872,7 +872,7 @@
     "copy_all_ranges": "Copier toutes les plages",
     "copied": "Copié",
     "dist_title": "Répartition des slots",
-    "dist_hint": "Un bloc par nœud, largeur proportionnelle aux slots ; plus foncé = plus de clés ; maintenez {key} et glissez pour sélectionner plusieurs slots",
+    "dist_hint": "Un bloc par nœud, largeur proportionnelle aux slots ; la couleur indique la chaleur relative à la médiane ; maintenez {key} et glissez pour sélectionner plusieurs slots",
     "dist_scan": "Scanner",
     "dist_rescan": "Rescanner",
     "dist_scanning": "Scan en cours…",
@@ -880,15 +880,12 @@
     "dist_never": "Jamais scanné",
     "dist_empty": "Aucun résultat. Cliquez sur « Scanner » pour compter les clés par slot",
     "dist_partial": "Échec de lecture sur {n} nœud(s), données possiblement incomplètes",
-    "dist_scale_log": "Log",
-    "dist_scale_linear": "Linéaire",
     "dist_slot": "Slot {slot}",
     "dist_keys": "{n} clés",
     "dist_unassigned": "Non attribué",
     "dist_detail": "Slot {slot} · {addr} · {n} clés",
     "dist_migrate": "Migrer ce slot",
     "dist_scan_fail": "Échec du scan de la répartition",
-    "dist_scale_hint": "Log : les petits nombres restent visibles, idéal pour repérer les points chauds. Linéaire : proportion réelle, idéal pour comparer le déséquilibre.",
     "dist_deselect": "Désélectionner",
     "batch_migration": "Migration par lot",
     "batch_add": "Ajouter",
@@ -916,7 +913,6 @@
     "batch_skipped_many": "{n} slots non migrables ignorés",
     "batch_parse_fail": "Expression de slot invalide : {text}",
     "batch_slots_placeholder": "0-6, 8, 10-12",
-    "dist_range": "Plage de couleurs {lo}–{hi} clés (P2–P98)",
-    "dist_range_equal": "Tous les slots ont {n} clés"
+    "dist_hotspot": "Référence de point chaud : médiane {n} clés · 1× le plus clair, 2× le plus foncé"
   }
 }

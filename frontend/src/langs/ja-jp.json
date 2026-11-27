@@ -872,7 +872,7 @@
     "copy_all_ranges": "すべての範囲をコピー",
     "copied": "コピーしました",
     "dist_title": "スロット分布",
-    "dist_hint": "ノードごとに1ブロック、幅はスロット数に比例。色が濃いほどキーが多い。{key} を押しながらドラッグで複数選択できます",
+    "dist_hint": "ノードごとに1ブロック、幅はスロット数に比例。色は中央値に対するホットスポット度を示します。{key} を押しながらドラッグで複数選択できます",
     "dist_scan": "スキャン",
     "dist_rescan": "再スキャン",
     "dist_scanning": "スキャン中…",
@@ -880,15 +880,12 @@
     "dist_never": "未スキャン",
     "dist_empty": "スキャン結果がありません。「スキャン」で各スロットのキー数を集計します",
     "dist_partial": "{n} 個のノードで読み取りに失敗しました。データが不完全な可能性があります",
-    "dist_scale_log": "対数",
-    "dist_scale_linear": "線形",
     "dist_slot": "スロット {slot}",
     "dist_keys": "{n} キー",
     "dist_unassigned": "未割り当て",
     "dist_detail": "スロット {slot} · {addr} · {n} キー",
     "dist_migrate": "このスロットを移行",
     "dist_scan_fail": "スロット分布のスキャンに失敗しました",
-    "dist_scale_hint": "対数：キーが少ないスロットも見え、ホットスポット探しに適しています。線形：実際の比率で表示し、負荷の偏り比較に適しています。",
     "dist_deselect": "選択解除",
     "batch_migration": "一括移行",
     "batch_add": "追加",
@@ -916,7 +913,6 @@
     "batch_skipped_many": "移行できない {n} 件をスキップしました",
     "batch_parse_fail": "スロット指定を解析できません：{text}",
     "batch_slots_placeholder": "0-6, 8, 10-12",
-    "dist_range": "色範囲 {lo}–{hi} キー（P2–P98）",
-    "dist_range_equal": "すべてのスロットが {n} キー"
+    "dist_hotspot": "ホットスポット基準：中央値 {n} キー · 1× 最も淡く、2× 最も濃い"
   }
 }
